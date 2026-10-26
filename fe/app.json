@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Booking Flight",
-    "slug": "BookingFlight",
+    "name": "SkyJourney",
+    "slug": "SkyJourney",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/app_icon.png",
+    "icon": "./assets/Splash_icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true
