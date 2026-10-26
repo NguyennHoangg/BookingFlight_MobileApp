@@ -1,5 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 
 generator client {
   provider = "prisma-client-js"
@@ -10,9 +9,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==========================================
-// 1. ENUMS (KIỂU DỮ LIỆU ĐỊNH SẴN)
-// ==========================================
+
 
 enum Role {
   USER
@@ -39,10 +36,10 @@ enum SeatClass {
 }
 
 enum SeatType {
-  WINDOW   // Ghế cửa sổ
-  MIDDLE   // Ghế giữa
-  AISLE    // Ghế lối đi
-  EXIT_ROW // Thoát hiểm
+  WINDOW    // Ghế cửa sổ (A, F)
+  MIDDLE    // Ghế giữa (B, E)
+  AISLE     // Ghế lối đi (C, D)
+  EXIT_ROW  // Hàng ghế thoát hiểm (chỗ để chân rộng)
 }
 
 enum PassengerType {
@@ -52,14 +49,14 @@ enum PassengerType {
 }
 
 enum FlightDirection {
-  OUTBOUND // Chiều đi
-  INBOUND  // Chiều về
+  OUTBOUND  // Chuyến đi
+  INBOUND   // Chuyến về (khứ hồi)
 }
 
 enum BookingStatus {
-  PENDING   // Chờ thanh toán
+  PENDING   // Đang chờ thanh toán
   CONFIRMED // Đã thanh toán thành công
-  CANCELLED // Đã hủy / Hết hạn
+  CANCELLED // Đã hủy / Hết hạn giữ chỗ
 }
 
 enum PaymentMethod {
@@ -75,35 +72,35 @@ enum PaymentStatus {
 }
 
 enum DiscountType {
-  PERCENTAGE
-  FIXED_AMOUNT
+  PERCENTAGE   // Giảm theo %
+  FIXED_AMOUNT // Giảm số tiền cố định
 }
 
 enum ServiceType {
-  BAGGAGE
-  MEAL
-  INSURANCE
-  LOUNGE
+  BAGGAGE   // Hành lý ký gửi mua thêm
+  MEAL      // Suất ăn trên máy bay
+  INSURANCE // Bảo hiểm trễ chuyến / du lịch
+  LOUNGE    // Phòng chờ thương gia
 }
 
 enum BaggageStatus {
-  CHECKED_IN
-  LOADED
-  ARRIVED
+  CHECKED_IN // Đã nhận tại quầy làm thủ tục
+  LOADED     // Đã chất lên khoang máy bay
+  ARRIVED    // Đã ra băng chuyền sân bay đến
 }
 
 enum RefundStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  COMPLETED
+  PENDING   // Chờ xử lý
+  APPROVED  // Đã duyệt hoàn vé
+  REJECTED  // Từ chối
+  COMPLETED // Đã hoàn tiền về tài khoản khách
 }
 
-// ==========================================
-// 2. CÁC BẢNG DỮ LIỆU (MODELS) - TỔNG 20 BẢNG
-// ==========================================
+// ============================================================================
+// 2. CÁC BẢNG DỮ LIỆU CHÍNH (20 MODELS)
+// ============================================================================
 
-// 1. Người dùng
+// Bảng 1: Người dùng (Tài khoản đăng nhập App)
 model User {
   id             String         @id @default(uuid())
   email          String         @unique
@@ -114,6 +111,7 @@ model User {
   loyaltyPoints  Int            @default(0)
   membershipTier MembershipTier @default(MEMBER)
   role           Role           @default(USER)
+  isActive       Boolean        @default(true)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -123,50 +121,53 @@ model User {
   notifications   Notification[]
 }
 
-// 2. Danh bạ hành khách lưu sẵn
+// Bảng 2: Danh bạ hành khách lưu sẵn (Điền nhanh khi đặt vé)
 model SavedPassenger {
   id             String        @id @default(uuid())
   userId         String
-  fullName       String
+  fullName       String        // VD: NGUYEN VAN A
   passengerType  PassengerType @default(ADULT)
   dateOfBirth    DateTime
-  identityNumber String?       // CCCD / Hộ chiếu
+  identityNumber String?       // Số CCCD hoặc Hộ chiếu
+  isActive       Boolean       @default(true)
 
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// 3. Sân bay
+// Bảng 3: Sân bay (VD: SGN - Tân Sơn Nhất, HAN - Nội Bài)
 model Airport {
   id               String   @id @default(uuid())
-  code             String   @unique // SGN, HAN, DAD...
+  code             String   @unique // Mã IATA 3 ký tự: SGN, HAN, DAD, PQC...
   name             String
   city             String
   country          String   @default("Việt Nam")
+  isActive         Boolean  @default(true)
 
   departingFlights Flight[] @relation("DepartureAirport")
   arrivingFlights  Flight[] @relation("ArrivalAirport")
 }
 
-// 4. Hãng hàng không
+// Bảng 4: Hãng hàng không (Vietnam Airlines, Vietjet Air, Bamboo Airways)
 model Airline {
-  id                 String              @id @default(uuid())
-  code               String              @unique // VN, VJ, QH
-  name               String
-  logoUrl            String
+  id                String             @id @default(uuid())
+  code              String             @unique // Mã IATA 2 ký tự: VN, VJ, QH
+  name              String
+  logoUrl           String
+  isActive          Boolean            @default(true)
 
-  aircrafts          Aircraft[]
-  fareClasses        FareClass[]
-  flights            Flight[]
-  ancillaryServices  AncillaryService[]
+  aircrafts         Aircraft[]
+  fareClasses       FareClass[]
+  flights           Flight[]
+  ancillaryServices AncillaryService[]
 }
 
-// 5. Đội tàu bay
+// Bảng 5: Đội tàu bay
 model Aircraft {
   id               String         @id @default(uuid())
   airlineId        String
-  registrationCode String         @unique // VN-A861
-  model            String         // Airbus A321neo
-  seatLayout       String         @default("3-3")
+  registrationCode String         @unique // Số hiệu đăng bạ: VN-A861, VJ-A642
+  model            String         // Dòng máy bay: Airbus A321neo, Boeing 787-10
+  seatLayout       String         @default("3-3") // Cấu hình cột ghế: "3-3" hoặc "2-4-2"
   totalSeats       Int            @default(180)
   isActive         Boolean        @default(true)
 
@@ -175,73 +176,78 @@ model Aircraft {
   flights          Flight[]
 }
 
-// 6. Sơ đồ ghế mẫu của tàu bay
+// Bảng 6: Sơ đồ ghế mẫu chuẩn của tàu bay
 model SeatTemplate {
   id                String    @id @default(uuid())
   aircraftId        String
-  seatNumber        String    // 1A, 1B...
+  seatNumber        String    // "1A", "1B", ..., "30F"
   rowNumber         Int
-  columnLetter      String
+  columnLetter      String    // "A", "B", "C", "D", "E", "F"
   seatClass         SeatClass @default(ECONOMY)
   seatType          SeatType  @default(MIDDLE)
-  defaultExtraPrice Int       @default(0)
+  defaultExtraPrice Int       @default(0) // Phụ phí chọn ghế mặc định
+  isActive          Boolean   @default(true)
 
   aircraft          Aircraft  @relation(fields: [aircraftId], references: [id], onDelete: Cascade)
 
   @@unique([aircraftId, seatNumber])
 }
 
-// 7. Hạng vé & Điều kiện
+// Bảng 7: Hạng vé & Điều kiện hoàn đổi (Eco, Deluxe, SkyBoss/Business)
 model FareClass {
-  id             String   @id @default(uuid())
+  id             String                @id @default(uuid())
   airlineId      String
-  name           String   // Eco, Deluxe, SkyBoss
-  carryOnBaggage Int      @default(7)
-  checkedBaggage Int      @default(0)
-  isRefundable   Boolean  @default(false)
-  changeFee      Int      @default(350000)
+  name           String                // "Eco", "Deluxe", "Business"
+  carryOnBaggage Int                   @default(7)     // Số kg hành lý xách tay
+  checkedBaggage Int                   @default(0)     // Số kg hành lý ký gửi miễn phí đi kèm
+  isRefundable   Boolean               @default(false) // Có được phép hoàn hủy vé không?
+  changeFee      Int                   @default(350000)// Phí đổi giờ/ngày bay (VNĐ)
+  isActive       Boolean               @default(true)
 
-  airline        Airline  @relation(fields: [airlineId], references: [id])
+  airline        Airline               @relation(fields: [airlineId], references: [id])
   inventories    FlightFareInventory[]
   tickets        Ticket[]
 }
 
-// 8. Chuyến bay
+// Bảng 8: Chuyến bay
 model Flight {
-  id                 String       @id @default(uuid())
-  flightNumber       String       // VN214
+  id                 String                @id @default(uuid())
+  flightNumber       String                // Số hiệu: VN214, VJ122
   airlineId          String
   aircraftId         String
   departureAirportId String
   arrivalAirportId   String
   departureTime      DateTime
   arrivalTime        DateTime
-  terminal           String       @default("T1")
-  gate               String       @default("G05")
-  basePrice          Int
-  status             FlightStatus @default(SCHEDULED)
-  createdAt          DateTime     @default(now())
+  terminal           String                @default("T1")  // Nhà ga T1 / T2
+  gate               String                @default("G05") // Cổng ra máy bay
+  basePrice          Int                   // Giá cơ bản (VNĐ)
+  status             FlightStatus          @default(SCHEDULED)
+  isActive           Boolean               @default(true)
+  createdAt          DateTime              @default(now())
 
-  airline            Airline      @relation(fields: [airlineId], references: [id])
-  aircraft           Aircraft     @relation(fields: [aircraftId], references: [id])
-  departureAirport   Airport      @relation("DepartureAirport", fields: [departureAirportId], references: [id])
-  arrivalAirport     Airport      @relation("ArrivalAirport", fields: [arrivalAirportId], references: [id])
-  
+  airline            Airline               @relation(fields: [airlineId], references: [id])
+  aircraft           Aircraft              @relation(fields: [aircraftId], references: [id])
+  departureAirport   Airport               @relation("DepartureAirport", fields: [departureAirportId], references: [id])
+  arrivalAirport     Airport               @relation("ArrivalAirport", fields: [arrivalAirportId], references: [id])
+
   seats              FlightSeat[]
   fareInventories    FlightFareInventory[]
   tickets            Ticket[]
 
+  // Đánh Index giúp truy vấn tìm kiếm chuyến bay nhanh
   @@index([departureAirportId, arrivalAirportId, departureTime])
 }
 
-// 9. Quỹ vé theo hạng của chuyến bay
+// Bảng 9: Quỹ vé và giá bán theo từng hạng của chuyến bay
 model FlightFareInventory {
   id          String    @id @default(uuid())
   flightId    String
   fareClassId String
-  price       Int
-  totalQuota  Int
-  soldCount   Int       @default(0)
+  price       Int       // Giá bán của hạng vé này trên chuyến bay
+  totalQuota  Int       // Tổng số chỗ mở bán cho hạng vé này
+  soldCount   Int       @default(0) // Số chỗ đã bán
+  isActive    Boolean   @default(true)
 
   flight      Flight    @relation(fields: [flightId], references: [id], onDelete: Cascade)
   fareClass   FareClass @relation(fields: [fareClassId], references: [id])
@@ -249,16 +255,17 @@ model FlightFareInventory {
   @@unique([flightId, fareClassId])
 }
 
-// 10. Sơ đồ ghế thực tế trên chuyến bay (Chống trùng ghế)
+// Bảng 10: Sơ đồ ghế thực tế trên từng chuyến bay (Chống trùng ghế)
 model FlightSeat {
   id            String    @id @default(uuid())
   flightId      String
-  seatNumber    String    // 12A
+  seatNumber    String    // "12A", "12B"...
   seatClass     SeatClass @default(ECONOMY)
   seatType      SeatType  @default(MIDDLE)
-  priceModifier Int       @default(0)
-  isBooked      Boolean   @default(false)
-  lockedUntil   DateTime? // Khóa tạm 10p thanh toán
+  priceModifier Int       @default(0)     // Phụ phí chọn vị trí ghế này
+  isBooked      Boolean   @default(false) // true = Đã có người đặt
+  lockedUntil   DateTime?                 // Khóa ghế tạm thời 10 phút khi chờ thanh toán
+  isActive      Boolean   @default(true)
 
   flight        Flight    @relation(fields: [flightId], references: [id], onDelete: Cascade)
   ticket        Ticket?
@@ -266,15 +273,15 @@ model FlightSeat {
   @@unique([flightId, seatNumber])
 }
 
-// 11. Chương trình khuyến mãi (Promotion)
+// Bảng 11: Chương trình Khuyến mãi / Mã giảm giá
 model Promotion {
   id                String       @id @default(uuid())
-  code              String       @unique // TET2027
+  code              String       @unique // VD: "SUMMER2026", "VNPAY50K"
   title             String
   description       String
   discountType      DiscountType @default(PERCENTAGE)
-  discountValue     Int          // VD: 15 (%) hoặc 50000 (VND)
-  maxDiscountAmount Int
+  discountValue     Int          // VD: 15 (nếu giảm 15%) hoặc 50000 (nếu giảm 50k)
+  maxDiscountAmount Int          // Giảm tối đa (VNĐ)
   minOrderValue     Int          @default(0)
   startDate         DateTime
   expiryDate        DateTime
@@ -287,12 +294,13 @@ model Promotion {
   bookings          Booking[]
 }
 
-// 12. Ví Coupon của người dùng
+// Bảng 12: Ví Coupon cá nhân của người dùng
 model UserCoupon {
   id          String    @id @default(uuid())
   userId      String
   promotionId String
   isUsed      Boolean   @default(false)
+  isActive    Boolean   @default(true)
   claimedAt   DateTime  @default(now())
   usedAt      DateTime?
 
@@ -303,136 +311,139 @@ model UserCoupon {
   @@unique([userId, promotionId])
 }
 
-// 13. Đơn đặt chỗ tổng (Booking / Mã PNR)
+// Bảng 13: Đơn đặt chỗ tổng (Booking - Chứa mã đặt chỗ PNR 6 ký tự)
 model Booking {
-  id             String        @id @default(uuid())
-  pnrCode        String        @unique // Mã đặt chỗ 6 ký tự: VN839X
+  id             String               @id @default(uuid())
+  pnrCode        String               @unique // Mã PNR 6 ký tự: "VN839X"
   userId         String
   promotionId    String?
-  userCouponId   String?       @unique
-  isRoundTrip    Boolean       @default(false)
-  subTotal       Int
-  taxAndFees     Int           // Thuế sân bay & phí dịch vụ
-  discountAmount Int           @default(0)
-  totalAmount    Int
-  status         BookingStatus @default(PENDING)
-  
+  userCouponId   String?              @unique
+  isRoundTrip    Boolean              @default(false)
+  subTotal       Int                  // Tổng tiền vé + ghế + dịch vụ trước giảm giá
+  taxAndFees     Int                  // Thuế và phí sân bay
+  discountAmount Int                  @default(0)
+  totalAmount    Int                  // Số tiền thực trả cuối cùng
+  status         BookingStatus        @default(PENDING)
   contactName    String
   contactEmail   String
   contactPhone   String
-  
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  isActive       Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
-  user           User          @relation(fields: [userId], references: [id])
-  promotion      Promotion?    @relation(fields: [promotionId], references: [id])
-  userCoupon     UserCoupon?   @relation(fields: [userCouponId], references: [id])
+  user           User                 @relation(fields: [userId], references: [id])
+  promotion      Promotion?           @relation(fields: [promotionId], references: [id])
+  userCoupon     UserCoupon?          @relation(fields: [userCouponId], references: [id])
   tickets        Ticket[]
   payment        Payment?
   refundRequest  RefundCancelRequest?
 }
 
-// 14. Vé điện tử (Ticket / Boarding Pass) - ĐÃ CẬp NHẬT ĐẦY ĐỦ CÁC LOẠI MÃ
+// Bảng 14: Vé điện tử của từng hành khách (Ticket / Boarding Pass)
 model Ticket {
-  id                    String          @id @default(uuid())
-  ticketNumber          String          @unique // Số vé điện tử 13 chữ số chuẩn IATA: "738-9281029381"
-  bookingId             String
-  flightId              String
-  flightSeatId          String          @unique // Gắn với ghế duy nhất
-  fareClassId           String
-  direction             FlightDirection @default(OUTBOUND)
-  
-  passengerName         String          // NGUYEN VAN A
-  passengerType         PassengerType   @default(ADULT)
-  dateOfBirth           DateTime?
-  identityNumber        String?         // CCCD / Hộ chiếu
-  frequentFlyerNumber   String?         // Số thẻ khách hàng thường xuyên (Bông sen vàng)
-  
-  ticketPrice           Int             // Giá riêng của vé này
-  isCheckedIn           Boolean         @default(false)
-  boardingTime          DateTime?       // Giờ lên máy bay (thường trước cất cánh 30 phút)
-  qrCodeData            String          // Chuỗi mã hóa vạch chuẩn BCBP cho App quét
+  id                  String          @id @default(uuid())
+  ticketNumber        String          @unique // Số vé điện tử 13 chữ số IATA: "738-2938401928"
+  bookingId           String
+  flightId            String
+  flightSeatId        String          @unique // Mỗi vé gắn chặt với 1 ghế duy nhất
+  fareClassId         String
+  direction           FlightDirection @default(OUTBOUND)
+  passengerName       String          // Họ tên in hoa không dấu: NGUYEN VAN A
+  passengerType       PassengerType   @default(ADULT)
+  dateOfBirth         DateTime?
+  identityNumber      String?         // Số CCCD / Passport
+  frequentFlyerNumber String?         // Số thẻ Bông Sen Vàng / Hội viên hãng bay
+  ticketPrice         Int             // Giá thành phần của riêng vé này
+  isCheckedIn         Boolean         @default(false)
+  boardingTime        DateTime?       // Giờ lên máy bay (trước giờ bay 30-45 phút)
+  qrCodeData          String          // Chuỗi dữ liệu mã hóa để vẽ mã QR trên Boarding Pass
+  isActive            Boolean         @default(true)
 
-  booking               Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  flight                Flight          @relation(fields: [flightId], references: [id])
-  seat                  FlightSeat      @relation(fields: [flightSeatId], references: [id])
-  fareClass             FareClass       @relation(fields: [fareClassId], references: [id])
-  
-  addons                TicketAddon[]
-  luggage               LuggageCheckIn?
+  booking             Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  flight              Flight          @relation(fields: [flightId], references: [id])
+  seat                FlightSeat      @relation(fields: [flightSeatId], references: [id])
+  fareClass           FareClass       @relation(fields: [fareClassId], references: [id])
+  addons              TicketAddon[]
+  luggage             LuggageCheckIn?
 }
 
-// 15. Danh mục dịch vụ bổ trợ (Hành lý, Suất ăn)
+// Bảng 15: Danh mục dịch vụ mua thêm (Hành lý ký gửi, Suất ăn, Bảo hiểm)
 model AncillaryService {
   id          String        @id @default(uuid())
   airlineId   String
   type        ServiceType
-  name        String        // Gói 20kg ký gửi / Cơm gà
+  name        String        // VD: "Gói hành lý 20kg", "Cơm gà sốt tiêu đen"
   price       Int
+  isActive    Boolean       @default(true)
 
   airline     Airline       @relation(fields: [airlineId], references: [id])
   addons      TicketAddon[]
 }
 
-// 16. Chi tiết dịch vụ khách đã mua thêm cho vé
+// Bảng 16: Chi tiết dịch vụ hành khách đã mua kèm theo vé
 model TicketAddon {
   id             String           @id @default(uuid())
   ticketId       String
   serviceId      String
   quantity       Int              @default(1)
   priceAtBooking Int
+  isActive       Boolean          @default(true)
 
   ticket         Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   service        AncillaryService @relation(fields: [serviceId], references: [id])
 }
 
-// 17. Quản lý thẻ hành lý ký gửi (Luggage Tag)
+// Bảng 17: Quản lý thẻ hành lý ký gửi tại sân bay (Baggage Tag)
 model LuggageCheckIn {
   id             String        @id @default(uuid())
   ticketId       String        @unique
-  baggageTagCode String        @unique // Mã vạch vali: "VN-083921"
-  weightKg       Float         // Cân nặng thực tế
+  baggageTagCode String        @unique // Mã vạch dán lên vali: "VN-0839201"
+  weightKg       Float         // Cân nặng thực tế (kg)
   status         BaggageStatus @default(CHECKED_IN)
+  isActive       Boolean       @default(true)
   updatedAt      DateTime      @updatedAt
 
   ticket         Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
 
-// 18. Giao dịch thanh toán (VNPay / PayOS)
+// Bảng 18: Lịch sử giao dịch thanh toán (VNPay / PayOS)
 model Payment {
   id              String        @id @default(uuid())
   bookingId       String        @unique
   paymentMethod   PaymentMethod @default(VNPAY)
-  transactionCode String?       // Mã giao dịch từ VNPay
+  transactionCode String?       // Mã giao dịch trả về từ cổng thanh toán
   amount          Int
   status          PaymentStatus @default(PENDING)
   paidAt          DateTime?
+  isActive        Boolean       @default(true)
   createdAt       DateTime      @default(now())
 
   booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
-// 19. Yêu cầu hoàn / đổi vé
+// Bảng 19: Yêu cầu Hoàn / Hủy vé
 model RefundCancelRequest {
   id           String       @id @default(uuid())
   bookingId    String       @unique
   reason       String
-  penaltyFee   Int          // Phí phạt hoàn hủy
-  refundAmount Int          // Tiền trả lại khách
+  penaltyFee   Int          // Phí phạt hoàn hủy theo FareClass
+  refundAmount Int          // Số tiền thực nhận lại
   status       RefundStatus @default(PENDING)
+  isActive     Boolean      @default(true)
   requestedAt  DateTime     @default(now())
   processedAt  DateTime?
 
   booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
-// 20. Thông báo trong App
+// Bảng 20: Thông báo trong ứng dụng (Màn hình Notifications)
 model Notification {
   id        String   @id @default(uuid())
   userId    String
   title     String
   message   String
   isRead    Boolean  @default(false)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
