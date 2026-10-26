@@ -1,21 +1,23 @@
 import clientApi from "./clientApi";
 
 export interface LoginRequest {
-  email: string;
+  identifierValue: string;
   password: string;
 }
 
 export interface LoginResponse {
   success: boolean;
   data: {
-    accessToken: string;
-    refreshToken: string;
     user: {
       id: number;
       email: string;
       fullName: string;
       phoneNumber: string;
     };
+    token:{
+      accessToken: string;
+      refreshToken: string;
+    }
   };
 }
 

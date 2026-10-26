@@ -8,7 +8,8 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Alert
+    Alert,
+    ActivityIndicator
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -16,6 +17,7 @@ import type { RootStackParamList } from "../../navigation/types";
 
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
+import { useAuth } from "../../hook/useAuth";
 
 type LoginNavigationProp = NativeStackNavigationProp<RootStackParamList, "Login">;
 
@@ -23,14 +25,38 @@ export default function LoginScreen() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const navigation = useNavigation<LoginNavigationProp>();
+  const { login, loading, error, token } = useAuth();
 
-  const handleLogin = () => {
-    console.log(identifier, password);
+  const handleLogin = async () => {
+    if (!identifier.trim() || !password.trim()) {
+      Alert.alert("Thông báo", "Vui lòng nhập đầy đủ thông tin tài khoản và mật khẩu!");
+      return;
+    }
+    const request = {
+      identifierValue: identifier.trim(),
+      password: password,
+    };
+    const result = await login(request);
+    if (!result.success) {
+      Alert.alert("Đăng nhập thất bại", result.message || "Tài khoản hoặc mật khẩu không đúng!");
+    } else {
+      Alert.alert("Thành công", "Đăng nhập thành công!", [
+        { text: "OK", onPress: () => navigation.navigate("MainTabs") },
+      ]);
+    }
   };
 
   const handleRegister = () => {
     navigation.navigate("Register");
   };
+
+  if(loading){
+    return (
+        <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#0066CC" />
+        </View>
+    )
+  }
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-white">

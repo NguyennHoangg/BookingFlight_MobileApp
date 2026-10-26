@@ -22,11 +22,14 @@ app.get("/health", (_req: Request, res: Response) => {
 // Xử lý lỗi tập trung
 app.use(errorHandler);
 
-// Khởi tạo Redis
-await redisConfig.init();
-
+// Khởi chạy server trước
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+
+// Khởi tạo Redis ở chế độ nền (không block server nếu Redis chưa bật)
+redisConfig.init().catch(() => {
+  console.log("[Redis] Không thể kết nối Redis, hệ thống sẽ tự động dùng database.");
 });
 
 export default app;
