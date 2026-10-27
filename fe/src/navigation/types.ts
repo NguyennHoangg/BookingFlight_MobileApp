@@ -14,6 +14,7 @@ export type RootStackParamList = {
   Register: undefined;
   MainTabs: undefined;
   FlightDetail: { flightId: string };
+  TicketDetail: { bookingId?: string } | undefined;
   EditProfile: undefined;
   ChangePassword: undefined;
 };

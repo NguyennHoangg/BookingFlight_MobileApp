@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Clipboard, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/types';
 
 // MOCK DATA: Kết hợp từ các bảng Booking, Ticket, Flight, Airline, Airport trong Prisma Schema
 const MOCK_BOOKINGS = [
@@ -119,7 +121,7 @@ const MOCK_BOOKINGS = [
 ];
 
 export default function MyTicketsScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'completed' | 'cancelled'>('upcoming');
 
   // Lọc danh sách theo tab hiện tại
@@ -301,7 +303,7 @@ export default function MyTicketsScreen() {
                   className={`px-5 py-2.5 rounded-xl border flex-row items-center ${
                     booking.status === 'CONFIRMED' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200 shadow-sm'
                   }`}
-                  onPress={() => navigation.navigate('TicketDetail' as never, { bookingId: booking.id } as never)}
+                  onPress={() => navigation.navigate('TicketDetail', { bookingId: booking.id })}
                 >
                   <Text className={`font-bold text-sm mr-1 ${booking.status === 'CONFIRMED' ? 'text-blue-700' : 'text-gray-700'}`}>Chi tiết vé</Text>
                   <Ionicons name="chevron-forward" size={16} color={booking.status === 'CONFIRMED' ? '#1D4ED8' : '#374151'} />

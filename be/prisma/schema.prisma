@@ -96,6 +96,15 @@ enum RefundStatus {
   COMPLETED // Đã hoàn tiền về tài khoản khách
 }
 
+enum TicketStatus {
+  CONFIRMED  // Đã xác nhận / Đã thanh toán
+  CHECKED_IN // Đã check-in
+  BOARDED    // Đã lên máy bay
+  COMPLETED  // Đã hoàn thành chuyến bay
+  CANCELLED  // Đã hủy vé
+  REFUNDED   // Đã hoàn tiền
+}
+
 // ============================================================================
 // 2. CÁC BẢNG DỮ LIỆU CHÍNH (20 MODELS)
 // ============================================================================
@@ -114,11 +123,16 @@ model User {
   isActive       Boolean        @default(true)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  gender         Boolean?
+  dateOfBirth    DateTime?      @db.Date
 
   savedPassengers SavedPassenger[]
   userCoupons     UserCoupon[]
   bookings        Booking[]
   notifications   Notification[]
+  favoriteFlights FavoriteFlight[]
+  flightReviews   FlightReview[]
+  priceAlerts     PriceAlert[]
 }
 
 // Bảng 2: Danh bạ hành khách lưu sẵn (Điền nhanh khi đặt vé)
@@ -143,8 +157,10 @@ model Airport {
   country          String   @default("Việt Nam")
   isActive         Boolean  @default(true)
 
-  departingFlights Flight[] @relation("DepartureAirport")
-  arrivingFlights  Flight[] @relation("ArrivalAirport")
+  departingFlights Flight[]     @relation("DepartureAirport")
+  arrivingFlights  Flight[]     @relation("ArrivalAirport")
+  depPriceAlerts   PriceAlert[] @relation("AlertDepAirport")
+  arrPriceAlerts   PriceAlert[] @relation("AlertArrAirport")
 }
 
 // Bảng 4: Hãng hàng không (Vietnam Airlines, Vietjet Air, Bamboo Airways)
@@ -159,6 +175,7 @@ model Airline {
   fareClasses       FareClass[]
   flights           Flight[]
   ancillaryServices AncillaryService[]
+  flightReviews     FlightReview[]
 }
 
 // Bảng 5: Đội tàu bay
@@ -234,6 +251,8 @@ model Flight {
   seats              FlightSeat[]
   fareInventories    FlightFareInventory[]
   tickets            Ticket[]
+  favoriteFlights    FavoriteFlight[]
+  flightReviews      FlightReview[]
 
   // Đánh Index giúp truy vấn tìm kiếm chuyến bay nhanh
   @@index([departureAirportId, arrivalAirportId, departureTime])
@@ -357,6 +376,7 @@ model Ticket {
   isCheckedIn         Boolean         @default(false)
   boardingTime        DateTime?       // Giờ lên máy bay (trước giờ bay 30-45 phút)
   qrCodeData          String          // Chuỗi dữ liệu mã hóa để vẽ mã QR trên Boarding Pass
+  status              TicketStatus    @default(CONFIRMED)
   isActive            Boolean         @default(true)
 
   booking             Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
@@ -447,4 +467,64 @@ model Notification {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================================
+// 3. CÁC BẢNG BỔ SUNG: YÊU THÍCH, ĐÁNH GIÁ, CẢNH BÁO GIÁ, ĐIỂM ĐẾN
+// ============================================================================
+
+// Bảng 21: Chuyến bay yêu thích (Dùng cho tab Favorites trên App)
+model FavoriteFlight {
+  id        String   @id @default(uuid())
+  userId    String
+  flightId  String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flight    Flight   @relation(fields: [flightId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, flightId])
+}
+
+// Bảng 22: Đánh giá chất lượng chuyến bay & hãng hàng không
+model FlightReview {
+  id        String   @id @default(uuid())
+  userId    String
+  flightId  String
+  airlineId String
+  rating    Int      @default(5) // 1 - 5 sao
+  title     String?  // Tiêu đề đánh giá
+  comment   String?  // Nội dung nhận xét
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flight    Flight   @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  airline   Airline  @relation(fields: [airlineId], references: [id], onDelete: Cascade)
+}
+
+// Bảng 23: Cảnh báo & Theo dõi giá vé rẻ (Price Alert)
+model PriceAlert {
+  id                 String   @id @default(uuid())
+  userId             String
+  departureAirportId String
+  arrivalAirportId   String
+  targetPrice        Int      // Giá vé mong muốn cảnh báo (VNĐ)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departureAirport   Airport  @relation("AlertDepAirport", fields: [departureAirportId], references: [id], onDelete: Cascade)
+  arrivalAirport     Airport  @relation("AlertArrAirport", fields: [arrivalAirportId], references: [id], onDelete: Cascade)
+}
+
+// Bảng 24: Điểm đến du lịch nổi bật (Dùng hiển thị banner & khám phá trên Trang chủ)
+model Destination {
+  id          String   @id @default(uuid())
+  city        String   // VD: "Đà Nẵng", "Seoul", "Tokyo", "Phú Quốc"
+  country     String   // VD: "Việt Nam", "Hàn Quốc", "Nhật Bản"
+  imageUrl    String
+  tag         String   @default("Điểm đến hot")
+  description String
+  isPopular   Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }

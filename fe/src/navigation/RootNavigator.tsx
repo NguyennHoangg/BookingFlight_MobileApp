@@ -18,6 +18,7 @@ import ProfileScreen from '../screens/profile/Profile';
 import LoginScreen from '../screens/auth/Login';
 import RegisterScreen from '../screens/auth/Register';
 import FlightDetailScreen from '../screens/flight/FlightDetail';
+import TicketDetailScreen from '../screens/tickets/TicketDetail';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import ChangePasswordScreen from '../screens/profile/ChangePasswordScreen';
 
@@ -93,6 +94,7 @@ export default function RootNavigator() {
         <>
           <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
           <Stack.Screen name="FlightDetail" component={FlightDetailScreen} />
+          <Stack.Screen name="TicketDetail" component={TicketDetailScreen} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
           <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
         </>
