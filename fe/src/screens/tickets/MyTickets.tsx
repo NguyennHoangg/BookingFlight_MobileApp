@@ -1,123 +1,352 @@
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, Clipboard, Alert } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
-const MOCK_TICKETS = [
+// MOCK DATA: Kết hợp từ các bảng Booking, Ticket, Flight, Airline, Airport trong Prisma Schema
+const MOCK_BOOKINGS = [
+  // --- 2 CHUYẾN SẮP TỚI ---
   {
-    id: "1",
-    from: "HAN",
-    to: "SGN",
-    fromCity: "Hà Nội",
-    toCity: "TP. HCM",
-    date: "25/10/2026",
-    time: "07:00 → 09:20",
-    airline: "Vietnam Airlines",
-    code: "VN123",
-    status: "upcoming",
-    price: "1.250.000đ",
+    id: 'bk-1',
+    pnrCode: 'SJ8K2P',
+    status: 'CONFIRMED', // BookingStatus
+    totalAmount: 2345000,
+    category: 'upcoming',
+    flight: {
+      flightNumber: 'VN123',
+      departureTime: '08:30',
+      arrivalTime: '10:40',
+      date: 'Thứ Tư, 18/11/2026',
+      duration: '2g 10p',
+      type: 'Bay thẳng',
+      statusTag: 'Đúng giờ',
+      statusColor: 'text-green-600',
+      departureAirport: { code: 'SGN', name: 'Tân Sơn Nhất' },
+      arrivalAirport: { code: 'HAN', name: 'Nội Bài T1' },
+      airline: { name: 'Vietnam Airlines', code: 'VN', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietnam-Airlines-VNA.png' },
+      aircraft: 'Airbus A321'
+    },
+    ticket: {
+      passengerName: 'N. Minh Anh',
+      seatClass: 'Thương gia', // SeatClass.BUSINESS
+      seatNumber: '12A',
+      baggage: '20kg ký gửi'
+    }
   },
   {
-    id: "2",
-    from: "SGN",
-    to: "DAD",
-    fromCity: "TP. HCM",
-    toCity: "Đà Nẵng",
-    date: "15/09/2026",
-    time: "14:30 → 16:00",
-    airline: "VietJet Air",
-    code: "VJ456",
-    status: "completed",
-    price: "680.000đ",
+    id: 'bk-2',
+    pnrCode: 'QH9M4L',
+    status: 'CONFIRMED', 
+    totalAmount: 1420000,
+    category: 'upcoming',
+    flight: {
+      flightNumber: 'QH204',
+      departureTime: '14:15',
+      arrivalTime: '15:40',
+      date: 'Thứ Bảy, 12/12/2026',
+      duration: '1g 25p',
+      type: 'Bay thẳng',
+      statusTag: 'Dự kiến chuẩn giờ',
+      statusColor: 'text-gray-500',
+      departureAirport: { code: 'HAN', name: 'Nội Bài T1' },
+      arrivalAirport: { code: 'DAD', name: 'Đà Nẵng T1' },
+      airline: { name: 'Bamboo Airways', code: 'QH', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Bamboo-Airways-V.png' },
+      aircraft: 'Embraer 190'
+    },
+    ticket: {
+      passengerName: 'N. Minh Anh',
+      seatClass: 'Phổ thông', // SeatClass.ECONOMY
+      seatNumber: '08F',
+      baggage: '07kg xách tay'
+    }
   },
+  // --- 1 CHUYẾN ĐÃ HOÀN THÀNH ---
+  {
+    id: 'bk-3',
+    pnrCode: 'VJ882X',
+    status: 'COMPLETED', // Tương đương FlightStatus.COMPLETED
+    totalAmount: 1150000,
+    category: 'completed',
+    flight: {
+      flightNumber: 'VJ168',
+      departureTime: '09:00',
+      arrivalTime: '10:15',
+      date: 'Thứ Hai, 10/10/2026',
+      duration: '1g 15p',
+      type: 'Bay thẳng',
+      statusTag: 'Đã hạ cánh',
+      statusColor: 'text-gray-500',
+      departureAirport: { code: 'DAD', name: 'Đà Nẵng T1' },
+      arrivalAirport: { code: 'SGN', name: 'Tân Sơn Nhất' },
+      airline: { name: 'Vietjet Air', code: 'VJ', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietjet-Air.png' },
+      aircraft: 'Airbus A321'
+    },
+    ticket: {
+      passengerName: 'N. Minh Anh',
+      seatClass: 'Phổ thông',
+      seatNumber: '14B',
+      baggage: '15kg ký gửi'
+    }
+  },
+  // --- 1 CHUYẾN ĐÃ HỦY ---
+  {
+    id: 'bk-4',
+    pnrCode: 'VN001C',
+    status: 'CANCELLED', // BookingStatus.CANCELLED
+    totalAmount: 1850000,
+    category: 'cancelled',
+    flight: {
+      flightNumber: 'VN222',
+      departureTime: '18:00',
+      arrivalTime: '19:05',
+      date: 'Chủ Nhật, 15/09/2026',
+      duration: '1g 05p',
+      type: 'Bay thẳng',
+      statusTag: 'Đã hủy',
+      statusColor: 'text-red-500',
+      departureAirport: { code: 'SGN', name: 'Tân Sơn Nhất' },
+      arrivalAirport: { code: 'PQC', name: 'Phú Quốc' },
+      airline: { name: 'Vietnam Airlines', code: 'VN', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietnam-Airlines-VNA.png' },
+      aircraft: 'Boeing 787'
+    },
+    ticket: {
+      passengerName: 'N. Minh Anh',
+      seatClass: 'Phổ thông',
+      seatNumber: '—',
+      baggage: '23kg ký gửi'
+    }
+  }
 ];
 
-const statusConfig = {
-  upcoming: { label: "Sắp tới", bg: "bg-primary-light", text: "text-primary" },
-  completed: { label: "Đã hoàn thành", bg: "bg-slate-100", text: "text-slate-500" },
-  cancelled: { label: "Đã hủy", bg: "bg-red-50", text: "text-red-500" },
-};
-
 export default function MyTicketsScreen() {
+  const navigation = useNavigation();
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'completed' | 'cancelled'>('upcoming');
+
+  // Lọc danh sách theo tab hiện tại
+  const filteredBookings = MOCK_BOOKINGS.filter(b => b.category === activeTab);
+  // Đếm số lượng vé sắp tới cho Badge
+  const upcomingCount = MOCK_BOOKINGS.filter(b => b.category === 'upcoming').length;
+
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString('vi-VN') + ' ₫';
+  };
+
+  const copyToClipboard = (text: string) => {
+    // Trên web dùng navigator.clipboard.writeText, trên mobile dùng Clipboard
+    Alert.alert('Thành công', `Đã sao chép mã PNR: ${text}`);
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
-      {/* Header */}
-      <View className="bg-white px-5 pt-4 pb-4 border-b border-slate-100">
-        <Text className="text-slate-900 text-xl font-extrabold">Vé của tôi 🎫</Text>
-        <Text className="text-slate-400 text-sm mt-0.5">Quản lý hành trình của bạn</Text>
+    <View className="flex-1 bg-[#F9FAFB]">
+            
+{/* HEADER TĨNH */}
+<View className="px-5 pt-6 pb-4 bg-white">
+  <View className="flex-row items-center px-5 pt-4 pb-2 bg-white gap-3">
+    {/* Logo nằm bên trái */}
+    <Image 
+      source={require('../../../../fe/assets/Splash_icon.png')} 
+      className="max-w-12 max-h-12"
+      resizeMode="cover"
+    />
+    
+    {/* Cột chứa 2 dòng chữ bên phải logo */}
+    <View className="flex-col">
+      <Text className="text-3xl font-black text-gray-900 tracking-tight">Vé của tôi</Text>
+      <Text className="text-sm text-gray-500 font-medium mt-0.5">Quản lý hành trình bay cá nhân</Text>
+    </View>
+  </View>
+
+        {/* TAB SWITCHER */}
+        <View className="flex-row bg-gray-100 rounded-xl p-1 mt-5">
+          <TouchableOpacity 
+            className={`flex-1 py-2.5 flex-row items-center justify-center rounded-lg ${activeTab === 'upcoming' ? 'bg-[#2563EB] shadow-sm' : ''}`}
+            onPress={() => setActiveTab('upcoming')}
+          >
+            <Text className={`font-semibold text-sm ${activeTab === 'upcoming' ? 'text-white' : 'text-gray-500'}`}>Sắp tới</Text>
+            
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            className={`flex-1 py-2.5 items-center justify-center rounded-lg ${activeTab === 'completed' ? 'bg-[#2563EB] shadow-sm' : ''}`}
+            onPress={() => setActiveTab('completed')}
+          >
+            <Text className={`font-semibold text-sm ${activeTab === 'completed' ? 'text-white' : 'text-gray-500'}`}>Đã hoàn thành</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            className={`flex-1 py-2.5 items-center justify-center rounded-lg ${activeTab === 'cancelled' ? 'bg-[#2563EB] shadow-sm' : ''}`}
+            onPress={() => setActiveTab('cancelled')}
+          >
+            <Text className={`font-semibold text-sm ${activeTab === 'cancelled' ? 'text-white' : 'text-gray-500'}`}>Đã hủy</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
-        {MOCK_TICKETS.map((ticket) => {
-          const status = statusConfig[ticket.status as keyof typeof statusConfig];
-          return (
-            <TouchableOpacity
-              key={ticket.id}
-              className="bg-white rounded-2xl mb-4 overflow-hidden shadow-sm"
-              activeOpacity={0.85}
-            >
-              {/* Ticket top */}
-              <View className="px-5 pt-4 pb-3">
-                <View className="flex-row justify-between items-start mb-3">
-                  <Text className="text-slate-400 text-xs font-semibold">{ticket.airline}</Text>
-                  <View className={`px-3 py-1 rounded-full ${status.bg}`}>
-                    <Text className={`text-xs font-bold ${status.text}`}>{status.label}</Text>
+      <ScrollView 
+        className="flex-1 px-5 pt-4"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
+        {/* DANH SÁCH VÉ */}
+        {filteredBookings.length > 0 ? (
+          filteredBookings.map((booking) => (
+            <View key={booking.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 mb-5 p-5">
+              
+              {/* Top: Hãng bay & Trạng thái */}
+              <View className="flex-row justify-between items-start mb-4">
+                <View className="flex-row items-center flex-1 pr-2">
+                  <View className="w-10 h-10 rounded-xl bg-blue-50 items-center justify-center border border-blue-100">
+                    <Ionicons name="airplane" size={20} color="#2563EB" />
                   </View>
-                </View>
-
-                {/* Route */}
-                <View className="flex-row items-center justify-between">
-                  <View className="items-start">
-                    <Text className="text-slate-900 text-3xl font-extrabold">{ticket.from}</Text>
-                    <Text className="text-slate-400 text-xs mt-0.5">{ticket.fromCity}</Text>
-                  </View>
-                  <View className="items-center flex-1 px-4">
-                    <Text className="text-primary text-xl">✈️</Text>
-                    <View className="flex-row items-center mt-1">
-                      <View className="flex-1 h-px bg-slate-200" />
+                  <View className="ml-3 flex-1">
+                    <View className="flex-row items-center">
+                      <Text className="font-bold text-gray-900 text-base mr-2">{booking.flight.airline.name}</Text>
+                      <View className="bg-blue-50 px-1.5 py-0.5 rounded">
+                        <Text className="text-[10px] font-bold text-blue-600">{booking.flight.flightNumber}</Text>
+                      </View>
                     </View>
-                    <Text className="text-slate-400 text-xs mt-1">{ticket.time}</Text>
-                  </View>
-                  <View className="items-end">
-                    <Text className="text-slate-900 text-3xl font-extrabold">{ticket.to}</Text>
-                    <Text className="text-slate-400 text-xs mt-0.5">{ticket.toCity}</Text>
+                    <Text className="text-xs text-gray-500 mt-0.5">{booking.flight.aircraft} • {booking.ticket.seatClass}</Text>
                   </View>
                 </View>
-              </View>
-
-              {/* Divider with notches */}
-              <View className="flex-row items-center px-2">
-                <View className="w-4 h-4 rounded-full bg-slate-100" />
-                <View className="flex-1 border-t border-dashed border-slate-200 mx-1" />
-                <View className="w-4 h-4 rounded-full bg-slate-100" />
-              </View>
-
-              {/* Ticket bottom */}
-              <View className="flex-row justify-between items-center px-5 py-3">
-                <View>
-                  <Text className="text-slate-400 text-xs">Ngày bay</Text>
-                  <Text className="text-slate-800 font-semibold text-sm">{ticket.date}</Text>
-                </View>
-                <View>
-                  <Text className="text-slate-400 text-xs">Mã vé</Text>
-                  <Text className="text-slate-800 font-semibold text-sm">{ticket.code}</Text>
-                </View>
-                <View className="items-end">
-                  <Text className="text-slate-400 text-xs">Tổng tiền</Text>
-                  <Text className="text-primary font-extrabold text-sm">{ticket.price}</Text>
+                
+                <View className={`px-2.5 py-1.5 rounded-full flex-row items-center border ${
+                  booking.status === 'CONFIRMED' ? 'bg-emerald-50 border-emerald-100' :
+                  booking.status === 'CANCELLED' ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <View className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                    booking.status === 'CONFIRMED' ? 'bg-emerald-500' :
+                    booking.status === 'CANCELLED' ? 'bg-red-500' : 'bg-gray-400'
+                  }`} />
+                  <Text className={`text-[10px] font-bold ${
+                    booking.status === 'CONFIRMED' ? 'text-emerald-700' :
+                    booking.status === 'CANCELLED' ? 'text-red-700' : 'text-gray-600'
+                  }`}>
+                    {booking.status === 'CONFIRMED' ? 'Đã xác nhận' : 
+                     booking.status === 'CANCELLED' ? 'Đã hủy' : 'Hoàn thành'}
+                  </Text>
                 </View>
               </View>
 
-              {ticket.status === "upcoming" && (
-                <TouchableOpacity className="bg-primary-light mx-4 mb-4 rounded-xl py-3 items-center">
-                  <Text className="text-primary font-bold text-sm">Xem thẻ lên máy bay</Text>
+              {/* Date & PNR */}
+              <View className="flex-row items-center justify-between py-3 border-y border-gray-50 mb-4">
+                <View className="flex-row items-center">
+                  <Ionicons name="calendar-outline" size={16} color="#2563EB" />
+                  <Text className="text-sm font-bold text-gray-800 ml-2">{booking.flight.date}</Text>
+                </View>
+                <TouchableOpacity 
+                  className="flex-row items-center bg-gray-50 px-2 py-1 rounded border border-gray-200"
+                  onPress={() => copyToClipboard(booking.pnrCode)}
+                >
+                  <Text className="text-[10px] text-gray-500 mr-1">Mã PNR:</Text>
+                  <Text className="text-[12px] font-black text-blue-700 mr-1.5 tracking-wider">{booking.pnrCode}</Text>
+                  <Ionicons name="copy-outline" size={12} color="#6B7280" />
                 </TouchableOpacity>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+              </View>
 
-        <View className="h-6" />
+              {/* Tuyến bay (SGN -> HAN) */}
+              <View className="flex-row justify-between items-center mb-5">
+                <View className="items-start">
+                  <Text className="text-2xl font-black text-gray-900">{booking.flight.departureTime}</Text>
+                  <Text className="font-bold text-blue-600 text-lg mt-0.5">{booking.flight.departureAirport.code}</Text>
+                  <Text className="text-xs text-gray-500 mt-0.5">{booking.flight.departureAirport.name}</Text>
+                </View>
+
+                <View className="flex-1 px-4 items-center justify-center relative">
+                  <Text className="text-[10px] text-gray-500 mb-1 font-medium">{booking.flight.duration} • {booking.flight.type}</Text>
+                  <View className="flex-row items-center w-full relative">
+                    <View className="w-1.5 h-1.5 rounded-full border border-blue-600 bg-white" />
+                    <View className="flex-1 h-[1px] border-b border-dashed border-gray-300 mx-1" />
+                    <View className="bg-blue-600 w-6 h-6 rounded-full items-center justify-center shadow-sm relative z-10 mx-1">
+                      <Ionicons name="airplane" size={14} color="white" />
+                    </View>
+                    <View className="flex-1 h-[1px] border-b border-dashed border-gray-300 mx-1" />
+                    <View className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                  </View>
+                  <Text className={`text-[10px] font-bold mt-2 ${booking.flight.statusColor}`}>{booking.flight.statusTag}</Text>
+                </View>
+
+                <View className="items-end">
+                  <Text className="text-2xl font-black text-gray-900">{booking.flight.arrivalTime}</Text>
+                  <Text className="font-bold text-blue-600 text-lg mt-0.5">{booking.flight.arrivalAirport.code}</Text>
+                  <Text className="text-xs text-gray-500 mt-0.5">{booking.flight.arrivalAirport.name}</Text>
+                </View>
+              </View>
+
+              {/* Thông tin khách hàng (3 cột) */}
+              <View className="flex-row bg-gray-50 rounded-2xl py-3 px-2 border border-gray-100 mb-4">
+                <View className="flex-1 items-center border-r border-gray-200">
+                  <Text className="text-[10px] text-gray-500 font-medium mb-1">Hành khách</Text>
+                  <Text className="text-xs font-bold text-gray-900">{booking.ticket.passengerName}</Text>
+                </View>
+                <View className="flex-1 items-center border-r border-gray-200">
+                  <Text className="text-[10px] text-gray-500 font-medium mb-1">Số ghế</Text>
+                  <Text className="text-xs font-bold text-blue-600">{booking.ticket.seatNumber}</Text>
+                </View>
+                <View className="flex-1 items-center">
+                  <Text className="text-[10px] text-gray-500 font-medium mb-1">Hành lý</Text>
+                  <Text className="text-xs font-bold text-gray-900">{booking.ticket.baggage}</Text>
+                </View>
+              </View>
+
+              {/* Nét đứt phân cách */}
+              <View className="w-full border-t border-dashed border-gray-200 mb-4" />
+
+              {/* Bottom: Giá tiền & Nút xem chi tiết */}
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text className="text-[10px] text-gray-500 font-medium mb-0.5">Tổng thanh toán</Text>
+                  <Text className="text-lg font-black text-gray-900">{formatCurrency(booking.totalAmount)}</Text>
+                </View>
+                <TouchableOpacity 
+                  className={`px-5 py-2.5 rounded-xl border flex-row items-center ${
+                    booking.status === 'CONFIRMED' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200 shadow-sm'
+                  }`}
+                  onPress={() => navigation.navigate('TicketDetail' as never, { bookingId: booking.id } as never)}
+                >
+                  <Text className={`font-bold text-sm mr-1 ${booking.status === 'CONFIRMED' ? 'text-blue-700' : 'text-gray-700'}`}>Chi tiết vé</Text>
+                  <Ionicons name="chevron-forward" size={16} color={booking.status === 'CONFIRMED' ? '#1D4ED8' : '#374151'} />
+                </TouchableOpacity>
+              </View>
+
+            </View>
+          ))
+        ) : (
+          <View className="items-center justify-center py-20">
+            <Ionicons name="document-text-outline" size={64} color="#D1D5DB" />
+            <Text className="text-base font-bold text-gray-400 mt-4">Không có vé nào trong mục này</Text>
+          </View>
+        )}
+
+        {/* CÁC BANNER QUẢNG CÁO & HỖ TRỢ (Chỉ hiện ở Sắp tới / Hoàn thành) */}
+        {activeTab !== 'cancelled' && (
+          <>
+            <View className="bg-[#2563EB] rounded-3xl p-5 mb-4 shadow-sm border border-blue-600 relative overflow-hidden">
+              <View className="flex-row items-center bg-white/20 self-start px-2.5 py-1 rounded-full mb-3">
+                <Ionicons name="compass-outline" size={14} color="white" />
+                <Text className="text-white text-[10px] font-bold ml-1">ƯU ĐÃI CHẶNG BAY MỚI</Text>
+              </View>
+              <Text className="text-white text-xl font-bold mb-2">Lên kế hoạch cho hành trình tiếp theo?</Text>
+              <Text className="text-blue-100 text-xs mb-4">Hơn 120 điểm đến nội địa và quốc tế đang chờ đón bạn.</Text>
+              <TouchableOpacity className="bg-white rounded-xl py-3 px-4 flex-row items-center justify-center self-start shadow-sm">
+                <Text className="font-bold text-blue-700 mr-2 text-sm">Tìm vé ngay</Text>
+                <Ionicons name="arrow-forward" size={16} color="#1D4ED8" />
+              </TouchableOpacity>
+            </View>
+
+            <View className="bg-white border border-gray-100 shadow-sm rounded-3xl p-5 mb-5 flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1 pr-4">
+                <View className="w-10 h-10 rounded-full bg-blue-50 items-center justify-center">
+                  <Ionicons name="headset-outline" size={20} color="#2563EB" />
+                </View>
+                <Text className="text-sm font-medium text-gray-700 ml-3 leading-5">Cần trợ giúp đổi chuyến hoặc hoàn vé?</Text>
+              </View>
+              <TouchableOpacity>
+                <Text className="text-blue-600 font-bold text-sm text-center">Hỗ trợ{'\n'}24/7</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
