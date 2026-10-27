@@ -21,7 +21,7 @@ const loginController = asyncHandler(
     const accessToken = jwt.sign(
       { userId: user.id, role: user.role },
       accessTokenSecret,
-      { expiresIn: "15m" },
+      { expiresIn: "7d" },
     );
 
     const refreshToken = jwt.sign(
@@ -44,13 +44,13 @@ const loginController = asyncHandler(
 
 const registerController = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email, password, fullName, phone } = req.body;
+    const { email, password, fullName, phone, phoneNumber } = req.body;
 
     const newUser = await authService.registerService({
       email,
       password,
       fullName,
-      phone,
+      phone: phone || phoneNumber,
     });
 
     if (!newUser) {
@@ -60,7 +60,6 @@ const registerController = asyncHandler(
     res.status(201).json({
       success: true,
       message: "Tạo tài khoản thành công",
-      data: newUser,
     });
   },
 );
@@ -74,11 +73,9 @@ const logoutController = asyncHandler(
 
     const { refreshToken } = req.body;
 
-    if (!accessToken) {
-      return next(new AppError("Không tìm thấy token để đăng xuất", 400));
+    if (accessToken) {
+      await authService.logoutService(accessToken, refreshToken);
     }
-
-    await authService.logoutService(accessToken, refreshToken);
 
     res.status(200).json({
       success: true,

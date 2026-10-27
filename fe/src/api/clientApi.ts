@@ -2,7 +2,7 @@ import axios from "axios";
 import { Platform } from "react-native";
 
 // IP máy tính trong mạng LAN (để điện thoại thật và máy ảo đều kết nối được)
-const DEV_IP = "172.23.50.93";
+const DEV_IP = "192.168.1.214";
 const PORT = 3000;
 
 const BASE_URL = Platform.select({
@@ -20,7 +20,27 @@ export const clientApi = axios.create({
 
 clientApi.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+    const url = originalRequest?.url || "";
+
+    // Tu dong dang xuat cuc bo khi token het han hoac khong hop le
+    // Khong goi lai tren cac endpoint auth de tranh vong lap vo tan
+    if (
+      (error.response?.status === 401 || error.response?.status === 403) &&
+      !url.includes("/auth/logout") &&
+      !url.includes("/auth/login")
+    ) {
+      try {
+        const { store } = require("../store");
+        const { resetAuth } = require("../store/slices/authSlice");
+        const storage = require("../utils/storage").default;
+        await storage.clearAuth();
+        store.dispatch(resetAuth());
+      } catch (e) {
+        // bo qua loi don dep token
+      }
+    }
     return Promise.reject(error);
   }
 );

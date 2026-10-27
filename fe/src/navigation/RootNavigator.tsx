@@ -19,6 +19,7 @@ import LoginScreen from '../screens/auth/Login';
 import RegisterScreen from '../screens/auth/Register';
 import FlightDetailScreen from '../screens/flight/FlightDetail';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import ChangePasswordScreen from '../screens/profile/ChangePasswordScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -93,6 +94,7 @@ export default function RootNavigator() {
           <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
           <Stack.Screen name="FlightDetail" component={FlightDetailScreen} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
         </>
       ) : (
         // Chưa đăng nhập: Mở Login trước, có thể chuyển sang Register

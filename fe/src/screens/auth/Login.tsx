@@ -15,7 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/types";
 
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { useAuth } from "../../hook/useAuth";
 import { useKeyboardScrollView } from "../../hook/useKeyboardScrollView";
@@ -41,11 +41,9 @@ export default function LoginScreen() {
     const result = await login(request);
     if (!result.success) {
       Alert.alert("Đăng nhập thất bại", result.message || "Tài khoản hoặc mật khẩu không đúng!");
-    } else {
-      Alert.alert("Thành công", "Đăng nhập thành công!", [
-        { text: "OK", onPress: () => navigation.navigate("MainTabs") },
-      ]);
     }
+    // Khi dang nhap thanh cong, Redux se cap nhat isAuthenticated = true,
+    // RootNavigator se tu dong chuyen sang MainTabs ma khong can navigate thu cong.
   };
 
   const handleRegister = () => {
@@ -60,14 +58,13 @@ export default function LoginScreen() {
     )
   }
   return (
-    <SafeAreaProvider>
-      <SafeAreaView className="flex-1 bg-white">
-        <ScrollView
-          ref={scrollViewRef}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: keyboardPadding }}
-        >
-          <View className="flex items-center justify-center mt-20">
+    <SafeAreaView className="flex-1 bg-white">
+      <ScrollView
+        ref={scrollViewRef}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: keyboardPadding }}
+      >
+        <View className="flex items-center justify-center mt-20">
               <Image source={require("../../../assets/Splash_icon.png")} className="w-20 h-20" />
           </View>
 
@@ -169,6 +166,5 @@ export default function LoginScreen() {
         </View>
         </ScrollView>
       </SafeAreaView>
-    </SafeAreaProvider>
   );
 }

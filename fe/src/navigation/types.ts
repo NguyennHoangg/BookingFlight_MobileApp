@@ -15,6 +15,7 @@ export type RootStackParamList = {
   MainTabs: undefined;
   FlightDetail: { flightId: string };
   EditProfile: undefined;
+  ChangePassword: undefined;
 };
 
 export type MainTabParamList = {

@@ -1,9 +1,17 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import AuthAPI, { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "../../api/auth.api";
+import AuthAPI, {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  ProfileResponse,
+  UpdateProfileRequest,
+  ChangePasswordRequest,
+} from "../../api/auth.api";
 import storage from "../../utils/storage";
 
 export interface User {
-  id: number;
+  id: string | number;
   email: string;
   fullName: string;
   phone?: string;
@@ -12,6 +20,9 @@ export interface User {
   role?: string;
   loyaltyPoints?: number;
   membershipTier?: string;
+  gender?: boolean | string | null;
+  dateOfBirth?: string | null;
+  upcomingFlights?: number;
 }
 
 export interface AuthState {
@@ -97,6 +108,48 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+// Async thunk: Fetch Profile
+export const fetchProfile = createAsyncThunk<
+  User,
+  void,
+  { rejectValue: string }
+>("auth/fetchProfile", async (_, { rejectWithValue }) => {
+  try {
+    const response = await AuthAPI.getProfileApi();
+    const user: User = response.data;
+    if (user) {
+      await storage.setUser(user);
+    }
+    return user;
+  } catch (err: any) {
+    const message =
+      err.response?.data?.message || err.message || "Không thể tải thông tin tài khoản!";
+    return rejectWithValue(message);
+  }
+});
+
+export const profileUser = fetchProfile;
+
+// Async thunk: Cap nhat thong tin ho so
+export const updateUserProfile = createAsyncThunk<
+  User,
+  UpdateProfileRequest,
+  { rejectValue: string }
+>("auth/updateUserProfile", async (data, { rejectWithValue }) => {
+  try {
+    const response = await AuthAPI.updateProfileApi(data);
+    const user: User = response.data;
+    if (user) {
+      await storage.setUser(user);
+    }
+    return user;
+  } catch (err: any) {
+    const message =
+      err.response?.data?.message || err.message || "Cập nhật hồ sơ thất bại!";
+    return rejectWithValue(message);
+  }
+});
+
 // Async thunk: Logout
 export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
   try {
@@ -106,25 +159,6 @@ export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
   } finally {
     // Xoá token khỏi AsyncStorage
     await storage.clearAuth();
-  }
-});
-
-// Async thunk: Fetch Profile
-export const fetchProfile = createAsyncThunk<
-  LoginResponse["data"]["user"],
-  void,
-  { rejectValue: string }
->("auth/fetchProfile", async (_, { rejectWithValue }) => {
-  try {
-    const response = await AuthAPI.getProfileApi();
-    if (response.data.user) {
-      await storage.setUser(response.data.user);
-    }
-    return response.data.user;
-  } catch (err: any) {
-    const message =
-      err.response?.data?.message || err.message || "Không thể tải thông tin tài khoản!";
-    return rejectWithValue(message);
   }
 });
 
@@ -229,6 +263,11 @@ const authSlice = createSlice({
 
     // fetchProfile
     builder.addCase(fetchProfile.fulfilled, (state, action) => {
+      state.user = action.payload;
+    });
+
+    // updateUserProfile
+    builder.addCase(updateUserProfile.fulfilled, (state, action) => {
       state.user = action.payload;
     });
   },
