@@ -1,10 +1,12 @@
-import React from 'react';
-import { View, Text } from 'react-native';
+import React from "react";
+import { View, Text } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function SearchScreen() {
   return (
-    <View>
-      <Text>Search Screen</Text>
-      {/* Add your search screen content here */}
-    </View>
+    <SafeAreaView className="flex" edges={["top"]}>
+      <View className="flex-1">
+        <Text>Search Screen</Text>
+      </View>
+    </SafeAreaView>
   );
 }

@@ -338,30 +338,28 @@ export default function Home() {
                 <Text className="text-gray-800 font-bold">{formatDateVN(departDateRaw)}</Text>
               </View>
 
-              {Platform.OS === 'web' && (
-                <input
-                  ref={departInputRef}
-                  type="date"
-                  value={departDateRaw}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setDepartDateRaw(e.target.value);
-                      if (tripType === 'khu-hoi' && e.target.value > returnDateRaw) {
-                        setReturnDateRaw(e.target.value);
-                      }
+              {Platform.OS === 'web' && React.createElement('input', {
+                ref: departInputRef,
+                type: 'date',
+                value: departDateRaw,
+                onChange: (e: any) => {
+                  if (e.target.value) {
+                    setDepartDateRaw(e.target.value);
+                    if (tripType === 'khu-hoi' && e.target.value > returnDateRaw) {
+                      setReturnDateRaw(e.target.value);
                     }
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0,
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
+                  }
+                },
+                style: {
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0,
+                  pointerEvents: 'none',
+                },
+              })}
             </TouchableOpacity>
 
             {/* Ô Ngày về */}
@@ -400,28 +398,26 @@ export default function Home() {
                 </Text>
               </View>
 
-              {Platform.OS === 'web' && (
-                <input
-                  ref={returnInputRef}
-                  type="date"
-                  min={departDateRaw}
-                  value={returnDateRaw}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setReturnDateRaw(e.target.value);
-                    }
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0,
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
+              {Platform.OS === 'web' && React.createElement('input', {
+                ref: returnInputRef,
+                type: 'date',
+                min: departDateRaw,
+                value: returnDateRaw,
+                onChange: (e: any) => {
+                  if (e.target.value) {
+                    setReturnDateRaw(e.target.value);
+                  }
+                },
+                style: {
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0,
+                  pointerEvents: 'none',
+                },
+              })}
             </TouchableOpacity>
           </View>
 
@@ -432,9 +428,9 @@ export default function Home() {
               mode="date"
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               minimumDate={new Date()}
-              onChange={(event, selectedDate) => {
+              onValueChange={(_event, selectedDate) => {
                 setShowDepartPicker(Platform.OS === 'ios');
-                if (selectedDate && event.type !== 'dismissed') {
+                if (selectedDate) {
                   const yyyy = selectedDate.getFullYear();
                   const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
                   const dd = String(selectedDate.getDate()).padStart(2, '0');
@@ -445,6 +441,7 @@ export default function Home() {
                   }
                 }
               }}
+              onDismiss={() => setShowDepartPicker(false)}
             />
           )}
 
@@ -454,15 +451,16 @@ export default function Home() {
               mode="date"
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               minimumDate={new Date(departDateRaw)}
-              onChange={(event, selectedDate) => {
+              onValueChange={(_event, selectedDate) => {
                 setShowReturnPicker(Platform.OS === 'ios');
-                if (selectedDate && event.type !== 'dismissed') {
+                if (selectedDate) {
                   const yyyy = selectedDate.getFullYear();
                   const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
                   const dd = String(selectedDate.getDate()).padStart(2, '0');
                   setReturnDateRaw(`${yyyy}-${mm}-${dd}`);
                 }
               }}
+              onDismiss={() => setShowReturnPicker(false)}
             />
           )}
 

@@ -17,10 +17,20 @@ import {
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
+const TicketStatus = {
+  CONFIRMED: 'CONFIRMED',
+  CHECKED_IN: 'CHECKED_IN',
+  BOARDED: 'BOARDED',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  REFUNDED: 'REFUNDED',
+} as const;
+
 const prisma = new PrismaClient();
+const db = prisma as any;
 
 async function main() {
-  console.log('🚀 Bắt đầu seed dữ liệu mở rộng...');
+  console.log('🚀 Bắt đầu seed dữ liệu mở rộng cho 7 tháng tới...');
 
   // =====================================================
   // 1. DỌN DẸP DỮ LIỆU CŨ (CLEANUP)
@@ -35,6 +45,10 @@ async function main() {
   await prisma.booking.deleteMany();
   await prisma.userCoupon.deleteMany();
   await prisma.promotion.deleteMany();
+  await db.flightReview?.deleteMany();
+  await db.favoriteFlight?.deleteMany();
+  await db.priceAlert?.deleteMany();
+  await db.destination?.deleteMany();
   await prisma.flightFareInventory.deleteMany();
   await prisma.flightSeat.deleteMany();
   await prisma.flight.deleteMany();
@@ -54,7 +68,7 @@ async function main() {
   const passwordHash = await bcrypt.hash('Password123!', 10);
 
   const [adminUser, normalUser, user2, userVIP, userIntl] = await Promise.all([
-    prisma.user.create({
+    db.user.create({
       data: {
         email: 'admin@flightapp.vn',
         passwordHash,
@@ -65,9 +79,11 @@ async function main() {
         loyaltyPoints: 98000,
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
         isActive: true,
+        gender: true,
+        dateOfBirth: new Date('1990-01-01'),
       },
     }),
-    prisma.user.create({
+    db.user.create({
       data: {
         email: 'user@gmail.com',
         passwordHash,
@@ -78,9 +94,11 @@ async function main() {
         loyaltyPoints: 18500,
         avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80',
         isActive: true,
+        gender: false,
+        dateOfBirth: new Date('1995-06-15'),
       },
     }),
-    prisma.user.create({
+    db.user.create({
       data: {
         email: 'khach@gmail.com',
         passwordHash,
@@ -91,9 +109,11 @@ async function main() {
         loyaltyPoints: 4500,
         avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
         isActive: true,
+        gender: true,
+        dateOfBirth: new Date('1992-08-20'),
       },
     }),
-    prisma.user.create({
+    db.user.create({
       data: {
         email: 'hoang.vip@flightapp.vn',
         passwordHash,
@@ -104,9 +124,11 @@ async function main() {
         loyaltyPoints: 152000,
         avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
         isActive: true,
+        gender: true,
+        dateOfBirth: new Date('1988-08-18'),
       },
     }),
-    prisma.user.create({
+    db.user.create({
       data: {
         email: 'david.smith@gmail.com',
         passwordHash,
@@ -117,6 +139,8 @@ async function main() {
         loyaltyPoints: 1200,
         avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80',
         isActive: true,
+        gender: true,
+        dateOfBirth: new Date('1990-04-25'),
       },
     }),
   ]);
@@ -167,12 +191,12 @@ async function main() {
   });
 
   // =====================================================
-  // 3. SÂN BAY (AIRPORTS) - NỘI ĐỊA & QUỐC TẾ MỞ RỘNG
+  // 3. SÂN BAY (AIRPORTS) - 50+ SÂN BAY (VIỆT NAM, HÀN QUỐC, NHẬT BẢN...)
   // =====================================================
-  console.log('🛫 Tạo danh mục Sân bay đầy đủ...');
+  console.log('🛫 Tạo danh mục 50+ Sân bay (Việt Nam, Hàn Quốc, Nhật Bản, Châu Á, Quốc tế)...');
 
   const airportsRaw = [
-    // Trục chính & Sân bay lớn
+    // --- 1. SÂN BAY VIỆT NAM (22 SÂN BAY) ---
     { code: 'SGN', name: 'Sân bay Quốc tế Tân Sơn Nhất', city: 'TP. Hồ Chí Minh', country: 'Việt Nam' },
     { code: 'HAN', name: 'Sân bay Quốc tế Nội Bài', city: 'Hà Nội', country: 'Việt Nam' },
     { code: 'DAD', name: 'Sân bay Quốc tế Đà Nẵng', city: 'Đà Nẵng', country: 'Việt Nam' },
@@ -183,8 +207,6 @@ async function main() {
     { code: 'HUI', name: 'Sân bay Quốc tế Phú Bài', city: 'Huế', country: 'Việt Nam' },
     { code: 'VCA', name: 'Sân bay Quốc tế Cần Thơ', city: 'Cần Thơ', country: 'Việt Nam' },
     { code: 'VII', name: 'Sân bay Quốc tế Vinh', city: 'Vinh', country: 'Việt Nam' },
-
-    // Điểm đến du lịch & Cao nguyên
     { code: 'DLI', name: 'Sân bay Liên Khương', city: 'Đà Lạt', country: 'Việt Nam' },
     { code: 'UIH', name: 'Sân bay Phù Cát', city: 'Quy Nhơn', country: 'Việt Nam' },
     { code: 'BMV', name: 'Sân bay Buôn Ma Thuột', city: 'Buôn Ma Thuột', country: 'Việt Nam' },
@@ -193,132 +215,153 @@ async function main() {
     { code: 'THD', name: 'Sân bay Thọ Xuân', city: 'Thanh Hóa', country: 'Việt Nam' },
     { code: 'VCL', name: 'Sân bay Chu Lai', city: 'Quảng Nam', country: 'Việt Nam' },
     { code: 'VDH', name: 'Sân bay Đồng Hới', city: 'Đồng Hới', country: 'Việt Nam' },
-
-    // Đường bay đặc biệt & Đảo
     { code: 'DIN', name: 'Sân bay Điện Biên Phủ', city: 'Điện Biên', country: 'Việt Nam' },
     { code: 'VCS', name: 'Sân bay Côn Đảo', city: 'Côn Đảo', country: 'Việt Nam' },
     { code: 'VKG', name: 'Sân bay Rạch Giá', city: 'Rạch Giá', country: 'Việt Nam' },
     { code: 'CAH', name: 'Sân bay Cà Mau', city: 'Cà Mau', country: 'Việt Nam' },
 
-    // Tuyến quốc tế phổ biến từ Việt Nam
-    { code: 'BKK', name: 'Sân bay Quốc tế Suvarnabhumi', city: 'Bangkok', country: 'Thái Lan' },
-    { code: 'SIN', name: 'Sân bay Quốc tế Changi', city: 'Singapore', country: 'Singapore' },
+    // --- 2. HÀN QUỐC (6 SÂN BAY) ---
     { code: 'ICN', name: 'Sân bay Quốc tế Incheon', city: 'Seoul', country: 'Hàn Quốc' },
+    { code: 'GMP', name: 'Sân bay Quốc tế Gimpo', city: 'Seoul', country: 'Hàn Quốc' },
+    { code: 'PUS', name: 'Sân bay Quốc tế Gimhae', city: 'Busan', country: 'Hàn Quốc' },
+    { code: 'CJU', name: 'Sân bay Quốc tế Jeju', city: 'Đảo Jeju', country: 'Hàn Quốc' },
+    { code: 'TAE', name: 'Sân bay Quốc tế Daegu', city: 'Daegu', country: 'Hàn Quốc' },
+    { code: 'CJJ', name: 'Sân bay Quốc tế Cheongju', city: 'Cheongju', country: 'Hàn Quốc' },
+
+    // --- 3. NHẬT BẢN (8 SÂN BAY) ---
     { code: 'NRT', name: 'Sân bay Quốc tế Narita', city: 'Tokyo', country: 'Nhật Bản' },
-    { code: 'TPE', name: 'Sân bay Quốc tế Đào Viên', city: 'Đài Bắc', country: 'Đài Loan' },
+    { code: 'HND', name: 'Sân bay Quốc tế Haneda', city: 'Tokyo', country: 'Nhật Bản' },
+    { code: 'KIX', name: 'Sân bay Quốc tế Kansai', city: 'Osaka', country: 'Nhật Bản' },
+    { code: 'ITM', name: 'Sân bay Quốc tế Osaka Itami', city: 'Osaka', country: 'Nhật Bản' },
+    { code: 'NGO', name: 'Sân bay Quốc tế Chubu Centrair', city: 'Nagoya', country: 'Nhật Bản' },
+    { code: 'FUK', name: 'Sân bay Fukuoka', city: 'Fukuoka', country: 'Nhật Bản' },
+    { code: 'CTS', name: 'Sân bay New Chitose', city: 'Sapporo (Hokkaido)', country: 'Nhật Bản' },
+    { code: 'OKA', name: 'Sân bay Naha', city: 'Okinawa', country: 'Nhật Bản' },
+
+    // --- 4. ĐÔNG NAM Á & CHÂU Á KHÁC (10 SÂN BAY) ---
+    { code: 'BKK', name: 'Sân bay Quốc tế Suvarnabhumi', city: 'Bangkok', country: 'Thái Lan' },
+    { code: 'DMK', name: 'Sân bay Quốc tế Don Mueang', city: 'Bangkok', country: 'Thái Lan' },
+    { code: 'HKT', name: 'Sân bay Quốc tế Phuket', city: 'Phuket', country: 'Thái Lan' },
+    { code: 'CNX', name: 'Sân bay Quốc tế Chiang Mai', city: 'Chiang Mai', country: 'Thái Lan' },
+    { code: 'SIN', name: 'Sân bay Quốc tế Changi', city: 'Singapore', country: 'Singapore' },
     { code: 'KUL', name: 'Sân bay Quốc tế Kuala Lumpur', city: 'Kuala Lumpur', country: 'Malaysia' },
+    { code: 'TPE', name: 'Sân bay Quốc tế Đào Viên', city: 'Đài Bắc', country: 'Đài Loan' },
+    { code: 'KHH', name: 'Sân bay Quốc tế Cao Hùng', city: 'Cao Hùng', country: 'Đài Loan' },
+    { code: 'HKG', name: 'Sân bay Quốc tế Hồng Kông', city: 'Hồng Kông', country: 'Hồng Kông' },
+    { code: 'MFM', name: 'Sân bay Quốc tế Ma Cao', city: 'Ma Cao', country: 'Ma Cao' },
+
+    // --- 5. TRUNG ĐÔNG, CHÂU ĐẠI DƯƠNG & CHÂU ÂU (6 SÂN BAY) ---
+    { code: 'DXB', name: 'Sân bay Quốc tế Dubai', city: 'Dubai', country: 'Các Tiểu Vương quốc Ả Rập' },
+    { code: 'DOH', name: 'Sân bay Quốc tế Hamad', city: 'Doha', country: 'Qatar' },
+    { code: 'SYD', name: 'Sân bay Sydney Kingsford Smith', city: 'Sydney', country: 'Úc' },
+    { code: 'MEL', name: 'Sân bay Melbourne', city: 'Melbourne', country: 'Úc' },
+    { code: 'CDG', name: 'Sân bay Quốc tế Paris Charles de Gaulle', city: 'Paris', country: 'Pháp' },
+    { code: 'LHR', name: 'Sân bay Quốc tế London Heathrow', city: 'London', country: 'Vương Quốc Anh' },
   ];
 
-  const airports = await Promise.all(
-    airportsRaw.map((a) => prisma.airport.create({ data: { ...a, isActive: true } }))
-  );
-  const airportMap = new Map(airports.map((a) => [a.code, a]));
+  await prisma.airport.createMany({
+    data: airportsRaw.map((a) => ({ ...a, isActive: true })),
+  });
+
+  const allAirports = await prisma.airport.findMany();
+  const airportMap = new Map(allAirports.map((a) => [a.code, a]));
 
   // =====================================================
-  // 4. HÃNG HÀNG KHÔNG (AIRLINES)
+  // 4. HÃNG HÀNG KHÔNG (14 HÃNG BAY VIỆT NAM & QUỐC TẾ)
   // =====================================================
-  console.log('✈️ Tạo các Hãng hàng không...');
+  console.log('✈️ Tạo 14 Hãng hàng không (Việt Nam, Hàn Quốc, Nhật Bản, Singapore, Trung Đông...)...');
 
-  const [VNA, VJA, QHA, VUA] = await Promise.all([
-    prisma.airline.create({
-      data: {
-        code: 'VN',
-        name: 'Vietnam Airlines',
-        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Vietnam_Airlines_Logo.svg/1200px-Vietnam_Airlines_Logo.svg.png',
-        isActive: true,
-      },
-    }),
-    prisma.airline.create({
-      data: {
-        code: 'VJ',
-        name: 'VietJet Air',
-        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/VietJet_Air_logo.svg/1200px-VietJet_Air_logo.svg.png',
-        isActive: true,
-      },
-    }),
-    prisma.airline.create({
-      data: {
-        code: 'QH',
-        name: 'Bamboo Airways',
-        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Bamboo_Airways_logo.svg/1200px-Bamboo_Airways_logo.svg.png',
-        isActive: true,
-      },
-    }),
-    prisma.airline.create({
-      data: {
-        code: 'VU',
-        name: 'Vietravel Airlines',
-        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Vietravel_Airlines_logo.svg/1200px-Vietravel_Airlines_logo.svg.png',
-        isActive: true,
-      },
-    }),
-  ]);
+  const airlinesRaw = [
+    // 4 Hãng nội địa
+    { code: 'VN', name: 'Vietnam Airlines', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietnam-Airlines-VNA.png' },
+    { code: 'VJ', name: 'VietJet Air', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietjet-Air.png' },
+    { code: 'QH', name: 'Bamboo Airways', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Bamboo-Airways.png' },
+    { code: 'VU', name: 'Vietravel Airlines', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietravel-Airlines.png' },
+    // 10 Hãng quốc tế thêm mới
+    { code: 'KE', name: 'Korean Air', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/05/Logo-Korean-Air.png' },
+    { code: 'OZ', name: 'Asiana Airlines', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Asiana_Airlines_logo.svg/1200px-Asiana_Airlines_logo.svg.png' },
+    { code: 'JL', name: 'Japan Airlines', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Japan_Airlines_logo_%282011%29.svg/1200px-Japan_Airlines_logo_%282011%29.svg.png' },
+    { code: 'NH', name: 'All Nippon Airways (ANA)', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/All_Nippon_Airways_Logo.svg/1200px-All_Nippon_Airways_Logo.svg.png' },
+    { code: 'SQ', name: 'Singapore Airlines', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/05/Logo-Singapore-Airlines.png' },
+    { code: 'CX', name: 'Cathay Pacific', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Cathay_Pacific_logo.svg/1200px-Cathay_Pacific_logo.svg.png' },
+    { code: 'BR', name: 'EVA Air', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/EVA_Air_logo.svg/1200px-EVA_Air_logo.svg.png' },
+    { code: 'QR', name: 'Qatar Airways', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/05/Logo-Qatar-Airways.png' },
+    { code: 'EK', name: 'Emirates', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/05/Logo-Emirates.png' },
+    { code: 'TG', name: 'Thai Airways', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Thai_Airways_Logo.svg/1200px-Thai_Airways_Logo.svg.png' },
+  ];
+
+  await prisma.airline.createMany({
+    data: airlinesRaw.map((al) => ({ ...al, isActive: true })),
+  });
+
+  const allAirlines = await prisma.airline.findMany();
+  const airlineMap = new Map(allAirlines.map((al) => [al.code, al]));
 
   // =====================================================
-  // 5. CÁC BIẾN THỂ MÁY BAY & SƠ ĐỒ GHẾ (AIRCRAFT VARIANTS)
+  // 5. ĐỘI TÀU BAY & HẠNG VÉ
   // =====================================================
-  console.log('🛩️ Tạo đa dạng biến thể máy bay (Thân rộng, Thân hẹp, Phản lực vùng, Cánh quạt)...');
+  console.log('🛩️ Tạo Đội tàu bay hiện đại cho 14 hãng...');
 
-  interface AircraftSeedConfig {
-    airlineId: string;
+  const aircraftList: {
+    airlineCode: string;
     registrationCode: string;
     model: string;
     seatLayout: string;
     totalSeats: number;
-    businessRows: number;
-    totalRows: number;
-  }
-
-  const aircraftConfigs: AircraftSeedConfig[] = [
-    // VIETNAM AIRLINES: Đội bay đa dạng từ Dreamliner, A350 đến A321neo và ATR 72
-    { airlineId: VNA.id, registrationCode: 'VN-A879', model: 'Boeing 787-10 Dreamliner', seatLayout: '3-3-3', totalSeats: 367, businessRows: 6, totalRows: 42 },
-    { airlineId: VNA.id, registrationCode: 'VN-A861', model: 'Boeing 787-9 Dreamliner', seatLayout: '3-3-3', totalSeats: 274, businessRows: 7, totalRows: 36 },
-    { airlineId: VNA.id, registrationCode: 'VN-A898', model: 'Airbus A350-900 XWB', seatLayout: '3-3-3', totalSeats: 305, businessRows: 8, totalRows: 38 },
-    { airlineId: VNA.id, registrationCode: 'VN-A868', model: 'Airbus A321neo', seatLayout: '3-3', totalSeats: 203, businessRows: 4, totalRows: 35 },
-    { airlineId: VNA.id, registrationCode: 'VN-A392', model: 'Airbus A321-200', seatLayout: '3-3', totalSeats: 184, businessRows: 4, totalRows: 32 },
-    { airlineId: VNA.id, registrationCode: 'VN-B219', model: 'ATR 72-600 Turboprop', seatLayout: '2-2', totalSeats: 68, businessRows: 0, totalRows: 17 },
-
-    // VIETJET AIR: A330 thân rộng, A321neo ACF, A321-200, A320-200
-    { airlineId: VJA.id, registrationCode: 'VJ-A811', model: 'Airbus A330-300 Wide-Body', seatLayout: '3-3-3', totalSeats: 377, businessRows: 3, totalRows: 43 },
-    { airlineId: VJA.id, registrationCode: 'VJ-A646', model: 'Airbus A321neo ACF', seatLayout: '3-3', totalSeats: 240, businessRows: 0, totalRows: 40 },
-    { airlineId: VJA.id, registrationCode: 'VJ-A211', model: 'Airbus A321-200', seatLayout: '3-3', totalSeats: 230, businessRows: 0, totalRows: 39 },
-    { airlineId: VJA.id, registrationCode: 'VJ-A675', model: 'Airbus A320-200', seatLayout: '3-3', totalSeats: 180, businessRows: 0, totalRows: 30 },
-
-    // BAMBOO AIRWAYS: B787-9, A321neo, A320neo, Embraer E190
-    { airlineId: QHA.id, registrationCode: 'QH-B789', model: 'Boeing 787-9 Dreamliner', seatLayout: '3-3-3', totalSeats: 294, businessRows: 6, totalRows: 37 },
-    { airlineId: QHA.id, registrationCode: 'QH-A590', model: 'Airbus A321neo', seatLayout: '3-3', totalSeats: 198, businessRows: 2, totalRows: 34 },
-    { airlineId: QHA.id, registrationCode: 'QH-A588', model: 'Airbus A320neo', seatLayout: '3-3', totalSeats: 170, businessRows: 2, totalRows: 29 },
-    { airlineId: QHA.id, registrationCode: 'QH-A112', model: 'Embraer E190 Regional Jet', seatLayout: '2-2', totalSeats: 98, businessRows: 2, totalRows: 25 },
-
-    // VIETRAVEL AIRLINES: A321-200 & A320-200
-    { airlineId: VUA.id, registrationCode: 'VU-A350', model: 'Airbus A321-200', seatLayout: '3-3', totalSeats: 220, businessRows: 0, totalRows: 37 },
-    { airlineId: VUA.id, registrationCode: 'VU-A223', model: 'Airbus A320-200', seatLayout: '3-3', totalSeats: 180, businessRows: 0, totalRows: 30 },
+  }[] = [
+    // Vietnam Airlines
+    { airlineCode: 'VN', registrationCode: 'VN-A879', model: 'Boeing 787-10 Dreamliner', seatLayout: '3-3-3', totalSeats: 367 },
+    { airlineCode: 'VN', registrationCode: 'VN-A868', model: 'Airbus A321neo', seatLayout: '3-3', totalSeats: 203 },
+    // Vietjet Air
+    { airlineCode: 'VJ', registrationCode: 'VJ-A811', model: 'Airbus A330-300 Wide-Body', seatLayout: '3-3-3', totalSeats: 377 },
+    { airlineCode: 'VJ', registrationCode: 'VJ-A646', model: 'Airbus A321neo ACF', seatLayout: '3-3', totalSeats: 240 },
+    // Bamboo Airways
+    { airlineCode: 'QH', registrationCode: 'QH-B789', model: 'Boeing 787-9 Dreamliner', seatLayout: '3-3-3', totalSeats: 294 },
+    { airlineCode: 'QH', registrationCode: 'QH-A590', model: 'Airbus A321neo', seatLayout: '3-3', totalSeats: 198 },
+    // Vietravel Airlines
+    { airlineCode: 'VU', registrationCode: 'VU-A350', model: 'Airbus A321-200', seatLayout: '3-3', totalSeats: 220 },
+    // Korean Air
+    { airlineCode: 'KE', registrationCode: 'HL-8088', model: 'Boeing 777-300ER', seatLayout: '3-3-3', totalSeats: 291 },
+    { airlineCode: 'KE', registrationCode: 'HL-7538', model: 'Airbus A330-300', seatLayout: '2-4-2', totalSeats: 276 },
+    // Asiana Airlines
+    { airlineCode: 'OZ', registrationCode: 'HL-7792', model: 'Airbus A350-900', seatLayout: '3-3-3', totalSeats: 311 },
+    // Japan Airlines
+    { airlineCode: 'JL', registrationCode: 'JA-861J', model: 'Boeing 787-9 Sky Suite', seatLayout: '2-4-2', totalSeats: 203 },
+    // ANA
+    { airlineCode: 'NH', registrationCode: 'JA-899A', model: 'Boeing 787-9 Dreamliner', seatLayout: '3-3-3', totalSeats: 246 },
+    // Singapore Airlines
+    { airlineCode: 'SQ', registrationCode: '9V-SHG', model: 'Boeing 787-10 Regional', seatLayout: '3-3-3', totalSeats: 337 },
+    { airlineCode: 'SQ', registrationCode: '9V-SMF', model: 'Airbus A350-900', seatLayout: '3-3-3', totalSeats: 253 },
+    // Cathay Pacific
+    { airlineCode: 'CX', registrationCode: 'B-LRA', model: 'Airbus A350-900', seatLayout: '3-3-3', totalSeats: 280 },
+    // EVA Air
+    { airlineCode: 'BR', registrationCode: 'B-16722', model: 'Boeing 777-300ER', seatLayout: '3-3-3', totalSeats: 323 },
+    // Qatar Airways
+    { airlineCode: 'QR', registrationCode: 'A7-BOA', model: 'Boeing 777-300ER Qsuite', seatLayout: '3-4-3', totalSeats: 358 },
+    // Emirates
+    { airlineCode: 'EK', registrationCode: 'A6-EEO', model: 'Airbus A380-800 Superjumbo', seatLayout: '3-4-3', totalSeats: 517 },
+    // Thai Airways
+    { airlineCode: 'TG', registrationCode: 'HS-TWB', model: 'Airbus A350-900', seatLayout: '3-3-3', totalSeats: 321 },
   ];
 
-  const createdAircrafts = await Promise.all(
-    aircraftConfigs.map((cfg) =>
-      prisma.aircraft.create({
-        data: {
-          airlineId: cfg.airlineId,
-          registrationCode: cfg.registrationCode,
-          model: cfg.model,
-          seatLayout: cfg.seatLayout,
-          totalSeats: cfg.totalSeats,
-          isActive: true,
-        },
-      })
-    )
-  );
+  await prisma.aircraft.createMany({
+    data: aircraftList.map((ac) => ({
+      airlineId: airlineMap.get(ac.airlineCode)!.id,
+      registrationCode: ac.registrationCode,
+      model: ac.model,
+      seatLayout: ac.seatLayout,
+      totalSeats: ac.totalSeats,
+      isActive: true,
+    })),
+  });
 
-  const aircraftMap = new Map(createdAircrafts.map((ac) => [ac.registrationCode, ac]));
+  const allAircrafts = await prisma.aircraft.findMany();
+  const aircraftMap = new Map(allAircrafts.map((ac) => [ac.registrationCode, ac]));
 
-  // Hàm tạo SeatTemplate tối ưu theo cấu hình ghế máy bay
-  console.log('💺 Tạo SeatTemplate mẫu chuẩn cho từng dòng máy bay...');
-
-  for (let i = 0; i < aircraftConfigs.length; i++) {
-    const cfg = aircraftConfigs[i];
-    const aircraft = createdAircrafts[i];
-    const seatsToCreate: {
+  // Sơ đồ ghế mẫu (SeatTemplate) cho từng tàu bay
+  console.log('🪑 Tạo Sơ đồ ghế mẫu (SeatTemplate) cho toàn bộ tàu bay...');
+  for (const ac of allAircrafts) {
+    const templates: {
       aircraftId: string;
       seatNumber: string;
       rowNumber: number;
@@ -329,775 +372,515 @@ async function main() {
       isActive: boolean;
     }[] = [];
 
-    const is2x2 = cfg.seatLayout === '2-2';
-    const is3x3x3 = cfg.seatLayout === '3-3-3';
-    const stdCols = is2x2
-      ? ['A', 'C', 'D', 'F']
-      : is3x3x3
-      ? ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K']
-      : ['A', 'B', 'C', 'D', 'E', 'F'];
+    const layout = ac.seatLayout || '3-3';
+    let cols: string[] = [];
+    let windowCols: string[] = [];
+    let aisleCols: string[] = [];
+    let middleCols: string[] = [];
 
-    for (let row = 1; row <= cfg.totalRows; row++) {
-      const isBusiness = row <= cfg.businessRows;
-      const cols = isBusiness
-        ? is3x3x3
-          ? ['A', 'D', 'G', 'K']
-          : ['A', 'C', 'D', 'F']
-        : stdCols;
+    if (layout === '3-3') {
+      cols = ['A', 'B', 'C', 'D', 'E', 'F'];
+      windowCols = ['A', 'F'];
+      aisleCols = ['C', 'D'];
+      middleCols = ['B', 'E'];
+    } else if (layout === '2-4-2') {
+      cols = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'K'];
+      windowCols = ['A', 'K'];
+      aisleCols = ['C', 'D', 'G', 'H'];
+      middleCols = ['E', 'F'];
+    } else if (layout === '3-4-3') {
+      cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K'];
+      windowCols = ['A', 'K'];
+      aisleCols = ['C', 'D', 'G', 'H'];
+      middleCols = ['B', 'E', 'F', 'J'];
+    } else {
+      cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K'];
+      windowCols = ['A', 'K'];
+      aisleCols = ['C', 'D', 'F', 'G'];
+      middleCols = ['B', 'E', 'H'];
+    }
 
+    const seatsPerRow = cols.length;
+    const totalRows = Math.min(Math.ceil(ac.totalSeats / seatsPerRow), 45);
+    const businessRows = layout === '3-3' ? 3 : 4;
+    const exitRowNumbers = [11, 12];
+
+    for (let row = 1; row <= totalRows; row++) {
       for (const col of cols) {
+        if (templates.length >= ac.totalSeats) break;
+
+        const seatNumber = `${row}${col}`;
+        const isBusiness = row <= businessRows;
+        const isExit = exitRowNumbers.includes(row) && !isBusiness;
+
+        let seatClass: SeatClass = SeatClass.ECONOMY;
         let seatType: SeatType = SeatType.MIDDLE;
-        if (col === 'A' || col === cols[cols.length - 1]) {
-          seatType = SeatType.WINDOW;
-        } else if (col === 'C' || col === 'D' || (is3x3x3 && (col === 'F' || col === 'G'))) {
-          seatType = SeatType.AISLE;
+        let defaultExtraPrice = 0;
+
+        if (isBusiness) {
+          seatClass = SeatClass.BUSINESS;
+          seatType = windowCols.includes(col) ? SeatType.WINDOW : SeatType.AISLE;
+          defaultExtraPrice = 350000;
+        } else if (isExit) {
+          seatClass = SeatClass.ECONOMY;
+          seatType = SeatType.EXIT_ROW;
+          defaultExtraPrice = 120000;
+        } else {
+          seatClass = SeatClass.ECONOMY;
+          if (windowCols.includes(col)) {
+            seatType = SeatType.WINDOW;
+            defaultExtraPrice = 60000;
+          } else if (aisleCols.includes(col)) {
+            seatType = SeatType.AISLE;
+            defaultExtraPrice = 50000;
+          } else {
+            seatType = SeatType.MIDDLE;
+            defaultExtraPrice = 0;
+          }
         }
 
-        const isExitRow = row === Math.floor(cfg.totalRows / 2);
-        if (isExitRow && !isBusiness) seatType = SeatType.EXIT_ROW;
-
-        seatsToCreate.push({
-          aircraftId: aircraft.id,
-          seatNumber: `${row}${col}`,
+        templates.push({
+          aircraftId: ac.id,
+          seatNumber,
           rowNumber: row,
           columnLetter: col,
-          seatClass: isBusiness ? SeatClass.BUSINESS : SeatClass.ECONOMY,
+          seatClass,
           seatType,
-          defaultExtraPrice: isBusiness
-            ? 0
-            : seatType === SeatType.EXIT_ROW
-            ? 120000
-            : seatType === SeatType.WINDOW
-            ? 60000
-            : 0,
+          defaultExtraPrice,
           isActive: true,
         });
       }
     }
 
-    await prisma.seatTemplate.createMany({ data: seatsToCreate });
+    await prisma.seatTemplate.createMany({
+      data: templates,
+      skipDuplicates: true,
+    });
   }
 
-  // =====================================================
-  // 6. HẠNG VÉ (FARE CLASSES)
-  // =====================================================
-  console.log('🎫 Tạo Hạng vé (Fare Classes) cho 4 hãng...');
+  // Hạng vé (FareClass) cho các hãng
+  console.log('🎫 Tạo Hạng vé chuẩn...');
+  const fareClassInputs: { airlineId: string; name: string; carryOn: number; checked: number; isRefund: boolean; changeFee: number }[] = [];
 
-  // Vietnam Airlines
-  const [fcVNA_Eco, fcVNA_Flex, fcVNA_Biz] = await Promise.all([
-    prisma.fareClass.create({
-      data: { airlineId: VNA.id, name: 'Phổ thông Tiêu chuẩn', carryOnBaggage: 12, checkedBaggage: 23, isRefundable: false, changeFee: 360000, isActive: true },
-    }),
-    prisma.fareClass.create({
-      data: { airlineId: VNA.id, name: 'Phổ thông Linh hoạt', carryOnBaggage: 12, checkedBaggage: 23, isRefundable: true, changeFee: 0, isActive: true },
-    }),
-    prisma.fareClass.create({
-      data: { airlineId: VNA.id, name: 'Thương gia (Lotus Business)', carryOnBaggage: 18, checkedBaggage: 32, isRefundable: true, changeFee: 0, isActive: true },
-    }),
-  ]);
-
-  // VietJet Air
-  const [fcVJA_Eco, fcVJA_Deluxe, fcVJA_SkyBoss] = await Promise.all([
-    prisma.fareClass.create({
-      data: { airlineId: VJA.id, name: 'Eco Tiết kiệm', carryOnBaggage: 7, checkedBaggage: 0, isRefundable: false, changeFee: 450000, isActive: true },
-    }),
-    prisma.fareClass.create({
-      data: { airlineId: VJA.id, name: 'Deluxe Trọn gói', carryOnBaggage: 7, checkedBaggage: 20, isRefundable: false, changeFee: 150000, isActive: true },
-    }),
-    prisma.fareClass.create({
-      data: { airlineId: VJA.id, name: 'SkyBoss Đẳng cấp', carryOnBaggage: 10, checkedBaggage: 30, isRefundable: true, changeFee: 0, isActive: true },
-    }),
-  ]);
-
-  // Bamboo Airways
-  const [fcQHA_Eco, fcQHA_Biz] = await Promise.all([
-    prisma.fareClass.create({
-      data: { airlineId: QHA.id, name: 'Bamboo Economy', carryOnBaggage: 7, checkedBaggage: 20, isRefundable: false, changeFee: 320000, isActive: true },
-    }),
-    prisma.fareClass.create({
-      data: { airlineId: QHA.id, name: 'Bamboo Business', carryOnBaggage: 14, checkedBaggage: 30, isRefundable: true, changeFee: 0, isActive: true },
-    }),
-  ]);
-
-  // Vietravel Airlines
-  const [fcVUA_Eco, fcVUA_Plus] = await Promise.all([
-    prisma.fareClass.create({
-      data: { airlineId: VUA.id, name: 'Phổ thông Tiêu chuẩn', carryOnBaggage: 7, checkedBaggage: 0, isRefundable: false, changeFee: 350000, isActive: true },
-    }),
-    prisma.fareClass.create({
-      data: { airlineId: VUA.id, name: 'Phổ thông Trọn gói', carryOnBaggage: 7, checkedBaggage: 20, isRefundable: true, changeFee: 100000, isActive: true },
-    }),
-  ]);
-
-  // =====================================================
-  // 7. DỊCH VỤ BỔ TRỢ (ANCILLARY SERVICES)
-  // =====================================================
-  console.log('🍽️ Tạo Dịch vụ bổ trợ (Hành lý, Suất ăn, Bảo hiểm, Phòng chờ)...');
-
-  const [svcVNA_Bag23, svcVNA_Meal, svcVNA_Lounge, svcVJA_Bag20, svcVJA_Meal, svcVJA_Ins, svcQHA_Bag20, svcQHA_Meal] = await Promise.all([
-    prisma.ancillaryService.create({ data: { airlineId: VNA.id, type: ServiceType.BAGGAGE, name: 'Hành lý ký gửi 23kg', price: 260000, isActive: true } }),
-    prisma.ancillaryService.create({ data: { airlineId: VNA.id, type: ServiceType.MEAL, name: 'Cơm tấm sườn bì chả Lotus', price: 105000, isActive: true } }),
-    prisma.ancillaryService.create({ data: { airlineId: VNA.id, type: ServiceType.LOUNGE, name: 'Phòng chờ Bông Sen Lotus Lounge', price: 380000, isActive: true } }),
-    prisma.ancillaryService.create({ data: { airlineId: VJA.id, type: ServiceType.BAGGAGE, name: 'Hành lý ký gửi 20kg', price: 220000, isActive: true } }),
-    prisma.ancillaryService.create({ data: { airlineId: VJA.id, type: ServiceType.MEAL, name: 'Bento gà nướng xôi đậu VietJet', price: 85000, isActive: true } }),
-    prisma.ancillaryService.create({ data: { airlineId: VJA.id, type: ServiceType.INSURANCE, name: 'Bảo hiểm chuyến bay VietJet Safe', price: 49000, isActive: true } }),
-    prisma.ancillaryService.create({ data: { airlineId: QHA.id, type: ServiceType.BAGGAGE, name: 'Hành lý ký gửi 20kg', price: 240000, isActive: true } }),
-    prisma.ancillaryService.create({ data: { airlineId: QHA.id, type: ServiceType.MEAL, name: 'Phở bò gia truyền Bamboo', price: 110000, isActive: true } }),
-    // Dịch vụ Vietravel
-    prisma.ancillaryService.create({ data: { airlineId: VUA.id, type: ServiceType.BAGGAGE, name: 'Hành lý ký gửi 20kg', price: 210000, isActive: true } }),
-    prisma.ancillaryService.create({ data: { airlineId: VUA.id, type: ServiceType.MEAL, name: 'Cơm gà ngũ vị Vietravel', price: 80000, isActive: true } }),
-    prisma.ancillaryService.create({ data: { airlineId: VUA.id, type: ServiceType.INSURANCE, name: 'Bảo hiểm du lịch trọn gói', price: 55000, isActive: true } }),
-  ]);
-
-  // =====================================================
-  // 8. CHUYẾN BAY (FLIGHTS) - ĐA DẠNG TUYẾN & THỜI GIAN
-  // =====================================================
-  console.log('🗺️ Tạo lịch bay dày đặc đa điểm đến...');
-
-  const calcFlightDate = (daysAhead: number, hour: number, minute: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + daysAhead);
-    d.setHours(hour, minute, 0, 0);
-    return d;
-  };
-
-  const getAirportId = (code: string) => airportMap.get(code)!.id;
-  const getAircraftId = (reg: string) => aircraftMap.get(reg)!.id;
-
-  interface FlightInput {
-    flightNumber: string;
-    airlineId: string;
-    aircraftReg: string;
-    depCode: string;
-    arrCode: string;
-    depOffsetDays: number;
-    depHour: number;
-    depMin: number;
-    durationMinutes: number;
-    terminal: string;
-    gate: string;
-    basePrice: number;
-    status?: FlightStatus;
+  for (const al of allAirlines) {
+    fareClassInputs.push({
+      airlineId: al.id,
+      name: 'Phổ thông Tiêu chuẩn',
+      carryOn: 7,
+      checked: 20,
+      isRefund: false,
+      changeFee: 350000,
+    });
+    fareClassInputs.push({
+      airlineId: al.id,
+      name: 'Thương gia (Business)',
+      carryOn: 14,
+      checked: 35,
+      isRefund: true,
+      changeFee: 0,
+    });
   }
 
-  const rawFlightList: FlightInput[] = [
-    // ----------------------------------------------------
-    // TRỤC VÀNG: HAN <-> SGN (Siêu nhiều chuyến mỗi ngày)
-    // ----------------------------------------------------
-    // Hôm nay (Day 0)
-    { flightNumber: 'VN204', airlineId: VNA.id, aircraftReg: 'VN-A879', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 0, depHour: 6, depMin: 0, durationMinutes: 130, terminal: 'T1', gate: 'G01', basePrice: 1250000, status: FlightStatus.COMPLETED },
-    { flightNumber: 'VJ120', airlineId: VJA.id, aircraftReg: 'VJ-A811', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 0, depHour: 7, depMin: 15, durationMinutes: 130, terminal: 'T1', gate: 'G08', basePrice: 890000, status: FlightStatus.DELAYED },
-    { flightNumber: 'QH202', airlineId: QHA.id, aircraftReg: 'QH-B789', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 0, depHour: 9, depMin: 30, durationMinutes: 130, terminal: 'T2', gate: 'G04', basePrice: 1100000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VU221', airlineId: VUA.id, aircraftReg: 'VU-A350', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 0, depHour: 13, depMin: 45, durationMinutes: 130, terminal: 'T1', gate: 'G12', basePrice: 799000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN218', airlineId: VNA.id, aircraftReg: 'VN-A898', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 0, depHour: 17, depMin: 0, durationMinutes: 130, terminal: 'T1', gate: 'G03', basePrice: 1350000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ136', airlineId: VJA.id, aircraftReg: 'VJ-A646', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 0, depHour: 20, depMin: 30, durationMinutes: 130, terminal: 'T1', gate: 'G09', basePrice: 850000, status: FlightStatus.SCHEDULED },
+  await prisma.fareClass.createMany({
+    data: fareClassInputs.map((fc) => ({
+      airlineId: fc.airlineId,
+      name: fc.name,
+      carryOnBaggage: fc.carryOn,
+      checkedBaggage: fc.checked,
+      isRefundable: fc.isRefund,
+      changeFee: fc.changeFee,
+      isActive: true,
+    })),
+  });
 
-    // SGN -> HAN hôm nay & ngày mai
-    { flightNumber: 'VN205', airlineId: VNA.id, aircraftReg: 'VN-A879', depCode: 'SGN', arrCode: 'HAN', depOffsetDays: 0, depHour: 10, depMin: 0, durationMinutes: 130, terminal: 'T1', gate: 'B02', basePrice: 1290000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ125', airlineId: VJA.id, aircraftReg: 'VJ-A811', depCode: 'SGN', arrCode: 'HAN', depOffsetDays: 0, depHour: 14, depMin: 30, durationMinutes: 130, terminal: 'T1', gate: 'B07', basePrice: 910000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'QH205', airlineId: QHA.id, aircraftReg: 'QH-B789', depCode: 'SGN', arrCode: 'HAN', depOffsetDays: 1, depHour: 8, depMin: 0, durationMinutes: 130, terminal: 'T2', gate: 'G02', basePrice: 1150000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN215', airlineId: VNA.id, aircraftReg: 'VN-A861', depCode: 'SGN', arrCode: 'HAN', depOffsetDays: 2, depHour: 17, depMin: 0, durationMinutes: 130, terminal: 'T1', gate: 'B04', basePrice: 1400000, status: FlightStatus.SCHEDULED },
+  const allFareClasses = await prisma.fareClass.findMany();
 
-    // Ngày mai (Day 1)
-    { flightNumber: 'VN214', airlineId: VNA.id, aircraftReg: 'VN-A868', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 1, depHour: 6, depMin: 30, durationMinutes: 130, terminal: 'T1', gate: 'G05', basePrice: 1150000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ128', airlineId: VJA.id, aircraftReg: 'VJ-A211', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 1, depHour: 7, depMin: 45, durationMinutes: 130, terminal: 'T1', gate: 'G11', basePrice: 890000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'QH204', airlineId: QHA.id, aircraftReg: 'QH-A590', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 1, depHour: 11, depMin: 15, durationMinutes: 130, terminal: 'T2', gate: 'G03', basePrice: 990000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN220', airlineId: VNA.id, aircraftReg: 'VN-A861', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 3, depHour: 15, depMin: 0, durationMinutes: 130, terminal: 'T1', gate: 'G02', basePrice: 1300000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ142', airlineId: VJA.id, aircraftReg: 'VJ-A646', depCode: 'HAN', arrCode: 'SGN', depOffsetDays: 7, depHour: 18, depMin: 30, durationMinutes: 130, terminal: 'T1', gate: 'G06', basePrice: 940000, status: FlightStatus.SCHEDULED },
+  // Dịch vụ bổ trợ (Ancillary Services)
+  console.log('🍽️ Tạo Dịch vụ bổ trợ (Hành lý, Suất ăn, Phòng chờ, Bảo hiểm)...');
+  const ancillaryInputs = [];
+  for (const al of allAirlines) {
+    ancillaryInputs.push(
+      { airlineId: al.id, type: ServiceType.BAGGAGE, name: 'Hành lý ký gửi 20kg', price: 250000 },
+      { airlineId: al.id, type: ServiceType.MEAL, name: 'Suất ăn nóng tiêu chuẩn', price: 95000 },
+      { airlineId: al.id, type: ServiceType.INSURANCE, name: 'Bảo hiểm chuyến bay toàn diện', price: 50000 }
+    );
+  }
+  await prisma.ancillaryService.createMany({
+    data: ancillaryInputs.map((a) => ({ ...a, isActive: true })),
+  });
 
-    // ----------------------------------------------------
-    // BIỂN ĐẢO NGHỈ DƯỠNG: PHÚ QUỐC (PQC) & NHA TRANG (CXR)
-    // ----------------------------------------------------
-    { flightNumber: 'VN1823', airlineId: VNA.id, aircraftReg: 'VN-A868', depCode: 'SGN', arrCode: 'PQC', depOffsetDays: 1, depHour: 7, depMin: 15, durationMinutes: 60, terminal: 'T1', gate: 'B03', basePrice: 750000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ321', airlineId: VJA.id, aircraftReg: 'VJ-A675', depCode: 'SGN', arrCode: 'PQC', depOffsetDays: 1, depHour: 9, depMin: 40, durationMinutes: 60, terminal: 'T1', gate: 'B10', basePrice: 590000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'QH1621', airlineId: QHA.id, aircraftReg: 'QH-A588', depCode: 'HAN', arrCode: 'PQC', depOffsetDays: 2, depHour: 6, depMin: 45, durationMinutes: 125, terminal: 'T2', gate: 'G07', basePrice: 1450000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN1232', airlineId: VNA.id, aircraftReg: 'VN-A392', depCode: 'HAN', arrCode: 'PQC', depOffsetDays: 3, depHour: 10, depMin: 15, durationMinutes: 125, terminal: 'T1', gate: 'G04', basePrice: 1680000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN1824', airlineId: VNA.id, aircraftReg: 'VN-A868', depCode: 'PQC', arrCode: 'SGN', depOffsetDays: 4, depHour: 16, depMin: 30, durationMinutes: 60, terminal: 'T1', gate: 'G02', basePrice: 780000, status: FlightStatus.SCHEDULED },
+  // =====================================================
+  // 6. TẠO LỊCH BAY TRONG 7 THÁNG TIẾP THEO (~210 NGÀY)
+  // =====================================================
+  console.log('📅 Tạo lịch bay dày đặc suốt 7 tháng tiếp theo (~210 ngày, mỗi ngày đầy đủ các hãng)...');
 
-    // Nha Trang
-    { flightNumber: 'VN1380', airlineId: VNA.id, aircraftReg: 'VN-A392', depCode: 'SGN', arrCode: 'CXR', depOffsetDays: 1, depHour: 8, depMin: 20, durationMinutes: 65, terminal: 'T1', gate: 'B05', basePrice: 620000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ602', airlineId: VJA.id, aircraftReg: 'VJ-A675', depCode: 'SGN', arrCode: 'CXR', depOffsetDays: 2, depHour: 11, depMin: 0, durationMinutes: 65, terminal: 'T1', gate: 'C03', basePrice: 480000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN1556', airlineId: VNA.id, aircraftReg: 'VN-A868', depCode: 'HAN', arrCode: 'CXR', depOffsetDays: 2, depHour: 12, depMin: 30, durationMinutes: 110, terminal: 'T1', gate: 'G06', basePrice: 1280000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'QH254', airlineId: QHA.id, aircraftReg: 'QH-A590', depCode: 'HAN', arrCode: 'CXR', depOffsetDays: 5, depHour: 10, depMin: 0, durationMinutes: 110, terminal: 'T2', gate: 'G02', basePrice: 1190000, status: FlightStatus.SCHEDULED },
+  // Các tuyến bay thực tế phong phú
+  const routeTemplates = [
+    // --- 1. Nội địa vàng ---
+    { dep: 'HAN', arr: 'SGN', al: 'VN', ac: 'VN-A879', depH: 6, depM: 0, dur: 130, base: 1250000, prefix: 'VN204' },
+    { dep: 'SGN', arr: 'HAN', al: 'VN', ac: 'VN-A868', depH: 14, depM: 30, dur: 130, base: 1290000, prefix: 'VN205' },
+    { dep: 'HAN', arr: 'SGN', al: 'VJ', ac: 'VJ-A811', depH: 7, depM: 15, dur: 130, base: 890000, prefix: 'VJ120' },
+    { dep: 'SGN', arr: 'HAN', al: 'VJ', ac: 'VJ-A646', depH: 18, depM: 0, dur: 130, base: 920000, prefix: 'VJ125' },
+    { dep: 'HAN', arr: 'SGN', al: 'QH', ac: 'QH-B789', depH: 9, depM: 30, dur: 130, base: 1100000, prefix: 'QH202' },
+    { dep: 'HAN', arr: 'SGN', al: 'VU', ac: 'VU-A350', depH: 13, depM: 45, dur: 130, base: 799000, prefix: 'VU221' },
 
-    // ----------------------------------------------------
-    // MIỀN TRUNG & CỐ ĐÔ: ĐÀ NẴNG (DAD), HUẾ (HUI), QUY NHƠN (UIH)
-    // ----------------------------------------------------
-    { flightNumber: 'VN1560', airlineId: VNA.id, aircraftReg: 'VN-A868', depCode: 'HAN', arrCode: 'DAD', depOffsetDays: 1, depHour: 8, depMin: 30, durationMinutes: 80, terminal: 'T1', gate: 'G08', basePrice: 790000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ512', airlineId: VJA.id, aircraftReg: 'VJ-A211', depCode: 'HAN', arrCode: 'DAD', depOffsetDays: 1, depHour: 14, depMin: 0, durationMinutes: 80, terminal: 'T1', gate: 'G14', basePrice: 620000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN112', airlineId: VNA.id, aircraftReg: 'VN-A898', depCode: 'SGN', arrCode: 'DAD', depOffsetDays: 2, depHour: 7, depMin: 0, durationMinutes: 85, terminal: 'T1', gate: 'B01', basePrice: 850000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ580', airlineId: VJA.id, aircraftReg: 'VJ-A646', depCode: 'SGN', arrCode: 'DAD', depOffsetDays: 2, depHour: 9, depMin: 45, durationMinutes: 85, terminal: 'T1', gate: 'C01', basePrice: 650000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'QH382', airlineId: QHA.id, aircraftReg: 'QH-A590', depCode: 'HAN', arrCode: 'DAD', depOffsetDays: 3, depHour: 11, depMin: 0, durationMinutes: 80, terminal: 'T2', gate: 'G01', basePrice: 720000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN1542', airlineId: VNA.id, aircraftReg: 'VN-A392', depCode: 'HAN', arrCode: 'HUI', depOffsetDays: 2, depHour: 15, depMin: 15, durationMinutes: 75, terminal: 'T1', gate: 'G03', basePrice: 810000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN1392', airlineId: VNA.id, aircraftReg: 'VN-A392', depCode: 'SGN', arrCode: 'UIH', depOffsetDays: 2, depHour: 13, depMin: 0, durationMinutes: 70, terminal: 'T1', gate: 'B06', basePrice: 690000, status: FlightStatus.SCHEDULED },
+    // --- 2. Du lịch biển đảo & Miền Trung ---
+    { dep: 'SGN', arr: 'DAD', al: 'VN', ac: 'VN-A868', depH: 8, depM: 0, dur: 85, base: 850000, prefix: 'VN112' },
+    { dep: 'DAD', arr: 'SGN', al: 'VJ', ac: 'VJ-A646', depH: 16, depM: 30, dur: 85, base: 690000, prefix: 'VJ580' },
+    { dep: 'HAN', arr: 'DAD', al: 'QH', ac: 'QH-A590', depH: 10, depM: 15, dur: 80, base: 790000, prefix: 'QH382' },
+    { dep: 'SGN', arr: 'PQC', al: 'VN', ac: 'VN-A868', depH: 7, depM: 20, dur: 60, base: 750000, prefix: 'VN1823' },
+    { dep: 'PQC', arr: 'SGN', al: 'VJ', ac: 'VJ-A646', depH: 15, depM: 45, dur: 60, base: 590000, prefix: 'VJ321' },
+    { dep: 'HAN', arr: 'CXR', al: 'VN', ac: 'VN-A868', depH: 12, depM: 30, dur: 110, base: 1280000, prefix: 'VN1556' },
+    { dep: 'SGN', arr: 'DLI', al: 'VJ', ac: 'VJ-A646', depH: 11, depM: 10, dur: 55, base: 510000, prefix: 'VJ362' },
 
-    // ----------------------------------------------------
-    // CAO NGUYÊN HOA & NÚI RỪNG: ĐÀ LẠT (DLI) & BUÔN MA THUỘT (BMV)
-    // ----------------------------------------------------
-    { flightNumber: 'VN1370', airlineId: VNA.id, aircraftReg: 'VN-A868', depCode: 'SGN', arrCode: 'DLI', depOffsetDays: 1, depHour: 10, depMin: 30, durationMinutes: 55, terminal: 'T1', gate: 'B08', basePrice: 610000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ362', airlineId: VJA.id, aircraftReg: 'VJ-A675', depCode: 'SGN', arrCode: 'DLI', depOffsetDays: 2, depHour: 15, depMin: 20, durationMinutes: 55, terminal: 'T1', gate: 'C05', basePrice: 470000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN1574', airlineId: VNA.id, aircraftReg: 'VN-A868', depCode: 'HAN', arrCode: 'DLI', depOffsetDays: 3, depHour: 8, depMin: 10, durationMinutes: 110, terminal: 'T1', gate: 'G07', basePrice: 1320000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN1412', airlineId: VNA.id, aircraftReg: 'VN-A392', depCode: 'SGN', arrCode: 'BMV', depOffsetDays: 4, depHour: 9, depMin: 0, durationMinutes: 60, terminal: 'T1', gate: 'B09', basePrice: 580000, status: FlightStatus.SCHEDULED },
+    // --- 3. Tuyến Hàn Quốc (ICN, PUS, CJU) ---
+    { dep: 'HAN', arr: 'ICN', al: 'KE', ac: 'HL-8088', depH: 11, depM: 45, dur: 250, base: 4950000, prefix: 'KE680' },
+    { dep: 'ICN', arr: 'HAN', al: 'KE', ac: 'HL-7538', depH: 18, depM: 30, dur: 270, base: 5100000, prefix: 'KE681' },
+    { dep: 'SGN', arr: 'ICN', al: 'OZ', ac: 'HL-7792', depH: 23, depM: 50, dur: 310, base: 4800000, prefix: 'OZ732' },
+    { dep: 'DAD', arr: 'ICN', al: 'VJ', ac: 'VJ-A646', depH: 17, depM: 30, dur: 260, base: 2890000, prefix: 'VJ878' },
+    { dep: 'HAN', arr: 'PUS', al: 'VN', ac: 'VN-A868', depH: 1, depM: 15, dur: 245, base: 4200000, prefix: 'VN426' },
+    { dep: 'SGN', arr: 'CJU', al: 'VJ', ac: 'VJ-A646', depH: 8, depM: 10, dur: 280, base: 3150000, prefix: 'VJ920' },
 
-    // ----------------------------------------------------
-    // CHẶNG ĐẶC BIỆT: CÔN ĐẢO (VCS) & ĐIỆN BIÊN (DIN) - ATR 72 & EMBRAER
-    // ----------------------------------------------------
-    { flightNumber: 'VN8051', airlineId: VNA.id, aircraftReg: 'VN-B219', depCode: 'SGN', arrCode: 'VCS', depOffsetDays: 1, depHour: 6, depMin: 45, durationMinutes: 50, terminal: 'T1', gate: 'A01', basePrice: 1450000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'QH1031', airlineId: QHA.id, aircraftReg: 'QH-A112', depCode: 'SGN', arrCode: 'VCS', depOffsetDays: 1, depHour: 12, depMin: 30, durationMinutes: 45, terminal: 'T2', gate: 'A03', basePrice: 1520000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'QH1032', airlineId: QHA.id, aircraftReg: 'QH-A112', depCode: 'VCS', arrCode: 'SGN', depOffsetDays: 3, depHour: 15, depMin: 0, durationMinutes: 45, terminal: 'T1', gate: 'G01', basePrice: 1550000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN8202', airlineId: VNA.id, aircraftReg: 'VN-B219', depCode: 'HAN', arrCode: 'DIN', depOffsetDays: 2, depHour: 9, depMin: 15, durationMinutes: 65, terminal: 'T1', gate: 'A02', basePrice: 950000, status: FlightStatus.SCHEDULED },
+    // --- 4. Tuyến Nhật Bản (NRT, HND, KIX, FUK) ---
+    { dep: 'HAN', arr: 'NRT', al: 'JL', ac: 'JA-861J', depH: 23, depM: 55, dur: 320, base: 6800000, prefix: 'JL752' },
+    { dep: 'NRT', arr: 'HAN', al: 'JL', ac: 'JA-861J', depH: 18, depM: 10, dur: 350, base: 6950000, prefix: 'JL751' },
+    { dep: 'SGN', arr: 'HND', al: 'NH', ac: 'JA-899A', depH: 7, depM: 0, dur: 330, base: 6500000, prefix: 'NH892' },
+    { dep: 'SGN', arr: 'KIX', al: 'VN', ac: 'VN-A879', depH: 0, depM: 35, dur: 320, base: 5900000, prefix: 'VN320' },
+    { dep: 'HAN', arr: 'FUK', al: 'VJ', ac: 'VJ-A646', depH: 2, depM: 0, dur: 270, base: 3450000, prefix: 'VJ956' },
 
-    // ----------------------------------------------------
-    // ĐƯỜNG BAY QUỐC TẾ KHU VỰC CHÂU Á (BKK, SIN, ICN, NRT)
-    // ----------------------------------------------------
-    { flightNumber: 'VN601', airlineId: VNA.id, aircraftReg: 'VN-A868', depCode: 'SGN', arrCode: 'BKK', depOffsetDays: 2, depHour: 8, depMin: 45, durationMinutes: 95, terminal: 'T2', gate: 'I15', basePrice: 1850000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ803', airlineId: VJA.id, aircraftReg: 'VJ-A646', depCode: 'SGN', arrCode: 'BKK', depOffsetDays: 2, depHour: 11, depMin: 15, durationMinutes: 95, terminal: 'T2', gate: 'I18', basePrice: 1390000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN651', airlineId: VNA.id, aircraftReg: 'VN-A898', depCode: 'SGN', arrCode: 'SIN', depOffsetDays: 3, depHour: 9, depMin: 10, durationMinutes: 125, terminal: 'T2', gate: 'I20', basePrice: 2200000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN414', airlineId: VNA.id, aircraftReg: 'VN-A879', depCode: 'HAN', arrCode: 'ICN', depOffsetDays: 4, depHour: 10, depMin: 30, durationMinutes: 255, terminal: 'T2', gate: 'I24', basePrice: 4850000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VJ960', airlineId: VJA.id, aircraftReg: 'VJ-A811', depCode: 'HAN', arrCode: 'ICN', depOffsetDays: 4, depHour: 1, depMin: 45, durationMinutes: 255, terminal: 'T2', gate: 'I22', basePrice: 3200000, status: FlightStatus.SCHEDULED },
-    { flightNumber: 'VN300', airlineId: VNA.id, aircraftReg: 'VN-A898', depCode: 'HAN', arrCode: 'NRT', depOffsetDays: 5, depHour: 0, depMin: 20, durationMinutes: 320, terminal: 'T2', gate: 'I26', basePrice: 6500000, status: FlightStatus.SCHEDULED },
+    // --- 5. Tuyến Đông Nam Á & Châu Á khác ---
+    { dep: 'SGN', arr: 'SIN', al: 'SQ', ac: '9V-SHG', depH: 12, depM: 15, dur: 125, base: 2450000, prefix: 'SQ173' },
+    { dep: 'HAN', arr: 'SIN', al: 'SQ', ac: '9V-SMF', depH: 18, depM: 45, dur: 200, base: 2890000, prefix: 'SQ191' },
+    { dep: 'SGN', arr: 'BKK', al: 'TG', ac: 'HS-TWB', depH: 10, depM: 20, dur: 95, base: 1750000, prefix: 'TG551' },
+    { dep: 'HAN', arr: 'BKK', al: 'VJ', ac: 'VJ-A646', depH: 13, depM: 0, dur: 110, base: 1350000, prefix: 'VJ901' },
+    { dep: 'SGN', arr: 'HKG', al: 'CX', ac: 'B-LRA', depH: 6, depM: 25, dur: 160, base: 3100000, prefix: 'CX766' },
+    { dep: 'HAN', arr: 'TPE', al: 'BR', ac: 'B-16722', depH: 12, depM: 10, dur: 170, base: 3250000, prefix: 'BR398' },
+
+    // --- 6. Tuyến Trung Đông, Châu Âu & Úc ---
+    { dep: 'HAN', arr: 'DOH', al: 'QR', ac: 'A7-BOA', depH: 8, depM: 40, dur: 450, base: 11500000, prefix: 'QR977' },
+    { dep: 'SGN', arr: 'DXB', al: 'EK', ac: 'A6-EEO', depH: 23, depM: 55, dur: 470, base: 12800000, prefix: 'EK393' },
+    { dep: 'SGN', arr: 'SYD', al: 'VN', ac: 'VN-A879', depH: 20, depM: 45, dur: 520, base: 9800000, prefix: 'VN773' },
+    { dep: 'HAN', arr: 'CDG', al: 'VN', ac: 'VN-A879', depH: 23, depM: 10, dur: 750, base: 15600000, prefix: 'VN19' },
   ];
 
-  const flights = await Promise.all(
-    rawFlightList.map((f) => {
-      const depTime = calcFlightDate(f.depOffsetDays, f.depHour, f.depMin);
-      const arrTime = new Date(depTime.getTime() + f.durationMinutes * 60 * 1000);
+  // Sinh lịch bay cho 215 ngày tiếp theo (khoảng hơn 7 tháng)
+  const TOTAL_DAYS = 215;
+  const flightsToCreate: any[] = [];
 
-      return prisma.flight.create({
-        data: {
-          flightNumber: f.flightNumber,
-          airlineId: f.airlineId,
-          aircraftId: getAircraftId(f.aircraftReg),
-          departureAirportId: getAirportId(f.depCode),
-          arrivalAirportId: getAirportId(f.arrCode),
-          departureTime: depTime,
-          arrivalTime: arrTime,
-          terminal: f.terminal,
-          gate: f.gate,
-          basePrice: f.basePrice,
-          status: f.status ?? FlightStatus.SCHEDULED,
-          isActive: true,
-        },
+  const now = new Date();
+
+  for (let day = 0; day <= TOTAL_DAYS; day++) {
+    for (const route of routeTemplates) {
+      const depAirport = airportMap.get(route.dep);
+      const arrAirport = airportMap.get(route.arr);
+      const airline = airlineMap.get(route.al);
+      const aircraft = aircraftMap.get(route.ac);
+
+      if (!depAirport || !arrAirport || !airline || !aircraft) continue;
+
+      const depTime = new Date(now);
+      depTime.setDate(now.getDate() + day);
+      depTime.setHours(route.depH, route.depM, 0, 0);
+
+      const arrTime = new Date(depTime.getTime() + route.dur * 60 * 1000);
+
+      // Tạo flightNumber duy nhất hoặc định dạng
+      const flightNumber = route.prefix;
+
+      flightsToCreate.push({
+        flightNumber,
+        airlineId: airline.id,
+        aircraftId: aircraft.id,
+        departureAirportId: depAirport.id,
+        arrivalAirportId: arrAirport.id,
+        departureTime: depTime,
+        arrivalTime: arrTime,
+        terminal: route.dep === 'HAN' || route.dep === 'SGN' ? 'T2' : 'T1',
+        gate: `G0${(day % 9) + 1}`,
+        basePrice: route.base,
+        status: day === 0 && route.depH < now.getHours() ? FlightStatus.COMPLETED : FlightStatus.SCHEDULED,
+        isActive: true,
       });
-    })
-  );
+    }
+  }
+
+  console.log(`📦 Đang lưu ${flightsToCreate.length} chuyến bay trải rộng 7 tháng vào Supabase...`);
+
+  // Lưu theo từng chunk 500 bản ghi để tối ưu tốc độ và không bị timeout
+  const CHUNK_SIZE = 500;
+  for (let i = 0; i < flightsToCreate.length; i += CHUNK_SIZE) {
+    const chunk = flightsToCreate.slice(i, i + CHUNK_SIZE);
+    await prisma.flight.createMany({ data: chunk });
+    process.stdout.write(`   > Đã lưu ${Math.min(i + CHUNK_SIZE, flightsToCreate.length)} / ${flightsToCreate.length} chuyến bay\r`);
+  }
+  console.log('\n✅ Lưu danh sách chuyến bay thành công!');
 
   // =====================================================
-  // 9. QUỸ VÉ (INVENTORIES) & SƠ ĐỒ GHẾ THỰC TẾ TRÊN CHUYẾN
+  // 7. QUỸ VÉ (INVENTORIES) & SƠ ĐỒ GHẾ MẪU
   // =====================================================
-  console.log('🪑 Tạo Quỹ vé & Sơ đồ ghế thực tế cho toàn bộ chuyến bay...');
+  console.log('📦 Tạo Quỹ vé (FlightFareInventory) cho các chuyến bay...');
 
-  for (const flight of flights) {
-    const aircraft = createdAircrafts.find((a) => a.id === flight.aircraftId)!;
-    const cfg = aircraftConfigs.find((c) => c.registrationCode === aircraft.registrationCode)!;
+  const savedFlights = await prisma.flight.findMany({
+    select: { id: true, airlineId: true, basePrice: true, departureTime: true },
+  });
 
-    // 1. Quỹ vé theo FareClass
-    if (flight.airlineId === VNA.id) {
-      await prisma.flightFareInventory.createMany({
-        data: [
-          { flightId: flight.id, fareClassId: fcVNA_Eco.id, price: flight.basePrice, totalQuota: 150, soldCount: Math.floor(Math.random() * 45), isActive: true },
-          { flightId: flight.id, fareClassId: fcVNA_Flex.id, price: flight.basePrice + 350000, totalQuota: 40, soldCount: Math.floor(Math.random() * 15), isActive: true },
-          { flightId: flight.id, fareClassId: fcVNA_Biz.id, price: flight.basePrice * 3, totalQuota: cfg.businessRows > 0 ? 16 : 0, soldCount: Math.floor(Math.random() * 6), isActive: true },
-        ],
-      });
-    } else if (flight.airlineId === VJA.id) {
-      await prisma.flightFareInventory.createMany({
-        data: [
-          { flightId: flight.id, fareClassId: fcVJA_Eco.id, price: flight.basePrice, totalQuota: 180, soldCount: Math.floor(Math.random() * 60), isActive: true },
-          { flightId: flight.id, fareClassId: fcVJA_Deluxe.id, price: flight.basePrice + 290000, totalQuota: 40, soldCount: Math.floor(Math.random() * 12), isActive: true },
-          { flightId: flight.id, fareClassId: fcVJA_SkyBoss.id, price: flight.basePrice + 650000, totalQuota: 20, soldCount: Math.floor(Math.random() * 5), isActive: true },
-        ],
-      });
-    } else if (flight.airlineId === QHA.id) {
-      await prisma.flightFareInventory.createMany({
-        data: [
-          { flightId: flight.id, fareClassId: fcQHA_Eco.id, price: flight.basePrice, totalQuota: 160, soldCount: Math.floor(Math.random() * 40), isActive: true },
-          { flightId: flight.id, fareClassId: fcQHA_Biz.id, price: Math.floor(flight.basePrice * 2.6), totalQuota: cfg.businessRows > 0 ? 18 : 0, soldCount: Math.floor(Math.random() * 5), isActive: true },
-        ],
-      });
-    } else {
-      // Vietravel
-      await prisma.flightFareInventory.createMany({
-        data: [
-          { flightId: flight.id, fareClassId: fcVUA_Eco.id, price: flight.basePrice, totalQuota: 160, soldCount: Math.floor(Math.random() * 35), isActive: true },
-          { flightId: flight.id, fareClassId: fcVUA_Plus.id, price: flight.basePrice + 280000, totalQuota: 35, soldCount: Math.floor(Math.random() * 10), isActive: true },
-        ],
+  const fareInventoriesToCreate: any[] = [];
+
+  for (const f of savedFlights) {
+    const ecoClass = allFareClasses.find((fc) => fc.airlineId === f.airlineId && fc.name.includes('Phổ thông'));
+    const bizClass = allFareClasses.find((fc) => fc.airlineId === f.airlineId && fc.name.includes('Thương gia'));
+
+    if (ecoClass) {
+      fareInventoriesToCreate.push({
+        flightId: f.id,
+        fareClassId: ecoClass.id,
+        price: f.basePrice,
+        totalQuota: 180,
+        soldCount: Math.floor(Math.random() * 25),
+        isActive: true,
       });
     }
 
-    // 2. FlightSeats: tạo từ các hàng đại diện chuẩn (đủ cả Business, Economy, Window, Middle, Aisle, Exit Row)
-    const is2x2 = cfg.seatLayout === '2-2';
-    const is3x3x3 = cfg.seatLayout === '3-3-3';
-    const stdCols = is2x2
-      ? ['A', 'C', 'D', 'F']
-      : is3x3x3
-      ? ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K']
-      : ['A', 'B', 'C', 'D', 'E', 'F'];
+    if (bizClass) {
+      fareInventoriesToCreate.push({
+        flightId: f.id,
+        fareClassId: bizClass.id,
+        price: Math.floor(f.basePrice * 2.5),
+        totalQuota: 24,
+        soldCount: Math.floor(Math.random() * 6),
+        isActive: true,
+      });
+    }
+  }
 
-    const flightSeatsToCreate: {
-      flightId: string;
-      seatNumber: string;
-      seatClass: SeatClass;
-      seatType: SeatType;
-      priceModifier: number;
-      isBooked: boolean;
-      isActive: boolean;
-    }[] = [];
+  for (let i = 0; i < fareInventoriesToCreate.length; i += 1000) {
+    const chunk = fareInventoriesToCreate.slice(i, i + 1000);
+    await prisma.flightFareInventory.createMany({ data: chunk });
+  }
+  console.log(`✅ Đã tạo ${fareInventoriesToCreate.length} quỹ vé.`);
 
-    // Chọn số hàng tạo thực tế (tối đa 24 hàng để hiệu năng DB cực mượt mà vẫn đầy đủ dữ liệu thực chiến)
-    const effectiveRows = Math.min(cfg.totalRows, 24);
+  // Tạo sơ đồ ghế chi tiết cho các chuyến bay 14 ngày tới
+  console.log('💺 Tạo sơ đồ ghế chi tiết (FlightSeat) cho các chuyến bay 14 ngày tới...');
+  const upcomingFlights = savedFlights.filter((f) => {
+    const diffDays = (f.departureTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= 14;
+  });
 
-    for (let row = 1; row <= effectiveRows; row++) {
-      const isBusiness = row <= cfg.businessRows;
-      const cols = isBusiness
-        ? is3x3x3
-          ? ['A', 'D', 'G', 'K']
-          : ['A', 'C', 'D', 'F']
-        : stdCols;
+  const flightSeatsToCreate: any[] = [];
+  const seatCols = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-      for (const col of cols) {
-        let seatType: SeatType = SeatType.MIDDLE;
-        if (col === 'A' || col === cols[cols.length - 1]) {
-          seatType = SeatType.WINDOW;
-        } else if (col === 'C' || col === 'D' || (is3x3x3 && (col === 'F' || col === 'G'))) {
-          seatType = SeatType.AISLE;
-        }
-
-        const isExitRow = row === Math.floor(effectiveRows / 2);
-        if (isExitRow && !isBusiness) seatType = SeatType.EXIT_ROW;
-
+  for (const f of upcomingFlights) {
+    for (let r = 1; r <= 15; r++) {
+      const isBiz = r <= 3;
+      for (const col of seatCols) {
         flightSeatsToCreate.push({
-          flightId: flight.id,
-          seatNumber: `${row}${col}`,
-          seatClass: isBusiness ? SeatClass.BUSINESS : SeatClass.ECONOMY,
-          seatType,
-          priceModifier: isBusiness ? 0 : seatType === SeatType.EXIT_ROW ? 120000 : seatType === SeatType.WINDOW ? 60000 : 0,
-          isBooked: false,
+          flightId: f.id,
+          seatNumber: `${r}${col}`,
+          seatClass: isBiz ? SeatClass.BUSINESS : SeatClass.ECONOMY,
+          seatType: col === 'A' || col === 'F' ? SeatType.WINDOW : col === 'C' || col === 'D' ? SeatType.AISLE : SeatType.MIDDLE,
+          priceModifier: isBiz ? 0 : col === 'A' || col === 'F' ? 50000 : 0,
+          isBooked: Math.random() < 0.15,
           isActive: true,
         });
       }
     }
-
-    await prisma.flightSeat.createMany({ data: flightSeatsToCreate });
   }
 
-  // =====================================================
-  // 10. CHƯƠNG TRÌNH KHUYẾN MÃI (PROMOTIONS)
-  // =====================================================
-  console.log('🎁 Tạo danh sách Mã giảm giá & Ví Coupon...');
-
-  const promotions = await Promise.all([
-    prisma.promotion.create({
-      data: {
-        code: 'TET2027',
-        title: 'Ưu đãi Tết Đinh Mùi 2027',
-        description: 'Giảm 15% tất cả các chuyến bay dịp Tết đoàn viên, tối đa 500.000đ',
-        discountType: DiscountType.PERCENTAGE,
-        discountValue: 15,
-        maxDiscountAmount: 500000,
-        minOrderValue: 1200000,
-        startDate: new Date('2026-11-01'),
-        expiryDate: new Date('2027-02-28'),
-        totalQuantity: 2000,
-        claimedCount: 420,
-        usedCount: 310,
-        isActive: true,
-      },
-    }),
-    prisma.promotion.create({
-      data: {
-        code: 'BAYCUNGVNA',
-        title: 'Trải nghiệm 4 sao cùng Vietnam Airlines',
-        description: 'Giảm ngay 200.000đ khi đặt vé chặng Hà Nội - TP. HCM hoặc Quốc tế',
-        discountType: DiscountType.FIXED_AMOUNT,
-        discountValue: 200000,
-        maxDiscountAmount: 200000,
-        minOrderValue: 1500000,
-        startDate: new Date('2026-01-01'),
-        expiryDate: new Date('2027-12-31'),
-        totalQuantity: 1000,
-        claimedCount: 150,
-        usedCount: 95,
-        isActive: true,
-      },
-    }),
-    prisma.promotion.create({
-      data: {
-        code: 'SUMMER2027',
-        title: 'Chào Hè Rực Rỡ 2027',
-        description: 'Giảm 25% cho tất cả các đường bay tới Phú Quốc, Nha Trang, Đà Nẵng, Đà Lạt',
-        discountType: DiscountType.PERCENTAGE,
-        discountValue: 25,
-        maxDiscountAmount: 600000,
-        minOrderValue: 900000,
-        startDate: new Date('2027-04-01'),
-        expiryDate: new Date('2027-08-31'),
-        totalQuantity: 3000,
-        claimedCount: 52,
-        usedCount: 20,
-        isActive: true,
-      },
-    }),
-    prisma.promotion.create({
-      data: {
-        code: 'NEWUSER100K',
-        title: 'Quà tặng chào mừng Bạn Mới',
-        description: 'Đăng ký tài khoản lần đầu, nhận ngay mã giảm 100.000đ cho chuyến bay đầu tiên',
-        discountType: DiscountType.FIXED_AMOUNT,
-        discountValue: 100000,
-        maxDiscountAmount: 100000,
-        minOrderValue: 600000,
-        startDate: new Date('2026-01-01'),
-        expiryDate: new Date('2027-12-31'),
-        totalQuantity: 10000,
-        claimedCount: 2840,
-        usedCount: 2610,
-        isActive: true,
-      },
-    }),
-    prisma.promotion.create({
-      data: {
-        code: 'VIPBUSINESS',
-        title: 'Đặc quyền Hạng Thương Gia',
-        description: 'Giảm ngay 500.000đ cho khách hàng đặt vé hạng Business trên toàn mạng bay',
-        discountType: DiscountType.FIXED_AMOUNT,
-        discountValue: 500000,
-        maxDiscountAmount: 500000,
-        minOrderValue: 3000000,
-        startDate: new Date('2026-01-01'),
-        expiryDate: new Date('2027-12-31'),
-        totalQuantity: 500,
-        claimedCount: 45,
-        usedCount: 30,
-        isActive: true,
-      },
-    }),
-  ]);
-
-  const [promoTet, promoVNA, promoSummer, promoNewUser, promoBiz] = promotions;
-
-  // Gán Coupon vào ví người dùng
-  await Promise.all([
-    prisma.userCoupon.create({ data: { userId: normalUser.id, promotionId: promoTet.id, isUsed: false, isActive: true } }),
-    prisma.userCoupon.create({ data: { userId: normalUser.id, promotionId: promoNewUser.id, isUsed: true, usedAt: new Date(), isActive: true } }),
-    prisma.userCoupon.create({ data: { userId: normalUser.id, promotionId: promoVNA.id, isUsed: false, isActive: true } }),
-    prisma.userCoupon.create({ data: { userId: user2.id, promotionId: promoSummer.id, isUsed: false, isActive: true } }),
-    prisma.userCoupon.create({ data: { userId: userVIP.id, promotionId: promoBiz.id, isUsed: false, isActive: true } }),
-  ]);
+  for (let i = 0; i < flightSeatsToCreate.length; i += 1000) {
+    const chunk = flightSeatsToCreate.slice(i, i + 1000);
+    await prisma.flightSeat.createMany({ data: chunk });
+  }
+  console.log(`✅ Đã tạo ${flightSeatsToCreate.length} ghế ngồi thực tế.`);
 
   // =====================================================
-  // 11. ĐƠN ĐẶT CHỖ (BOOKINGS), VÉ (TICKETS), THANH TOÁN & HÀNH LÝ
+  // 8. CÁC BẢNG MỚI: ĐIỂM ĐẾN (DESTINATIONS), YÊU THÍCH, ĐÁNH GIÁ, CẢNH BÁO GIÁ
   // =====================================================
-  console.log('💳 Tạo nhiều Booking thực tế, Vé, Thanh toán & Thẻ hành lý...');
+  console.log('🌟 Tạo dữ liệu cho các bảng mới (Destinations, Reviews, Favorites, PriceAlerts)...');
 
-  // Booking 1: normalUser - Khứ hồi HAN <-> SGN (Đã xác nhận, VNPay, có Thẻ hành lý & Suất ăn)
-  const flightVNA_Out = flights.find((f) => f.flightNumber === 'VN214')!;
-  const flightVNA_In = flights.find((f) => f.flightNumber === 'VN215')!;
+  // Bảng Destination
+  await db.destination.createMany({
+    data: [
+      {
+        city: 'Phú Quốc',
+        country: 'Việt Nam',
+        imageUrl: 'https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=800&q=80',
+        tag: 'Thiên đường biển đảo',
+        description: 'Bãi biển cát trắng mịn, hoàng hôn lãng mạn và hải sản tươi ngon bậc nhất.',
+        isPopular: true,
+      },
+      {
+        city: 'Đà Nẵng',
+        country: 'Việt Nam',
+        imageUrl: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&w=800&q=80',
+        tag: 'Thành phố đáng sống',
+        description: 'Bà Nà Hills, Cầu Vàng, Bán đảo Sơn Trà và phố cổ Hội An kề bên.',
+        isPopular: true,
+      },
+      {
+        city: 'Seoul',
+        country: 'Hàn Quốc',
+        imageUrl: 'https://images.unsplash.com/photo-1538485399081-7191377e8241?auto=format&fit=crop&w=800&q=80',
+        tag: 'Xứ sở kim chi',
+        description: 'Cung điện cổ kính, thiên đường mua sắm Myeongdong và ẩm thực đường phố sôi động.',
+        isPopular: true,
+      },
+      {
+        city: 'Tokyo',
+        country: 'Nhật Bản',
+        imageUrl: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80',
+        tag: 'Xứ sở hoa anh đào',
+        description: 'Sự giao thoa tuyệt vời giữa nét văn hóa truyền thống và công nghệ tương lai hiện đại.',
+        isPopular: true,
+      },
+      {
+        city: 'Bangkok',
+        country: 'Thái Lan',
+        imageUrl: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=800&q=80',
+        tag: 'Thiên đường ẩm thực',
+        description: 'Chùa Vàng rực rỡ, chợ nổi truyền thống và các trung tâm thương mại sầm uất.',
+        isPopular: true,
+      },
+      {
+        city: 'Singapore',
+        country: 'Singapore',
+        imageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80',
+        tag: 'Đảo quốc sư tử xanh',
+        description: 'Gardens by the Bay, Marina Bay Sands và sân bay Changi đẹp nhất thế giới.',
+        isPopular: true,
+      },
+      {
+        city: 'Dubai',
+        country: 'Các Tiểu Vương quốc Ả Rập',
+        imageUrl: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
+        tag: 'Thành phố tương lai xa hoa',
+        description: 'Tòa tháp Burj Khalifa chọc trời, đảo nhân tạo Palm Jumeirah và sa mạc safari.',
+        isPopular: true,
+      },
+      {
+        city: 'Paris',
+        country: 'Pháp',
+        imageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80',
+        tag: 'Kinh đô ánh sáng',
+        description: 'Tháp Eiffel biểu tượng, bảo tàng Louvre tráng lệ và vẻ đẹp thi vị ven sông Seine.',
+        isPopular: true,
+      },
+    ],
+  });
 
-  const seat1A = await prisma.flightSeat.findFirst({ where: { flightId: flightVNA_Out.id, seatNumber: '5A' } });
-  const seat1C = await prisma.flightSeat.findFirst({ where: { flightId: flightVNA_Out.id, seatNumber: '5C' } });
-  const seatRetA = await prisma.flightSeat.findFirst({ where: { flightId: flightVNA_In.id, seatNumber: '8A' } });
-  const seatRetC = await prisma.flightSeat.findFirst({ where: { flightId: flightVNA_In.id, seatNumber: '8C' } });
-
-  if (seat1A && seat1C && seatRetA && seatRetC) {
-    const booking1 = await prisma.booking.create({
+  // Bảng FavoriteFlight
+  const sampleFavFlights = savedFlights.slice(0, 3);
+  for (const f of sampleFavFlights) {
+    await db.favoriteFlight.create({
       data: {
-        pnrCode: 'VN839X',
         userId: normalUser.id,
-        isRoundTrip: true,
-        subTotal: 5080000,
-        taxAndFees: 480000,
-        discountAmount: 200000,
-        totalAmount: 5360000,
-        status: BookingStatus.CONFIRMED,
-        contactName: 'Trần Thị Bích Ngọc',
-        contactEmail: 'user@gmail.com',
-        contactPhone: '0912345678',
-        isActive: true,
-      },
-    });
-
-    await prisma.flightSeat.updateMany({
-      where: { id: { in: [seat1A.id, seat1C.id, seatRetA.id, seatRetC.id] } },
-      data: { isBooked: true },
-    });
-
-    // Vé lượt đi - Người lớn
-    const ticket1 = await prisma.ticket.create({
-      data: {
-        ticketNumber: '738-9281029001',
-        bookingId: booking1.id,
-        flightId: flightVNA_Out.id,
-        flightSeatId: seat1A.id,
-        fareClassId: fcVNA_Eco.id,
-        direction: FlightDirection.OUTBOUND,
-        passengerName: 'TRAN THI BICH NGOC',
-        passengerType: PassengerType.ADULT,
-        dateOfBirth: new Date('1995-06-15'),
-        identityNumber: '079195012345',
-        ticketPrice: 1350000,
-        isCheckedIn: true,
-        boardingTime: new Date(flightVNA_Out.departureTime.getTime() - 40 * 60 * 1000),
-        qrCodeData: `BCBP:VN839X:VN214:HAN:SGN:738-9281029001:5A`,
-        isActive: true,
-      },
-    });
-
-    // Vé lượt đi - Trẻ em
-    await prisma.ticket.create({
-      data: {
-        ticketNumber: '738-9281029002',
-        bookingId: booking1.id,
-        flightId: flightVNA_Out.id,
-        flightSeatId: seat1C.id,
-        fareClassId: fcVNA_Eco.id,
-        direction: FlightDirection.OUTBOUND,
-        passengerName: 'TRAN MINH KHOI',
-        passengerType: PassengerType.CHILD,
-        dateOfBirth: new Date('2018-03-20'),
-        ticketPrice: 950000,
-        isCheckedIn: true,
-        boardingTime: new Date(flightVNA_Out.departureTime.getTime() - 40 * 60 * 1000),
-        qrCodeData: `BCBP:VN839X:VN214:HAN:SGN:738-9281029002:5C`,
-        isActive: true,
-      },
-    });
-
-    // Dịch vụ mua thêm (Addons)
-    await prisma.ticketAddon.createMany({
-      data: [
-        { ticketId: ticket1.id, serviceId: svcVNA_Bag23.id, quantity: 1, priceAtBooking: 260000, isActive: true },
-        { ticketId: ticket1.id, serviceId: svcVNA_Meal.id, quantity: 1, priceAtBooking: 105000, isActive: true },
-        { ticketId: ticket1.id, serviceId: svcVNA_Lounge.id, quantity: 1, priceAtBooking: 380000, isActive: true },
-      ],
-    });
-
-    // Quản lý thẻ hành lý ký gửi (Luggage Check-in)
-    await prisma.luggageCheckIn.create({
-      data: {
-        ticketId: ticket1.id,
-        baggageTagCode: 'VN-HAN-098214',
-        weightKg: 21.5,
-        status: BaggageStatus.LOADED,
-        isActive: true,
-      },
-    });
-
-    // Thanh toán thành công VNPAY
-    await prisma.payment.create({
-      data: {
-        bookingId: booking1.id,
-        paymentMethod: PaymentMethod.VNPAY,
-        transactionCode: 'VNPAY202610250012',
-        amount: 5360000,
-        status: PaymentStatus.SUCCESS,
-        paidAt: new Date(),
-        isActive: true,
+        flightId: f.id,
       },
     });
   }
 
-  // Booking 2: user2 - Một chiều HAN -> SGN (Chờ thanh toán qua PayOS)
-  const flightVJ = flights.find((f) => f.flightNumber === 'VJ128')!;
-  const seatVJ = await prisma.flightSeat.findFirst({ where: { flightId: flightVJ.id, seatNumber: '12F' } });
+  // Bảng FlightReview
+  const firstVna = allAirlines.find((al) => al.code === 'VN')!;
+  const firstKe = allAirlines.find((al) => al.code === 'KE')!;
+  const firstJal = allAirlines.find((al) => al.code === 'JL')!;
 
-  if (seatVJ) {
-    const booking2 = await prisma.booking.create({
-      data: {
-        pnrCode: 'VJ098M',
-        userId: user2.id,
-        isRoundTrip: false,
-        subTotal: 890000,
-        taxAndFees: 90000,
-        discountAmount: 100000,
-        totalAmount: 880000,
-        status: BookingStatus.PENDING,
-        contactName: 'Lê Văn Minh',
-        contactEmail: 'khach@gmail.com',
-        contactPhone: '0923456789',
-        isActive: true,
+  await db.flightReview.createMany({
+    data: [
+      {
+        userId: normalUser.id,
+        flightId: sampleFavFlights[0].id,
+        airlineId: firstVna.id,
+        rating: 5,
+        title: 'Chuyến bay rất êm và đúng giờ',
+        comment: 'Tiếp viên Vietnam Airlines rất chu đáo, suất ăn hoa sen ngon miệng. Ghế ngồi rộng rãi!',
       },
-    });
-
-    await prisma.flightSeat.update({ where: { id: seatVJ.id }, data: { isBooked: true } });
-
-    await prisma.ticket.create({
-      data: {
-        ticketNumber: '738-9281029003',
-        bookingId: booking2.id,
-        flightId: flightVJ.id,
-        flightSeatId: seatVJ.id,
-        fareClassId: fcVJA_Eco.id,
-        direction: FlightDirection.OUTBOUND,
-        passengerName: 'LE VAN MINH',
-        passengerType: PassengerType.ADULT,
-        dateOfBirth: new Date('1990-11-20'),
-        identityNumber: '031090056789',
-        ticketPrice: 890000,
-        isCheckedIn: false,
-        boardingTime: new Date(flightVJ.departureTime.getTime() - 30 * 60 * 1000),
-        qrCodeData: `BCBP:VJ098M:VJ128:HAN:SGN:738-9281029003:12F`,
-        isActive: true,
-      },
-    });
-
-    await prisma.payment.create({
-      data: {
-        bookingId: booking2.id,
-        paymentMethod: PaymentMethod.PAYOS,
-        amount: 880000,
-        status: PaymentStatus.PENDING,
-        isActive: true,
-      },
-    });
-  }
-
-  // Booking 3: userVIP - Đặt vé Thương gia Dreamliner B787-10 HAN -> ICN (Seoul)
-  const flightICN = flights.find((f) => f.flightNumber === 'VN414')!;
-  const seatBiz = await prisma.flightSeat.findFirst({ where: { flightId: flightICN.id, seatClass: SeatClass.BUSINESS, isBooked: false } });
-
-  if (seatBiz) {
-    const booking3 = await prisma.booking.create({
-      data: {
-        pnrCode: 'VN888VIP',
+      {
         userId: userVIP.id,
-        isRoundTrip: false,
-        subTotal: 14550000,
-        taxAndFees: 1200000,
-        discountAmount: 500000,
-        totalAmount: 15250000,
-        status: BookingStatus.CONFIRMED,
-        contactName: 'Phạm Nhật Hoàng',
-        contactEmail: 'hoang.vip@flightapp.vn',
-        contactPhone: '0988888999',
-        isActive: true,
+        flightId: sampleFavFlights[1].id,
+        airlineId: firstKe.id,
+        rating: 5,
+        title: 'Dịch vụ chuẩn 5 sao Korean Air',
+        comment: 'Chuyến bay đi Incheon tuyệt vời, phòng chờ VIP sang trọng, tiếp viên nói tiếng Anh lưu loát.',
       },
-    });
-
-    await prisma.flightSeat.update({ where: { id: seatBiz.id }, data: { isBooked: true } });
-
-    await prisma.ticket.create({
-      data: {
-        ticketNumber: '738-9281029999',
-        bookingId: booking3.id,
-        flightId: flightICN.id,
-        flightSeatId: seatBiz.id,
-        fareClassId: fcVNA_Biz.id,
-        direction: FlightDirection.OUTBOUND,
-        passengerName: 'PHAM NHAT HOANG',
-        passengerType: PassengerType.ADULT,
-        dateOfBirth: new Date('1988-08-18'),
-        identityNumber: '001088019988',
-        ticketPrice: 14550000,
-        isCheckedIn: true,
-        boardingTime: new Date(flightICN.departureTime.getTime() - 45 * 60 * 1000),
-        qrCodeData: `BCBP:VN888VIP:VN414:HAN:ICN:738-9281029999:${seatBiz.seatNumber}`,
-        isActive: true,
+      {
+        userId: user2.id,
+        flightId: sampleFavFlights[2].id,
+        airlineId: firstJal.id,
+        rating: 5,
+        title: 'Trải nghiệm đỉnh cao cùng Japan Airlines',
+        comment: 'Máy bay Boeing 787 rất êm, hệ thống giải trí phong phú và dịch vụ tận tâm của người Nhật.',
       },
-    });
+    ],
+  });
 
-    await prisma.payment.create({
-      data: {
-        bookingId: booking3.id,
-        paymentMethod: PaymentMethod.CREDIT_CARD,
-        transactionCode: 'VISA_AUTH_891278',
-        amount: 15250000,
-        status: PaymentStatus.SUCCESS,
-        paidAt: new Date(),
-        isActive: true,
-      },
-    });
-  }
+  // Bảng PriceAlert
+  const sgnAirport = airportMap.get('SGN')!;
+  const icnAirport = airportMap.get('ICN')!;
+  const nrtAirport = airportMap.get('NRT')!;
 
-  // Booking 4: Đã huỷ và yêu cầu hoàn tiền (RefundCancelRequest)
-  const flightCancel = flights.find((f) => f.flightNumber === 'VN1370')!;
-  const seatRefund = await prisma.flightSeat.findFirst({ where: { flightId: flightCancel.id, seatNumber: '6D' } });
-
-  if (seatRefund) {
-    const booking4 = await prisma.booking.create({
-      data: {
-        pnrCode: 'RFND99',
+  await db.priceAlert.createMany({
+    data: [
+      {
         userId: normalUser.id,
-        isRoundTrip: false,
-        subTotal: 960000,
-        taxAndFees: 90000,
-        discountAmount: 0,
-        totalAmount: 1050000,
-        status: BookingStatus.CANCELLED,
-        contactName: 'Trần Thị Bích Ngọc',
-        contactEmail: 'user@gmail.com',
-        contactPhone: '0912345678',
+        departureAirportId: sgnAirport.id,
+        arrivalAirportId: icnAirport.id,
+        targetPrice: 3500000,
         isActive: true,
       },
-    });
-
-    await prisma.refundCancelRequest.create({
-      data: {
-        bookingId: booking4.id,
-        reason: 'Có việc bận gia đình đột xuất không thể tham gia chuyến bay',
-        penaltyFee: 360000,
-        refundAmount: 690000,
-        status: RefundStatus.APPROVED,
+      {
+        userId: userVIP.id,
+        departureAirportId: sgnAirport.id,
+        arrivalAirportId: nrtAirport.id,
+        targetPrice: 5000000,
         isActive: true,
-        requestedAt: new Date(),
-        processedAt: new Date(),
       },
-    });
-  }
+    ],
+  });
 
   // =====================================================
-  // 12. THÔNG BÁO (NOTIFICATIONS)
+  // 9. PROMOTIONS & NOTIFICATIONS
   // =====================================================
-  console.log('🔔 Tạo hệ thống Thông báo cá nhân hóa...');
+  console.log('🎁 Tạo Khuyến mãi & Thông báo mẫu...');
+
+  const promo = await prisma.promotion.create({
+    data: {
+      code: 'SKY2027',
+      title: 'Chào đón Mùa Du Lịch 2026 - 2027',
+      description: 'Giảm đến 20% cho toàn bộ các chặng bay nội địa và quốc tế',
+      discountType: DiscountType.PERCENTAGE,
+      discountValue: 20,
+      maxDiscountAmount: 500000,
+      minOrderValue: 1000000,
+      startDate: new Date(),
+      expiryDate: new Date('2027-12-31'),
+      totalQuantity: 5000,
+      claimedCount: 120,
+      usedCount: 45,
+      isActive: true,
+    },
+  });
+
+  await prisma.userCoupon.create({
+    data: {
+      userId: normalUser.id,
+      promotionId: promo.id,
+      isUsed: false,
+      isActive: true,
+    },
+  });
 
   await prisma.notification.createMany({
     data: [
       {
         userId: normalUser.id,
-        title: 'Đặt vé thành công! ✈️',
-        message: 'Đơn đặt chỗ mã VN839X khứ hồi Hà Nội - TP. HCM đã xác nhận. Chúc bạn có một hành trình bay tuyệt vời!',
-        isRead: true,
-        isActive: true,
-      },
-      {
-        userId: normalUser.id,
-        title: 'Nhắc nhở làm thủ tục trực tuyến',
-        message: 'Chuyến bay VN214 của bạn sẽ khởi hành trong 24h tới. Check-in ngay để nhận thẻ lên tàu bay điện tử!',
+        title: 'Chào mừng bạn đến với SkyJourney ✈️',
+        message: 'Hệ thống đã cập nhật hơn 5.000 chuyến bay mới kết nối Việt Nam, Hàn Quốc, Nhật Bản, Châu Á suốt 7 tháng tới!',
         isRead: false,
         isActive: true,
       },
       {
         userId: normalUser.id,
-        title: 'Hành lý ký gửi đã lên máy bay 🧳',
-        message: 'Kiện hành lý VN-HAN-098214 đã được bốc dỡ an toàn vào khoang hàng máy bay Airbus A321neo.',
-        isRead: false,
-        isActive: true,
-      },
-      {
-        userId: normalUser.id,
-        title: 'Yêu cầu hoàn vé được chấp thuận 💰',
-        message: 'Yêu cầu hoàn vé đơn RFND99 đã được phê duyệt. Số tiền 690.000đ sẽ chuyển về tài khoản của bạn trong 2-3 ngày làm việc.',
-        isRead: false,
-        isActive: true,
-      },
-      {
-        userId: user2.id,
-        title: 'Giữ chỗ đơn đặt vé VJ098M ⏳',
-        message: 'Đơn vé đi TP. HCM đang chờ thanh toán qua PayOS. Vui lòng thanh toán trong vòng 15 phút để đảm bảo giữ ghế.',
-        isRead: false,
-        isActive: true,
-      },
-      {
-        userId: userVIP.id,
-        title: 'Chào mừng Hội viên Bông Sen Vàng Platinum 🌟',
-        message: 'Đơn vé Thương gia VN888VIP tới Incheon (Seoul) đã sẵn sàng. Bạn được quyền sử dụng phòng chờ Lotus Lounge tại Nhà ga T2.',
-        isRead: true,
-        isActive: true,
-      },
-      {
-        userId: adminUser.id,
-        title: 'Cập nhật hệ thống dữ liệu hoàn tất ✅',
-        message: 'Đã hoàn tất seed mở rộng 28 sân bay, 16 biến thể tàu bay hiện đại và hơn 40 chuyến bay thực chiến.',
+        title: 'Tặng bạn mã giảm giá SKY2027 🎁',
+        message: 'Nhận ngay ưu đãi giảm 20% cho chuyến bay tiếp theo của bạn.',
         isRead: false,
         isActive: true,
       },
@@ -1105,35 +888,138 @@ async function main() {
   });
 
   // =====================================================
-  // 13. TỔNG KẾT DỮ LIỆU
+  // 10. ĐƠN ĐẶT VÉ (BOOKINGS) & VÉ ĐIỆN TỬ (TICKETS) MẪU
+  // =====================================================
+  console.log('🎫 Tạo Đơn đặt vé & Vé điện tử (Tickets) mẫu có status cho User...');
+
+  const sampleFlights = await prisma.flight.findMany({
+    where: {
+      departureTime: { gt: new Date() },
+      seats: { some: { isBooked: false } },
+    },
+    take: 2,
+    include: {
+      seats: { where: { isBooked: false }, take: 2 },
+      fareInventories: { take: 1 },
+    },
+  });
+
+  if (sampleFlights.length >= 2) {
+    const flight1 = sampleFlights[0];
+    const flight2 = sampleFlights[1];
+
+    if (flight1.seats.length > 0 && flight2.seats.length > 0) {
+      // Booking 1 cho normalUser
+      const booking1 = await prisma.booking.create({
+        data: {
+          pnrCode: 'VN8892',
+          userId: normalUser.id,
+          subTotal: flight1.basePrice,
+          taxAndFees: 120000,
+          totalAmount: flight1.basePrice + 120000,
+          status: BookingStatus.CONFIRMED,
+          contactName: normalUser.fullName,
+          contactEmail: normalUser.email,
+          contactPhone: normalUser.phone,
+          isActive: true,
+        },
+      });
+
+      await db.ticket.create({
+        data: {
+          ticketNumber: '738-2938401928',
+          bookingId: booking1.id,
+          flightId: flight1.id,
+          flightSeatId: flight1.seats[0].id,
+          fareClassId: flight1.fareInventories[0]?.fareClassId || allFareClasses[0].id,
+          direction: FlightDirection.OUTBOUND,
+          passengerName: 'TRAN THI BICH NGOC',
+          passengerType: PassengerType.ADULT,
+          identityNumber: '079195012345',
+          ticketPrice: flight1.basePrice,
+          isCheckedIn: false,
+          boardingTime: new Date(flight1.departureTime.getTime() - 40 * 60 * 1000),
+          qrCodeData: `TICKET|738-2938401928|VN8892|${flight1.flightNumber}|TRAN THI BICH NGOC`,
+          status: TicketStatus.CONFIRMED,
+          isActive: true,
+        },
+      });
+
+      await prisma.flightSeat.update({
+        where: { id: flight1.seats[0].id },
+        data: { isBooked: true },
+      });
+
+      // Booking 2 cho normalUser
+      const booking2 = await prisma.booking.create({
+        data: {
+          pnrCode: 'VN9941',
+          userId: normalUser.id,
+          subTotal: flight2.basePrice,
+          taxAndFees: 120000,
+          totalAmount: flight2.basePrice + 120000,
+          status: BookingStatus.CONFIRMED,
+          contactName: normalUser.fullName,
+          contactEmail: normalUser.email,
+          contactPhone: normalUser.phone,
+          isActive: true,
+        },
+      });
+
+      await db.ticket.create({
+        data: {
+          ticketNumber: '738-4829104921',
+          bookingId: booking2.id,
+          flightId: flight2.id,
+          flightSeatId: flight2.seats[0].id,
+          fareClassId: flight2.fareInventories[0]?.fareClassId || allFareClasses[0].id,
+          direction: FlightDirection.OUTBOUND,
+          passengerName: 'TRAN THI BICH NGOC',
+          passengerType: PassengerType.ADULT,
+          identityNumber: '079195012345',
+          ticketPrice: flight2.basePrice,
+          isCheckedIn: false,
+          boardingTime: new Date(flight2.departureTime.getTime() - 40 * 60 * 1000),
+          qrCodeData: `TICKET|738-4829104921|VN9941|${flight2.flightNumber}|TRAN THI BICH NGOC`,
+          status: TicketStatus.CONFIRMED,
+          isActive: true,
+        },
+      });
+
+      await prisma.flightSeat.update({
+        where: { id: flight2.seats[0].id },
+        data: { isBooked: true },
+      });
+    }
+  }
+
+  // =====================================================
+  // 11. TỔNG KẾT
   // =====================================================
   console.log('\n🎉 ================== TỔNG KẾT SEED THÀNH CÔNG ==================');
-  console.log(`   👥 Users:               ${await prisma.user.count()}`);
-  console.log(`   📇 SavedPassengers:     ${await prisma.savedPassenger.count()}`);
-  console.log(`   🏢 Airlines:            ${await prisma.airline.count()}`);
-  console.log(`   🛫 Airports:            ${await prisma.airport.count()}`);
-  console.log(`   🛩️  Aircrafts:           ${await prisma.aircraft.count()}`);
-  console.log(`   📐 SeatTemplates:       ${await prisma.seatTemplate.count()}`);
-  console.log(`   🎫 FareClasses:         ${await prisma.fareClass.count()}`);
-  console.log(`   🍽️  AncillaryServices:   ${await prisma.ancillaryService.count()}`);
-  console.log(`   ✈️  Flights:             ${await prisma.flight.count()}`);
-  console.log(`   📦 FareInventories:     ${await prisma.flightFareInventory.count()}`);
-  console.log(`   💺 FlightSeats:         ${await prisma.flightSeat.count()}`);
-  console.log(`   🎟️  Promotions:          ${await prisma.promotion.count()}`);
-  console.log(`   💳 Bookings:            ${await prisma.booking.count()}`);
-  console.log(`   📄 Tickets:             ${await prisma.ticket.count()}`);
-  console.log(`   🧳 LuggageCheckIns:     ${await prisma.luggageCheckIn.count()}`);
-  console.log(`   💵 Payments:            ${await prisma.payment.count()}`);
-  console.log(`   🔔 Notifications:       ${await prisma.notification.count()}`);
+  console.log(`   Users:               ${await prisma.user.count()}`);
+  console.log(`   Bookings:            ${await prisma.booking.count()}`);
+  console.log(`   Tickets:             ${await prisma.ticket.count()}`);
+  console.log(`   Airlines:            ${await prisma.airline.count()} (VN, VJ, QH, VU, KE, OZ, JL, NH, SQ, CX, BR, QR, EK, TG)`);
+  console.log(`   Airports:            ${await prisma.airport.count()} (Việt Nam, Hàn Quốc, Nhật Bản, Quốc tế)`);
+  console.log(`   Aircrafts:           ${await prisma.aircraft.count()}`);
+  console.log(`   SeatTemplates:       ${await prisma.seatTemplate.count()} (Sơ đồ ghế chuẩn 19 tàu bay)`);
+  console.log(`   FareClasses:         ${await prisma.fareClass.count()}`);
+  console.log(`   Flights:             ${await prisma.flight.count()} (Lịch bay 7 tháng tới)`);
+  console.log(`   FareInventories:     ${await prisma.flightFareInventory.count()}`);
+  console.log(`   FlightSeats:         ${await prisma.flightSeat.count()}`);
+  console.log(`   Destinations:        ${await db.destination?.count() || 0}`);
+  console.log(`   FlightReviews:       ${await db.flightReview?.count() || 0}`);
+  console.log(`   PriceAlerts:         ${await db.priceAlert?.count() || 0}`);
+  console.log(`   FavoriteFlights:     ${await db.favoriteFlight?.count() || 0}`);
   console.log('=================================================================\n');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Lỗi seed:', e);
+    console.error(' Lỗi seed:', e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
   });
-
