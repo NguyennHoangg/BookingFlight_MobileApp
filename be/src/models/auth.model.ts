@@ -38,6 +38,8 @@ const registerUser = async ({
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
+      gender: null,
+      dateOfBirth: null
     };
     // bắt đầu transaction
     await query("BEGIN");
@@ -114,7 +116,7 @@ const findByIdentifier = async (identifierValue: string, type: string) => {
 
 const checkUserExitsByPhone = async (phone: string) => {
   try {
-    const text = `SELECT id, email, "fullName", phone, "avatarUrl", "loyaltyPoints", "membershipTier", role, "isActive", "createdAt", "updatedAt" FROM "User" WHERE phone = $1`;
+    const text = `SELECT id, "passwordHash", role, "fullName", phone, email FROM "User" WHERE phone = $1`;
     const values = [phone];
     const result = await query(text, values);
     return result.rows[0];

@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import redisCache from "../redis/redisCache";
 import { AppError } from "../errors/AppError";
+import { User } from "../types/User";
 
 const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -25,13 +26,13 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
 
   // 2. Xác thực JWT
   const secretKey = process.env.ACCESS_TOKEN_SECRET || "secretKey";
-  jwt.verify(token, secretKey, (err: any, user: any) => {
+  jwt.verify(token, secretKey, (err: any, decoded: any) => {
     if (err) {
       return next(new AppError("Token không hợp lệ hoặc đã hết hạn", 403));
     }
-    req.user = user;
+    req.user = decoded;
     next();
   });
 };
 
-export default authMiddleware;
+export { authMiddleware };

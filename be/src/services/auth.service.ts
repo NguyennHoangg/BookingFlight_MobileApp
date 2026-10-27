@@ -17,23 +17,27 @@ const loginService = async (identifierValue: string, password: string) => {
       //check tài khoản user có tồn tại hay không
       existingUser = await authModel.checkUserExits(identifierValue);
       if (!existingUser) {
-        throw new AppError("Account is not exits", 404);
+        throw new AppError("Tài khoản không tồn tại!", 404);
       }
     } else {
       type = "phone";
       existingUser = await authModel.checkUserExitsByPhone(identifierValue);
       if (!existingUser) {
-        throw new AppError("Account is not exits", 404);
+        throw new AppError("Tài khoản không tồn tại!", 404);
       }
     }
 
     //check mật khẩu có đúng không
+    if (!password || !existingUser?.passwordHash) {
+      throw new AppError("Mật khẩu không chính xác!", 401);
+    }
+
     const validPassword = await bcrypt.compare(
       password,
       existingUser.passwordHash,
     );
     if (!validPassword) {
-      throw new AppError("Invalid password", 401);
+      throw new AppError("Mật khẩu không chính xác!", 401);
     }
 
     //lấy thông tin user
@@ -47,7 +51,7 @@ const loginService = async (identifierValue: string, password: string) => {
       throw error;
     }
     console.error("Error in loginService:", error);
-    throw new AppError("Internal Server Error", 500);
+    throw new AppError("Lỗi hệ thống máy chủ", 500);
   }
 };
 
@@ -63,10 +67,16 @@ const registerService = async ({
   phone: string;
 }) => {
   try {
-    //check tài khoản user có tồn tại hay không
+    //check tài khoản email có tồn tại hay không
     const existingUser = await authModel.checkUserExits(email);
     if (existingUser) {
-      throw new AppError("Account is already exits", 400);
+      throw new AppError("Email này đã được sử dụng!", 400);
+    }
+
+    //check số điện thoại có tồn tại hay không
+    const existingPhone = await authModel.checkUserExitsByPhone(phone);
+    if (existingPhone) {
+      throw new AppError("Số điện thoại này đã được sử dụng!", 400);
     }
 
     //hash mật khẩu

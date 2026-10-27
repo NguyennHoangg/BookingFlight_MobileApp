@@ -1,39 +1,38 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Image, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-
-// MOCK DATA: Khớp với bảng User trong Schema Prisma
-export const MOCK_USER_PROFILE = {
-  id: 'usr-1234-abcd',
-  fullName: 'Nguyễn Minh Anh',
-  email: 'minhanh.nguyen@example.com',
-  phone: '+84 912 345 678',
-  avatarUrl: 'https://i.pravatar.cc/150?img=32',
-  loyaltyPoints: 1450,
-  membershipTier: 'GOLD', // MEMBER, SILVER, GOLD, PLATINUM
-  dateOfBirth: '1995-08-15',
-  gender: 'Nữ',
-  memberCode: 'SJ-88921',
-  upcomingFlights: 2,
-};
+import { useAuth } from '../../hook/useAuth';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [user, setUser] = useState(MOCK_USER_PROFILE);
+  const { user, profile, logout } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Tự động tải thông tin mới nhất khi vào trang
+  useEffect(() => {
+    profile();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await profile();
+    setRefreshing(false);
+  };
 
   const handleLogout = () => {
     Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', [
       { text: 'Hủy', style: 'cancel' },
-      { text: 'Đăng xuất', style: 'destructive' },
+      { text: 'Đăng xuất', style: 'destructive', onPress: () => logout() },
     ]);
   };
 
   return (
     <SafeAreaView className="flex-1 bg-[#F9FAFB]">
-      {/* HEADER TÀI KHOẢN */}
+      {/* Header trang tai khoan */}
       <View className="flex-row items-center justify-between px-5 pt-4 pb-4 bg-white">
         <View className="flex-row items-center">
           <Ionicons name="airplane" size={24} color="#2563EB" />
@@ -49,22 +48,27 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        
-        {/* THÔNG TIN USER CARD */}
+      <ScrollView 
+        className="flex-1" 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563EB']} />
+        }
+      >
+        {/* The thong tin nguoi dung */}
         <View className="mx-5 mt-4 bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
           <View className="flex-row items-center mb-5">
             <Image 
-              source={{ uri: user.avatarUrl }} 
+              source={{ uri: user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80' }} 
               className="w-16 h-16 rounded-full"
             />
             <View className="ml-4 flex-1">
-              <Text className="text-lg font-bold text-gray-900">{user.fullName}</Text>
-              <Text className="text-sm text-gray-500 mt-0.5">{user.email}</Text>
-              <Text className="text-sm text-gray-500">{user.phone}</Text>
+              <Text className="text-lg font-bold text-gray-900">{user?.fullName}</Text>
+              <Text className="text-sm text-gray-500 mt-0.5">{user?.email}</Text>
+              <Text className="text-sm text-gray-500">{user?.phone}</Text>
               <View className="bg-blue-50 px-3 py-1 rounded-full self-start mt-2 flex-row items-center border border-blue-100">
                 <Ionicons name="star" size={12} color="#2563EB" />
-                <Text className="text-xs font-semibold text-blue-600 ml-1">Hội viên Sky{user.membershipTier}</Text>
+                <Text className="text-xs font-semibold text-blue-600 ml-1">Hội viên Sky {user?.membershipTier}</Text>
               </View>
             </View>
           </View>
@@ -75,7 +79,7 @@ export default function ProfileScreen() {
                 <Ionicons name="airplane-outline" size={20} color="#2563EB" />
               </View>
               <View className="ml-3">
-                <Text className="text-base font-bold text-gray-900">{user.upcomingFlights}</Text>
+                <Text className="text-base font-bold text-gray-900">{user?.upcomingFlights ?? 0} </Text>
                 <Text className="text-[10px] text-gray-500 font-medium">Chuyến bay sắp tới</Text>
               </View>
             </View>
@@ -85,14 +89,14 @@ export default function ProfileScreen() {
                 <MaterialCommunityIcons name="ticket-percent-outline" size={20} color="#10B981" />
               </View>
               <View className="ml-3">
-                <Text className="text-base font-bold text-gray-900">{user.loyaltyPoints.toLocaleString('vi-VN')}</Text>
+                <Text className="text-base font-bold text-gray-900">{user?.loyaltyPoints?.toLocaleString('vi-VN')}</Text>
                 <Text className="text-[10px] text-gray-500 font-medium">Dặm thưởng Sky</Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* QUẢN LÝ CHUYẾN BAY & CÁ NHÂN */}
+        {/* Quan ly chuyen bay va ca nhan */}
         <Text className="mx-5 mt-6 mb-3 text-xs font-bold text-gray-500 uppercase">Quản lý chuyến bay & cá nhân</Text>
         <View className="mx-5 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           
@@ -121,10 +125,23 @@ export default function ProfileScreen() {
             </View>
             <View className="flex-row items-center">
               <View className="bg-blue-50 px-2 py-0.5 rounded mr-2">
-                <Text className="text-[10px] font-bold text-blue-600">{user.upcomingFlights} vé sắp tới</Text>
+                <Text className="text-[10px] font-bold text-blue-600">{user?.upcomingFlights ?? 0} vé sắp tới</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            className="flex-row items-center justify-between p-4 border-b border-gray-50"
+            onPress={() => navigation.navigate('ChangePassword')}
+          >
+            <View className="flex-row items-center">
+              <View className="w-8 h-8 rounded-full bg-blue-50 items-center justify-center">
+                <Ionicons name="key-outline" size={16} color="#2563EB" />
+              </View>
+              <Text className="ml-3 font-semibold text-gray-800 text-sm">Đổi mật khẩu</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
           </TouchableOpacity>
 
           <TouchableOpacity className="flex-row items-center justify-between p-4">
@@ -138,7 +155,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* TÙY CHỌN & HỖ TRỢ */}
+        {/* Tuy chon va ho tro */}
         <Text className="mx-5 mt-6 mb-3 text-xs font-bold text-gray-500 uppercase">Tùy chọn & Hỗ trợ</Text>
         <View className="mx-5 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6">
           <TouchableOpacity className="flex-row items-center justify-between p-4 border-b border-gray-50">
@@ -162,7 +179,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* LOGOUT BUTTON */}
+        {/* Nut dang xuat */}
         <TouchableOpacity 
           className="mx-5 bg-red-50 border border-red-100 rounded-2xl p-4 flex-row items-center justify-center mb-6"
           onPress={handleLogout}

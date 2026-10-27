@@ -1,21 +1,30 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React, { useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'; 
-import type { MainTabParamList, RootStackParamList } from './types';
+import type { RootStackParamList, MainTabParamList } from './types';
+import { useAppDispatch, useAppSelector } from '../store';
+import { initAuth } from '../store/slices/authSlice';
 
+// Tab screens
 import HomeScreen from '../screens/home/Home'; 
-import SearchScreen from '../screens/search/Search';         // Thêm màn hình Tìm vé
-import FavoritesScreen from '../screens/favorites/Favorites'; // Thêm màn hình Yêu thích
+import SearchScreen from '../screens/search/Search';
+import FavoritesScreen from '../screens/favorites/Favorites';
 import MyTicketsScreen from '../screens/tickets/MyTickets';
 import ProfileScreen from '../screens/profile/Profile';
+
+// Stack screens
+import LoginScreen from '../screens/auth/Login';
+import RegisterScreen from '../screens/auth/Register';
+import FlightDetailScreen from '../screens/flight/FlightDetail';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import ChangePasswordScreen from '../screens/profile/ChangePasswordScreen';
 
-const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
-function MainTabs() {
+function BottomTabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -42,13 +51,13 @@ function MainTabs() {
           height: 65,
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
-          borderTopColor: '#F3F4F6'
+          borderTopColor: '#F3F4F6',
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
           marginTop: -5,
-        }
+        },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Trang chủ' }} />
@@ -61,12 +70,39 @@ function MainTabs() {
 }
 
 export default function RootNavigator() {
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    dispatch(initAuth());
+  }, [dispatch]);
+
+  // Trong khi đang đọc token từ AsyncStorage thì hiển thị loading
+  if (!isInitialized) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' }}>
+        <ActivityIndicator size="large" color="#2563EB" />
+      </View>
+    );
+  }
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {isAuthenticated ? (
+        // Đã đăng nhập: Chỉ hiển thị các màn hình chính (MainTabs, FlightDetail, EditProfile)
+        <>
+          <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
+          <Stack.Screen name="FlightDetail" component={FlightDetailScreen} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+        </>
+      ) : (
+        // Chưa đăng nhập: Mở Login trước, có thể chuyển sang Register
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+        </>
+      )}
+    </Stack.Navigator>
   );
 }

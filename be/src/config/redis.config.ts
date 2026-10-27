@@ -11,13 +11,13 @@ const createClient = redis.createClient({
       ? process.env.REDIS_URL_DEV
       : process.env.REDIS_URL_PROD,
   socket: {
-    // Khi đang chạy mà đứt kết nối -> đợi 60s rồi tự động kết nối lại
-    reconnectStrategy: () => {
-      console.log("[Redis] Kết nối bị ngắt, sẽ thử kết nối lại sau 60s...");
-      return 60000;
+    reconnectStrategy: (retries) => {
+      if (retries > 1) {
+        return false;
+      }
+      return 3000;
     },
-    connectTimeout: 10000,
-    keepAlive: true,
+    connectTimeout: 3000,
   },
 });
 

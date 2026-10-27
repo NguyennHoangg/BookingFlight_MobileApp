@@ -1,16 +1,20 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, Modal, FlatList } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, Image, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
-// 1. MOCK DATA SÂN BAY
-export const MOCK_AIRPORTS = [
-  { code: 'SGN', city: 'TP. Hồ Chí Minh', name: 'Sân bay Tân Sơn Nhất' },
-  { code: 'HAN', city: 'Hà Nội', name: 'Sân bay Nội Bài' },
-  { code: 'DAD', city: 'Đà Nẵng', name: 'Sân bay Quốc tế Đà Nẵng' },
-  { code: 'CXR', city: 'Nha Trang', name: 'Sân bay Cam Ranh' },
-  { code: 'PQC', city: 'Phú Quốc', name: 'Sân bay Phú Quốc' },
-];
+import FlightDealCard from '../../components/flight/FlightDealCard';
+import AirportSelectModal, { Airport } from '../../components/flight/AirportSelectModal';
+import OptionSelectModal from '../../components/common/OptionSelectModal';
+import PassengerSelectModal, {
+  PassengerCounts,
+  formatPassengerSummary,
+} from '../../components/flight/PassengerSelectModal';
+import useAirport from '../../hook/useAirport';
+
+
 
 // 2. MOCK DATA CHUYẾN BAY
 const MOCK_FLIGHT_DEALS = [
@@ -52,24 +56,52 @@ const MOCK_FLIGHT_DEALS = [
   }
 ];
 
+const SEAT_CLASS_OPTIONS = ['Phổ thông', 'Thương gia'];
+
 export default function Home() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const [tripType, setTripType] = useState<'mot-chieu' | 'khu-hoi'>('khu-hoi');
-  const [departure, setDeparture] = useState(MOCK_AIRPORTS[0]);
-  const [arrival, setArrival] = useState(MOCK_AIRPORTS[1]);
+  const [departure, setDeparture] = useState<Airport>();
+  const [arrival, setArrival] = useState<Airport>();
 
-  const [departDateRaw, setDepartDateRaw] = useState('2026-10-24');
-  const [returnDateRaw, setReturnDateRaw] = useState('2026-10-27');
+  const getFormattedDate = (offsetDays: number = 0) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
-  const [passengers, setPassengers] = useState('1 Người lớn');
+  const [departDateRaw, setDepartDateRaw] = useState(getFormattedDate(0));
+  const [returnDateRaw, setReturnDateRaw] = useState(getFormattedDate(3));
+
+  const [passengerCounts, setPassengerCounts] = useState<PassengerCounts>({
+    adults: 1,
+    children: 0,
+    infants: 0,
+  });
   const [seatClass, setSeatClass] = useState('Phổ thông');
 
   const departInputRef = useRef<HTMLInputElement>(null);
   const returnInputRef = useRef<HTMLInputElement>(null);
+  const [showDepartPicker, setShowDepartPicker] = useState(false);
+  const [showReturnPicker, setShowReturnPicker] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectingType, setSelectingType] = useState<'departure' | 'arrival'>('departure');
+  const [passengerModalVisible, setPassengerModalVisible] = useState(false);
+  const [seatClassModalVisible, setSeatClassModalVisible] = useState(false);
+
+  const {airports, loading} = useAirport();
+
+  useEffect(() => {
+    if(airports.length > 0) {
+      setDeparture(airports[0]);
+      setArrival(airports[1]);
+    }
+  }, [airports]);
 
   // Đổi chiều sân bay
   const handleSwapAirports = () => {
@@ -83,10 +115,19 @@ export default function Home() {
     setModalVisible(true);
   };
 
-  const handleSelectAirport = (airport: typeof MOCK_AIRPORTS[0]) => {
+  // Chọn sân bay
+  const handleSelectAirport = (airport: Airport) => {
     if (selectingType === 'departure') {
+      // Nếu chọn trùng điểm đến hiện tại thì hoán đổi
+      if (arrival && airport.code === arrival.code) {
+        setArrival(departure);
+      }
       setDeparture(airport);
     } else {
+      // Nếu chọn trùng điểm đi hiện tại thì hoán đổi
+      if (departure && airport.code === departure.code) {
+        setDeparture(arrival);
+      }
       setArrival(airport);
     }
     setModalVisible(false);
@@ -103,15 +144,16 @@ export default function Home() {
   };
 
   const handleSearch = () => {
-    navigation.navigate('Search' as never, {
+    navigation.navigate('Search', {
       tripType,
       departure,
       arrival,
       departDate: departDateRaw,
       returnDate: tripType === 'khu-hoi' ? returnDateRaw : null,
-      passengers,
+      passengers: passengerCounts,
+      passengerSummary: formatPassengerSummary(passengerCounts),
       seatClass,
-    } as never);
+    });
   };
 
   const openPicker = (ref: React.RefObject<HTMLInputElement | null>) => {
@@ -124,8 +166,27 @@ export default function Home() {
     }
   };
 
+  const handleOpenDepartPicker = () => {
+    if (Platform.OS === 'web') {
+      openPicker(departInputRef);
+    } else {
+      setShowDepartPicker(true);
+    }
+  };
+
+  const handleOpenReturnPicker = () => {
+    if (tripType === 'mot-chieu') {
+      setTripType('khu-hoi');
+    }
+    if (Platform.OS === 'web') {
+      openPicker(returnInputRef);
+    } else {
+      setShowReturnPicker(true);
+    }
+  };
+
   return (
-    <View className="flex-1 bg-[#F9FAFB]">
+    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
@@ -138,7 +199,7 @@ export default function Home() {
               className="w-12 h-12 rounded-full mr-3"
             />
             <View>
-              <Text className="text-gray-800 text-lg font-bold">Chào buổi sáng! 👋</Text>
+              <Text className="text-gray-800 text-lg font-bold">Chào buổi sáng!</Text>
               <Text className="text-gray-500 text-sm">Khám phá thế giới cùng SkyJourney</Text>
             </View>
           </View>
@@ -152,18 +213,59 @@ export default function Home() {
         <View className="mx-5 mt-4 bg-white rounded-3xl p-4 shadow-sm border border-gray-100">
           
           {/* Trip Type Toggle */}
-          <View className="flex-row bg-gray-100 rounded-xl p-1 mb-4">
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: '#F3F4F6',
+              borderRadius: 12,
+              padding: 4,
+              marginBottom: 16,
+            }}
+          >
             <TouchableOpacity
-              className={`flex-1 py-2.5 items-center rounded-lg ${tripType === 'mot-chieu' ? 'bg-[#2563EB] shadow-sm' : ''}`}
+              activeOpacity={0.8}
               onPress={() => setTripType('mot-chieu')}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 8,
+                backgroundColor: tripType === 'mot-chieu' ? '#2563EB' : 'transparent',
+              }}
             >
-              <Text className={`font-semibold ${tripType === 'mot-chieu' ? 'text-white' : 'text-gray-500'}`}>Một chiều</Text>
+              <Text
+                style={{
+                  fontWeight: '600',
+                  fontSize: 14,
+                  color: tripType === 'mot-chieu' ? '#FFFFFF' : '#4B5563',
+                }}
+              >
+                Một chiều
+              </Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              className={`flex-1 py-2.5 items-center rounded-lg ${tripType === 'khu-hoi' ? 'bg-[#2563EB] shadow-sm' : ''}`}
+              activeOpacity={0.8}
               onPress={() => setTripType('khu-hoi')}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 8,
+                backgroundColor: tripType === 'khu-hoi' ? '#2563EB' : 'transparent',
+              }}
             >
-              <Text className={`font-semibold ${tripType === 'khu-hoi' ? 'text-white' : 'text-gray-500'}`}>Khứ hồi</Text>
+              <Text
+                style={{
+                  fontWeight: '600',
+                  fontSize: 14,
+                  color: tripType === 'khu-hoi' ? '#FFFFFF' : '#4B5563',
+                }}
+              >
+                Khứ hồi
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -176,11 +278,19 @@ export default function Home() {
               className="flex-row items-center pb-3 border-b border-gray-100"
             >
               <MaterialCommunityIcons name="airplane-takeoff" size={24} color="#3B82F6" />
-              <View className="flex-1 ml-2">
-                <Text className="text-gray-800 font-bold text-base">{departure.city}</Text>
-                <Text className="text-gray-500 text-xs">{departure.name}</Text>
-              </View>
-              <Text className="text-blue-600 font-bold text-lg">{departure.code}</Text>
+              {departure ? (
+                <>
+                  <View className="flex-1 ml-2">
+                    <Text className="text-gray-800 font-bold text-base">{departure.city}</Text>
+                    <Text className="text-gray-500 text-xs" numberOfLines={1}>{departure.name}</Text>
+                  </View>
+                  <Text className="text-blue-600 font-bold text-lg mr-8">{departure.code}</Text>
+                </>
+              ) : (
+                <View className="flex-1 ml-2">
+                  <Text className="text-gray-400 font-medium text-base">Chọn điểm đi</Text>
+                </View>
+              )}
             </TouchableOpacity>
 
             {/* Điểm đến */}
@@ -190,11 +300,19 @@ export default function Home() {
               className="flex-row items-center pt-3"
             >
               <MaterialCommunityIcons name="airplane-landing" size={24} color="#3B82F6" />
-              <View className="flex-1 ml-2">
-                <Text className="text-gray-800 font-bold text-base">{arrival.city}</Text>
-                <Text className="text-gray-500 text-xs">{arrival.name}</Text>
-              </View>
-              <Text className="text-blue-600 font-bold text-lg">{arrival.code}</Text>
+              {arrival ? (
+                <>
+                  <View className="flex-1 ml-2">
+                    <Text className="text-gray-800 font-bold text-base">{arrival.city}</Text>
+                    <Text className="text-gray-500 text-xs" numberOfLines={1}>{arrival.name}</Text>
+                  </View>
+                  <Text className="text-blue-600 font-bold text-lg mr-8">{arrival.code}</Text>
+                </>
+              ) : (
+                <View className="flex-1 ml-2">
+                  <Text className="text-gray-400 font-medium text-base">Chọn điểm đến</Text>
+                </View>
+              )}
             </TouchableOpacity>
 
             {/* Swap Button */}
@@ -211,7 +329,7 @@ export default function Home() {
             {/* Ô Ngày đi */}
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => openPicker(departInputRef)}
+              onPress={handleOpenDepartPicker}
               className="flex-1 border border-gray-200 rounded-2xl p-3 mr-2 flex-row items-center relative overflow-hidden"
             >
               <Ionicons name="calendar-outline" size={20} color="#6B7280" />
@@ -220,48 +338,69 @@ export default function Home() {
                 <Text className="text-gray-800 font-bold">{formatDateVN(departDateRaw)}</Text>
               </View>
 
-              <input
-                ref={departInputRef}
-                type="date"
-                value={departDateRaw}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setDepartDateRaw(e.target.value);
-                    if (tripType === 'khu-hoi' && e.target.value > returnDateRaw) {
-                      setReturnDateRaw(e.target.value);
+              {Platform.OS === 'web' && (
+                <input
+                  ref={departInputRef}
+                  type="date"
+                  value={departDateRaw}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setDepartDateRaw(e.target.value);
+                      if (tripType === 'khu-hoi' && e.target.value > returnDateRaw) {
+                        setReturnDateRaw(e.target.value);
+                      }
                     }
-                  }
-                }}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  pointerEvents: 'none',
-                }}
-              />
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0,
+                    pointerEvents: 'none',
+                  }}
+                />
+              )}
             </TouchableOpacity>
 
             {/* Ô Ngày về */}
             <TouchableOpacity
               activeOpacity={0.7}
-              disabled={tripType === 'mot-chieu'}
-              onPress={() => openPicker(returnInputRef)}
-              className={`flex-1 border border-gray-200 rounded-2xl p-3 ml-2 flex-row items-center relative overflow-hidden ${
-                tripType === 'mot-chieu' ? 'opacity-40 bg-gray-50' : ''
-              }`}
+              onPress={handleOpenReturnPicker}
+              style={{
+                flex: 1,
+                borderWidth: 1,
+                borderColor: '#E5E7EB',
+                borderRadius: 16,
+                padding: 12,
+                marginLeft: 8,
+                flexDirection: 'row',
+                alignItems: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+                opacity: tripType === 'mot-chieu' ? 0.45 : 1,
+                backgroundColor: tripType === 'mot-chieu' ? '#F9FAFB' : '#FFFFFF',
+              }}
             >
-              <Ionicons name="calendar-outline" size={20} color="#6B7280" />
-              <View className="ml-2">
+              <Ionicons
+                name="calendar-outline"
+                size={20}
+                color={tripType === 'mot-chieu' ? '#9CA3AF' : '#6B7280'}
+              />
+              <View style={{ marginLeft: 8 }}>
                 <Text className="text-gray-400 text-xs uppercase text-[10px] font-bold">Ngày về</Text>
-                <Text className="text-gray-800 font-bold">
+                <Text
+                  style={{
+                    color: tripType === 'mot-chieu' ? '#9CA3AF' : '#1F2937',
+                    fontWeight: '700',
+                  }}
+                >
                   {tripType === 'mot-chieu' ? '—' : formatDateVN(returnDateRaw)}
                 </Text>
               </View>
 
-              {tripType === 'khu-hoi' && (
+              {Platform.OS === 'web' && (
                 <input
                   ref={returnInputRef}
                   type="date"
@@ -286,42 +425,71 @@ export default function Home() {
             </TouchableOpacity>
           </View>
 
+          {/* Native Date Pickers */}
+          {showDepartPicker && (
+            <DateTimePicker
+              value={new Date(departDateRaw)}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              minimumDate={new Date()}
+              onChange={(event, selectedDate) => {
+                setShowDepartPicker(Platform.OS === 'ios');
+                if (selectedDate && event.type !== 'dismissed') {
+                  const yyyy = selectedDate.getFullYear();
+                  const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                  const dd = String(selectedDate.getDate()).padStart(2, '0');
+                  const formatted = `${yyyy}-${mm}-${dd}`;
+                  setDepartDateRaw(formatted);
+                  if (tripType === 'khu-hoi' && formatted > returnDateRaw) {
+                    setReturnDateRaw(formatted);
+                  }
+                }
+              }}
+            />
+          )}
+
+          {showReturnPicker && (
+            <DateTimePicker
+              value={new Date(returnDateRaw)}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              minimumDate={new Date(departDateRaw)}
+              onChange={(event, selectedDate) => {
+                setShowReturnPicker(Platform.OS === 'ios');
+                if (selectedDate && event.type !== 'dismissed') {
+                  const yyyy = selectedDate.getFullYear();
+                  const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                  const dd = String(selectedDate.getDate()).padStart(2, '0');
+                  setReturnDateRaw(`${yyyy}-${mm}-${dd}`);
+                }
+              }}
+            />
+          )}
+
           {/* Passengers & Class */}
           <View className="flex-row justify-between mb-4">
             {/* Ô 1: CHỌN SỐ LƯỢNG HÀNH KHÁCH */}
-            <View className="flex-1 border border-gray-200 rounded-2xl p-3 mr-2 flex-row items-center justify-between relative overflow-hidden">
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setPassengerModalVisible(true)}
+              className="flex-1 border border-gray-200 rounded-2xl p-3 mr-2 flex-row items-center justify-between"
+            >
               <View className="flex-row items-center flex-1">
                 <Ionicons name="people-outline" size={20} color="#6B7280" />
                 <View className="ml-2">
                   <Text className="text-gray-400 text-xs uppercase text-[10px] font-bold">Hành khách</Text>
-                  <Text className="text-gray-800 font-bold" numberOfLines={1}>{passengers}</Text>
+                  <Text className="text-gray-800 font-bold" numberOfLines={1}>{formatPassengerSummary(passengerCounts)}</Text>
                 </View>
               </View>
               <Ionicons name="chevron-down" size={16} color="#6B7280" />
-
-              <select
-                value={passengers}
-                onChange={(e) => setPassengers(e.target.value)}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  cursor: 'pointer',
-                  zIndex: 10,
-                }}
-              >
-                <option value="1 Người lớn">1 Người lớn</option>
-                <option value="2 Người lớn">2 Người lớn</option>
-                <option value="3 Người lớn">3 Người lớn</option>
-                <option value="4 Người lớn">4 Người lớn</option>
-              </select>
-            </View>
+            </TouchableOpacity>
 
             {/* Ô 2: CHỌN HẠNG GHẾ */}
-            <View className="flex-1 border border-gray-200 rounded-2xl p-3 ml-2 flex-row items-center justify-between relative overflow-hidden">
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setSeatClassModalVisible(true)}
+              className="flex-1 border border-gray-200 rounded-2xl p-3 ml-2 flex-row items-center justify-between"
+            >
               <View className="flex-row items-center flex-1">
                 <MaterialCommunityIcons name="seat-passenger" size={20} color="#6B7280" />
                 <View className="ml-2">
@@ -330,25 +498,7 @@ export default function Home() {
                 </View>
               </View>
               <Ionicons name="chevron-down" size={16} color="#6B7280" />
-
-              <select
-                value={seatClass}
-                onChange={(e) => setSeatClass(e.target.value)}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  cursor: 'pointer',
-                  zIndex: 10,
-                }}
-              >
-                <option value="Phổ thông">Phổ thông</option>
-                <option value="Thương gia">Thương gia</option>
-              </select>
-            </View>
+            </TouchableOpacity>
           </View>
 
           {/* NÚT TÌM CHUYẾN BAY */}
@@ -385,110 +535,42 @@ export default function Home() {
         {/* RENDER MOCK DATA */}
         <View className="px-5 pb-10">
           {MOCK_FLIGHT_DEALS.map((flight) => (
-            <TouchableOpacity 
-              key={flight.id} 
-              activeOpacity={0.7}
-              onPress={() => navigation.navigate('FlightDetail' as never, { flightId: flight.id } as never)}
-              className="bg-white rounded-2xl p-4 mt-4 shadow-sm border border-gray-100"
-            >
-              <View className="flex-row justify-between items-center mb-4">
-                <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
-                  <View className="w-6 h-6 rounded-full bg-blue-100 items-center justify-center">
-                    <Ionicons
-                      name="airplane"
-                      size={16}
-                      color="#3B82F6"
-                      style={{ transform: [{ rotate: '270deg' }] }}
-                    />
-                  </View>
-                  <Text className="text-gray-800 font-semibold text-sm ml-2">{flight.airlineName}</Text>
-                  <Text className="text-gray-400 text-xs ml-2">{flight.flightCode}</Text>
-                </View>
-                <View className={`px-2 py-1 rounded text-xs font-bold ${flight.tagColor}`}>
-                  <Text className={flight.tagColor + ' text-xs font-semibold'}>{flight.tag}</Text>
-                </View>
-              </View>
-
-              <View className="flex-row justify-between items-center">
-                <View className="items-start">
-                  <Text className="text-xl font-black text-gray-900">{flight.departureTime}</Text>
-                  <Text className="text-gray-500 text-xs mt-1">{flight.departureAirport} • {flight.departureCity}</Text>
-                </View>
-
-                <View className="flex-1 px-4 items-center justify-center">
-                  <Text className="text-gray-400 text-[10px] mb-1">{flight.duration} • {flight.type}</Text>
-                  <View className="flex-row items-center w-full">
-                    <View className="h-[1px] bg-gray-300 flex-1" />
-                    <Ionicons name="airplane" size={16} color="#3B82F6" className="mx-1" />
-                    <View className="h-[1px] bg-gray-300 flex-1" />
-                  </View>
-                </View>
-
-                <View className="items-end">
-                  <Text className="text-xl font-black text-gray-900">{flight.arrivalTime}</Text>
-                  <Text className="text-gray-500 text-xs mt-1">{flight.arrivalAirport} • {flight.arrivalCity}</Text>
-                </View>
-              </View>
-
-              <View className="flex-row justify-between items-center mt-5 pt-3 border-t border-gray-100">
-                <View className="flex-row items-center">
-                  <Ionicons name="checkmark-circle-outline" size={16} color="#10B981" />
-                  <Text className="text-gray-500 text-xs ml-1">{flight.baggageInfo}</Text>
-                </View>
-                <View className="flex-row items-baseline">
-                  <Text className="text-gray-500 text-xs mr-1">giá từ</Text>
-                  <Text className="text-blue-600 text-xl font-black">{flight.price} ₫</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+            <FlightDealCard
+              key={flight.id}
+              flight={flight}
+              onPress={() => navigation.navigate('FlightDetail', { flightId: flight.id })}
+            />
           ))}
         </View>
       </ScrollView>
 
       {/* MODAL CHỌN SÂN BAY */}
-      <Modal
+      <AirportSelectModal
         visible={modalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '70%' }}>
-            <View className="flex-row justify-between items-center pb-3 border-b border-gray-100">
-              <Text className="text-lg font-bold text-gray-800">
-                {selectingType === 'departure' ? 'Chọn điểm khởi hành' : 'Chọn điểm đến'}
-              </Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#4B5563" />
-              </TouchableOpacity>
-            </View>
+        title={selectingType === 'departure' ? 'Chọn điểm khởi hành' : 'Chọn điểm đến'}
+        airports={airports}
+        excludeCode={selectingType === 'departure' ? arrival?.code : departure?.code}
+        onSelect={handleSelectAirport}
+        onClose={() => setModalVisible(false)}
+      />
 
-            <FlatList
-              data={MOCK_AIRPORTS.filter((airport) =>
-                selectingType === 'departure'
-                  ? airport.code !== arrival.code
-                  : airport.code !== departure.code
-              )}
-              keyExtractor={(item) => item.code}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => handleSelectAirport(item)}
-                  className="flex-row items-center justify-between py-3.5 border-b border-gray-50"
-                >
-                  <View>
-                    <Text className="font-bold text-base text-gray-800">{item.city}</Text>
-                    <Text className="text-xs text-gray-500 mt-0.5">{item.name}</Text>
-                  </View>
-                  <View className="bg-blue-50 px-3 py-1 rounded-lg">
-                    <Text className="font-bold text-blue-600">{item.code}</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
-    </View>
+      {/* MODAL CHỌN HÀNH KHÁCH */}
+      <PassengerSelectModal
+        visible={passengerModalVisible}
+        value={passengerCounts}
+        onApply={setPassengerCounts}
+        onClose={() => setPassengerModalVisible(false)}
+      />
+
+      {/* MODAL CHỌN HẠNG GHẾ */}
+      <OptionSelectModal
+        visible={seatClassModalVisible}
+        title="Chọn hạng ghế"
+        options={SEAT_CLASS_OPTIONS}
+        selectedOption={seatClass}
+        onSelect={setSeatClass}
+        onClose={() => setSeatClassModalVisible(false)}
+      />
+    </SafeAreaView>
   );
 }

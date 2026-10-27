@@ -10,6 +10,8 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$
 const phoneRegex = /^(\+84|84|0)([3|5|7|8|9])[0-9]{8}$/;
 //Regex email
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+const identifierValueRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^(\+84|84|0)([3|5|7|8|9])[0-9]{8}$/;
 //Regex fullName
 const fullNameRegex = /^[A-Za-zÀ-ỹ]+(?:\s+[A-Za-zÀ-ỹ]+)*$/;
 
@@ -25,12 +27,20 @@ export const validateRegister = [
     body('email').matches(emailRegex).withMessage('Email không hợp lệ!'),
     body('password').matches(passwordRegex).withMessage('Mật khẩu không hợp lệ! (ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt)'),
     body('fullName').matches(fullNameRegex).withMessage('Họ tên không hợp lệ!'),
-    body('phone').matches(phoneRegex).withMessage('Số điện thoại không hợp lệ!'),
+    body('phone')
+        .custom((value, { req }) => {
+            const phoneVal = value || req.body.phoneNumber;
+            if (!phoneVal || !phoneRegex.test(phoneVal)) {
+                throw new Error('Số điện thoại không hợp lệ!');
+            }
+            req.body.phone = phoneVal;
+            return true;
+        }),
     validateMiddleware
 ]
 
 export const validateLogin = [
-    body('identifierValue').matches(emailRegex).withMessage('Email không hợp lệ!'),
+    body('identifierValue').matches(identifierValueRegex).withMessage('Email hoặc số điện thoại không hợp lệ!'),
     body('password').matches(passwordRegex).withMessage('Mật khẩu không hợp lệ! (ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt)'),
     validateMiddleware
 ]

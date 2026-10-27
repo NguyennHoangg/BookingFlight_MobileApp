@@ -11,6 +11,9 @@ export interface User{
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
+    gender: boolean | null;
+    dateOfBirth: Date | null;
+    upcomingFlights?: number;
 };
 
 export interface LoginRequest {
