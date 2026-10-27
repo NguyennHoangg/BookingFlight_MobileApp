@@ -18,6 +18,7 @@ import type { RootStackParamList } from "../../navigation/types";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { useAuth } from "../../hook/useAuth";
+import { useKeyboardScrollView } from "../../hook/useKeyboardScrollView";
 
 type LoginNavigationProp = NativeStackNavigationProp<RootStackParamList, "Login">;
 
@@ -26,6 +27,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const navigation = useNavigation<LoginNavigationProp>();
   const { login, loading, error, token } = useAuth();
+  const { scrollViewRef, keyboardPadding, scrollToInput } = useKeyboardScrollView();
 
   const handleLogin = async () => {
     if (!identifier.trim() || !password.trim()) {
@@ -60,7 +62,11 @@ export default function LoginScreen() {
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-white">
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
+        <ScrollView
+          ref={scrollViewRef}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: keyboardPadding }}
+        >
           <View className="flex items-center justify-center mt-20">
               <Image source={require("../../../assets/Splash_icon.png")} className="w-20 h-20" />
           </View>

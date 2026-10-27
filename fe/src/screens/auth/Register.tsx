@@ -17,13 +17,21 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/types";
 import Svg, { Path } from "react-native-svg";
+import { useAuth } from "../../hook/useAuth";
+import { useKeyboardScrollView } from "../../hook/useKeyboardScrollView";
 
 type RegisterNavigationProp = NativeStackNavigationProp<RootStackParamList, "Register">;
 
 export default function RegisterScreen() {
   const navigation = useNavigation<RegisterNavigationProp>();
+  const { register } = useAuth();
   const insets = useSafeAreaInsets();
-  const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Custom hook dùng lại cho nhiều màn hình
+  const { scrollViewRef, keyboardPadding, scrollToInput } = useKeyboardScrollView({
+    initialPadding: 40,
+    extraPadding: 60,
+  });
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,35 +43,7 @@ export default function RegisterScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
 
-  // Dynamic bottom padding so bottom fields can scroll fully above the keyboard
-  const [keyboardPadding, setKeyboardPadding] = useState(40);
-
-  useEffect(() => {
-    const showSub = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      (e) => {
-        setKeyboardPadding(e.endCoordinates.height + 60);
-      }
-    );
-    const hideSub = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => {
-        setKeyboardPadding(40);
-      }
-    );
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
-
-  const scrollToInput = (yOffset: number) => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ y: yOffset, animated: true });
-    }, 150);
-  };
-
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!fullName.trim() || !email.trim() || !phone.trim() || !password.trim()) {
       Alert.alert("Thông báo", "Vui lòng điền đầy đủ tất cả các trường!");
       return;
@@ -72,14 +52,33 @@ export default function RegisterScreen() {
       Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp!");
       return;
     }
+    if (password.length < 8) {
+      Alert.alert("Lỗi", "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
+      return;
+    }
     if (!agreeTerms) {
       Alert.alert("Thông báo", "Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật!");
       return;
     }
-    console.log("Register data:", { fullName, email, phone, password });
-    Alert.alert("Thành công", "Đăng ký tài khoản thành công!", [
-      { text: "Đăng nhập", onPress: () => navigation.navigate("Login") },
-    ]);
+    
+    try {
+      const result = await register({
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        password: password,
+      });
+
+      if (result.success) {
+        Alert.alert("Thành công", "Đăng ký tài khoản thành công! Vui lòng đăng nhập để tiếp tục.", [
+          { text: "Đăng nhập ngay", onPress: () => navigation.navigate("Login") },
+        ]);
+      } else {
+        Alert.alert("Đăng ký thất bại", result.message || "Đã có lỗi xảy ra vui lòng thử lại!");
+      }
+    } catch (error: any) {
+      Alert.alert("Lỗi", error?.message || "Đã có lỗi xảy ra vui lòng thử lại!");
+    }
   };
 
   const handleGoBack = () => {

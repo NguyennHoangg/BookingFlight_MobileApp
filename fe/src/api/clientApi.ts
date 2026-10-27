@@ -27,6 +27,16 @@ clientApi.interceptors.response.use(
 
 clientApi.interceptors.request.use(
   (request) => {
+    try {
+      // Lazy import or store getState to avoid circular dependencies
+      const { store } = require("../store");
+      const token = store.getState()?.auth?.token;
+      if (token && request.headers) {
+        request.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (e) {
+      // ignore
+    }
     return request;
   },
   (error) => {

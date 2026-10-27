@@ -1,7 +1,13 @@
-import AuthAPI, { LoginRequest } from "../api/auth.api";
-import { useState } from "react";
+import { LoginRequest, RegisterRequest } from "../api/auth.api";
+import { useAppDispatch, useAppSelector } from "../store";
+import { loginUser, logoutUser, User, registerUser } from "../store/slices/authSlice";
 
 export interface LoginResult {
+  success: boolean;
+  message?: string;
+}
+
+export interface RegisterResult {
   success: boolean;
   message?: string;
 }
@@ -9,51 +15,56 @@ export interface LoginResult {
 interface UseAuth {
   login: (request: LoginRequest) => Promise<LoginResult>;
   logout: () => Promise<void>;
+  register: (request: RegisterRequest) => Promise<RegisterResult>;
   loading: boolean;
   error: string | null;
   token: string | null;
+  user: User | null;
+  isAuthenticated: boolean;
 }
 
 export const useAuth = (): UseAuth => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const { user, token, loading, error, isAuthenticated } = useAppSelector(
+    (state) => state.auth
+  );
 
   const login = async (request: LoginRequest): Promise<LoginResult> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await AuthAPI.login(request);
-      const accessToken = response.data?.token?.accessToken || null;
-      setToken(accessToken);
+    const resultAction = await dispatch(loginUser(request));
+    if (loginUser.fulfilled.match(resultAction)) {
       return { success: true };
-    } catch (err: any) {
-      const errorMsg =
-        err.response?.data?.message ||
-        err.message ||
-        "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng!";
-      setError(errorMsg);
-      return { success: false, message: errorMsg };
-    } finally {
-      setLoading(false);
+    } else {
+      return {
+        success: false,
+        message: (resultAction.payload as string) || "Đăng nhập thất bại!",
+      };
+    }
+  };
+
+  const register = async (request: RegisterRequest): Promise<RegisterResult> => {
+    const resultAction = await dispatch(registerUser(request));
+    if (registerUser.fulfilled.match(resultAction)) {
+      return { success: true };
+    } else {
+      return {
+        success: false,
+        message: (resultAction.payload as string) || "Đăng ký thất bại!",
+      };
     }
   };
 
   const logout = async () => {
-    try {
-      await AuthAPI.logout();
-    } catch (err) {
-      console.log("Logout error", err);
-    } finally {
-      setToken(null);
-    }
+    await dispatch(logoutUser());
   };
 
   return {
     login,
     logout,
+    register,
     loading,
     error,
     token,
+    user,
+    isAuthenticated,
   };
 };
