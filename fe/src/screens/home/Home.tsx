@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, Platform } from 'react-native';
+import { navigate } from "../../navigation/routes";
+import React, { useState, useRef } from 'react';
+import { View, Text, ScrollView, Image, TouchableOpacity, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import FlightDealCard from '../../components/flight/FlightDealCard';
@@ -59,11 +60,10 @@ const MOCK_FLIGHT_DEALS = [
 const SEAT_CLASS_OPTIONS = ['Phổ thông', 'Thương gia'];
 
 export default function Home() {
-  const navigation = useNavigation<any>();
 
   const [tripType, setTripType] = useState<'mot-chieu' | 'khu-hoi'>('khu-hoi');
-  const [departure, setDeparture] = useState<Airport>();
-  const [arrival, setArrival] = useState<Airport>();
+  const [selectedDeparture, setDeparture] = useState<Airport>();
+  const [selectedArrival, setArrival] = useState<Airport>();
 
   const getFormattedDate = (offsetDays: number = 0) => {
     const d = new Date();
@@ -94,14 +94,10 @@ export default function Home() {
   const [passengerModalVisible, setPassengerModalVisible] = useState(false);
   const [seatClassModalVisible, setSeatClassModalVisible] = useState(false);
 
-  const {airports, loading} = useAirport();
+  const {airports} = useAirport();
 
-  useEffect(() => {
-    if(airports.length > 0) {
-      setDeparture(airports[0]);
-      setArrival(airports[1]);
-    }
-  }, [airports]);
+  const departure = selectedDeparture ?? airports[0];
+  const arrival = selectedArrival ?? airports[1];
 
   // Đổi chiều sân bay
   const handleSwapAirports = () => {
@@ -144,7 +140,15 @@ export default function Home() {
   };
 
   const handleSearch = () => {
-    navigation.navigate('Search', {
+    if (!departure || !arrival || departure.code === arrival.code) {
+      Alert.alert('Thông báo', 'Vui lòng chọn điểm đi và điểm đến khác nhau.');
+      return;
+    }
+    if (tripType === 'khu-hoi' && returnDateRaw < departDateRaw) {
+      Alert.alert('Thông báo', 'Ngày về phải từ ngày đi trở đi.');
+      return;
+    }
+    navigate('SearchFlightResult', {
       tripType,
       departure,
       arrival,
@@ -536,7 +540,7 @@ export default function Home() {
             <FlightDealCard
               key={flight.id}
               flight={flight}
-              onPress={() => navigation.navigate('FlightDetail', { flightId: flight.id })}
+              onPress={() => navigate('FlightDetail', { flightId: flight.id })}
             />
           ))}
         </View>

@@ -151,15 +151,12 @@ export const updateUserProfile = createAsyncThunk<
 });
 
 // Async thunk: Logout
-export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
-  try {
-    await AuthAPI.logout();
-  } catch (err) {
-    console.log("Logout thunk error:", err);
-  } finally {
-    // Xoá token khỏi AsyncStorage
-    await storage.clearAuth();
-  }
+export const logoutUser = createAsyncThunk("auth/logoutUser", async (_, { dispatch }) => {
+  // Start with the current credentials, then remove access to protected screens.
+  const request = AuthAPI.logout().catch(err => console.log("Logout thunk error:", err));
+  dispatch(resetAuth());
+  await storage.clearAuth();
+  await request;
 });
 
 const authSlice = createSlice({
@@ -250,16 +247,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = (action.payload as string) || "Đăng ký thất bại!";
       });
-
-    // logoutUser
-    builder.addCase(logoutUser.fulfilled, (state) => {
-      state.user = null;
-      state.token = null;
-      state.refreshToken = null;
-      state.isAuthenticated = false;
-      state.loading = false;
-      state.error = null;
-    });
 
     // fetchProfile
     builder.addCase(fetchProfile.fulfilled, (state, action) => {

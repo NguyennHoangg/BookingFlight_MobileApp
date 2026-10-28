@@ -30,7 +30,7 @@ const prisma = new PrismaClient();
 const db = prisma as any;
 
 async function main() {
-  console.log('🚀 Bắt đầu seed dữ liệu mở rộng cho 7 tháng tới...');
+  console.log('🚀 Bắt đầu seed dữ liệu mở rộng cho 8 tháng tới (mỗi ngày 10 chuyến HAN <-> SGN)...');
 
   // =====================================================
   // 1. DỌN DẸP DỮ LIỆU CŨ (CLEANUP)
@@ -510,19 +510,36 @@ async function main() {
   });
 
   // =====================================================
-  // 6. TẠO LỊCH BAY TRONG 7 THÁNG TIẾP THEO (~210 NGÀY)
+  // 6. TẠO LỊCH BAY TRONG 8 THÁNG (245 NGÀY - MỞ RỘNG THÊM 1 THÁNG, 10 CHUYẾN/NGÀY)
   // =====================================================
-  console.log('📅 Tạo lịch bay dày đặc suốt 7 tháng tiếp theo (~210 ngày, mỗi ngày đầy đủ các hãng)...');
+  console.log('📅 Tạo lịch bay dày đặc suốt 8 tháng (~245 ngày, 10 chuyến/ngày các hãng và khung giờ)...');
 
   // Các tuyến bay thực tế phong phú
   const routeTemplates = [
-    // --- 1. Nội địa vàng ---
+    // --- 1. Tuyến vàng Hà Nội (HAN) <-> TP. Hồ Chí Minh (SGN) (Mỗi chiều 10 chuyến/ngày) ---
+    // HAN -> SGN (10 chuyến trải đều từ 06:00 đến 20:45)
     { dep: 'HAN', arr: 'SGN', al: 'VN', ac: 'VN-A879', depH: 6, depM: 0, dur: 130, base: 1250000, prefix: 'VN204' },
-    { dep: 'SGN', arr: 'HAN', al: 'VN', ac: 'VN-A868', depH: 14, depM: 30, dur: 130, base: 1290000, prefix: 'VN205' },
     { dep: 'HAN', arr: 'SGN', al: 'VJ', ac: 'VJ-A811', depH: 7, depM: 15, dur: 130, base: 890000, prefix: 'VJ120' },
-    { dep: 'SGN', arr: 'HAN', al: 'VJ', ac: 'VJ-A646', depH: 18, depM: 0, dur: 130, base: 920000, prefix: 'VJ125' },
-    { dep: 'HAN', arr: 'SGN', al: 'QH', ac: 'QH-B789', depH: 9, depM: 30, dur: 130, base: 1100000, prefix: 'QH202' },
-    { dep: 'HAN', arr: 'SGN', al: 'VU', ac: 'VU-A350', depH: 13, depM: 45, dur: 130, base: 799000, prefix: 'VU221' },
+    { dep: 'HAN', arr: 'SGN', al: 'VN', ac: 'VN-A868', depH: 8, depM: 30, dur: 130, base: 1450000, prefix: 'VN208' },
+    { dep: 'HAN', arr: 'SGN', al: 'QH', ac: 'QH-B789', depH: 9, depM: 45, dur: 130, base: 1100000, prefix: 'QH202' },
+    { dep: 'HAN', arr: 'SGN', al: 'VJ', ac: 'VJ-A646', depH: 11, depM: 15, dur: 130, base: 950000, prefix: 'VJ134' },
+    { dep: 'HAN', arr: 'SGN', al: 'VU', ac: 'VU-A350', depH: 13, depM: 0, dur: 130, base: 799000, prefix: 'VU221' },
+    { dep: 'HAN', arr: 'SGN', al: 'VN', ac: 'VN-A879', depH: 14, depM: 30, dur: 130, base: 1350000, prefix: 'VN214' },
+    { dep: 'HAN', arr: 'SGN', al: 'QH', ac: 'QH-A590', depH: 16, depM: 15, dur: 130, base: 1180000, prefix: 'QH216' },
+    { dep: 'HAN', arr: 'SGN', al: 'VJ', ac: 'VJ-A811', depH: 18, depM: 30, dur: 130, base: 1050000, prefix: 'VJ168' },
+    { dep: 'HAN', arr: 'SGN', al: 'VN', ac: 'VN-A868', depH: 20, depM: 45, dur: 130, base: 1280000, prefix: 'VN224' },
+
+    // SGN -> HAN (10 chuyến trải đều từ 06:15 đến 21:30)
+    { dep: 'SGN', arr: 'HAN', al: 'VN', ac: 'VN-A868', depH: 6, depM: 15, dur: 130, base: 1290000, prefix: 'VN205' },
+    { dep: 'SGN', arr: 'HAN', al: 'VJ', ac: 'VJ-A646', depH: 7, depM: 45, dur: 130, base: 890000, prefix: 'VJ125' },
+    { dep: 'SGN', arr: 'HAN', al: 'QH', ac: 'QH-B789', depH: 9, depM: 0, dur: 130, base: 1120000, prefix: 'QH203' },
+    { dep: 'SGN', arr: 'HAN', al: 'VN', ac: 'VN-A879', depH: 10, depM: 30, dur: 130, base: 1390000, prefix: 'VN211' },
+    { dep: 'SGN', arr: 'HAN', al: 'VU', ac: 'VU-A350', depH: 12, depM: 15, dur: 130, base: 810000, prefix: 'VU222' },
+    { dep: 'SGN', arr: 'HAN', al: 'VJ', ac: 'VJ-A811', depH: 14, depM: 0, dur: 130, base: 930000, prefix: 'VJ145' },
+    { dep: 'SGN', arr: 'HAN', al: 'VN', ac: 'VN-A868', depH: 15, depM: 45, dur: 130, base: 1420000, prefix: 'VN219' },
+    { dep: 'SGN', arr: 'HAN', al: 'QH', ac: 'QH-A590', depH: 17, depM: 30, dur: 130, base: 1150000, prefix: 'QH217' },
+    { dep: 'SGN', arr: 'HAN', al: 'VJ', ac: 'VJ-A646', depH: 19, depM: 15, dur: 130, base: 990000, prefix: 'VJ179' },
+    { dep: 'SGN', arr: 'HAN', al: 'VN', ac: 'VN-A879', depH: 21, depM: 30, dur: 130, base: 1310000, prefix: 'VN235' },
 
     // --- 2. Du lịch biển đảo & Miền Trung ---
     { dep: 'SGN', arr: 'DAD', al: 'VN', ac: 'VN-A868', depH: 8, depM: 0, dur: 85, base: 850000, prefix: 'VN112' },
@@ -563,8 +580,8 @@ async function main() {
     { dep: 'HAN', arr: 'CDG', al: 'VN', ac: 'VN-A879', depH: 23, depM: 10, dur: 750, base: 15600000, prefix: 'VN19' },
   ];
 
-  // Sinh lịch bay cho 215 ngày tiếp theo (khoảng hơn 7 tháng)
-  const TOTAL_DAYS = 215;
+  // Sinh lịch bay cho 245 ngày tiếp theo (~8 tháng, thêm 1 tháng so với 7 tháng cũ)
+  const TOTAL_DAYS = 245;
   const flightsToCreate: any[] = [];
 
   const now = new Date();

@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+import { navigate, goBack } from "../../navigation/routes";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -11,11 +12,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../hook/useAuth";
-import type { RootStackParamList } from "../../navigation/types";
 
 // Chuyen doi gia tri gioi tinh giua boolean va chuoi hien thi
 const formatGenderToString = (genderVal: boolean | string | number | null | undefined): string => {
@@ -43,9 +42,8 @@ const formatDateToString = (rawDate: any): string => {
   }
 };
 
-type EditProfileProps = NativeStackScreenProps<RootStackParamList, "EditProfile">;
 
-export default function EditProfileScreen({ navigation }: EditProfileProps) {
+export default function EditProfileScreen() {
   const { user, updateProfile } = useAuth();
 
   // Khoi tao state form tu thong tin user hien tai
@@ -60,16 +58,6 @@ export default function EditProfileScreen({ navigation }: EditProfileProps) {
 
   const dateInputRef = useRef<any>(null);
 
-  // Dong bo thong tin nguoi dung chi khi user ID thay doi (tranh bi de du lieu khi re-render)
-  useEffect(() => {
-    if (user?.id) {
-      setFullName(user.fullName || "");
-      setPhone(user.phone || user.phoneNumber || "");
-      setDateOfBirth(formatDateToString(user.dateOfBirth));
-      setGender(formatGenderToString(user.gender));
-      setAvatarUrl(user.avatarUrl || "");
-    }
-  }, [user?.id]);
 
   // Khoi phuc lai thong tin ban dau
   const handleReset = () => {
@@ -106,7 +94,7 @@ export default function EditProfileScreen({ navigation }: EditProfileProps) {
 
       if (result.success) {
         Alert.alert("Thành công", "Thông tin hồ sơ đã được cập nhật.", [
-          { text: "OK", onPress: () => navigation.goBack() },
+          { text: "OK", onPress: () => goBack() },
         ]);
       } else {
         Alert.alert("Thất bại", result.message || "Cập nhật hồ sơ thất bại.");
@@ -168,7 +156,7 @@ export default function EditProfileScreen({ navigation }: EditProfileProps) {
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 pt-3 pb-3 bg-white border-b border-gray-100">
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => goBack()}
             className="p-2 -ml-2"
           >
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
@@ -207,7 +195,7 @@ export default function EditProfileScreen({ navigation }: EditProfileProps) {
             <View className="bg-blue-50 px-4 py-1.5 rounded-full mt-3 flex-row items-center border border-blue-100">
               <Ionicons name="star" size={14} color="#2563EB" />
               <Text className="text-xs font-semibold text-blue-600 ml-1">
-                Hội viên Sky{user?.membershipTier || "MEMBER"}
+                Hội viên {user?.membershipTier || "MEMBER"}
               </Text>
             </View>
           </View>
@@ -367,7 +355,7 @@ export default function EditProfileScreen({ navigation }: EditProfileProps) {
               Bảo mật tài khoản
             </Text>
             <TouchableOpacity
-              onPress={() => navigation.navigate("ChangePassword")}
+              onPress={() => navigate("ChangePassword")}
               className="flex-row items-center justify-between bg-gray-50 p-4 rounded-2xl border border-gray-100"
             >
               <View className="flex-row items-center">

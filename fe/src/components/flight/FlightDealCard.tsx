@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import RemoteImage from '../common/RemoteImage';
 
 export interface FlightDeal {
   id: string;
@@ -35,13 +36,8 @@ export default function FlightDealCard({ flight, onPress }: FlightDealCardProps)
     >
       <View className="flex-row justify-between items-center mb-4">
         <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
-          <View className="w-6 h-6 rounded-full bg-blue-100 items-center justify-center">
-            <Ionicons
-              name="airplane"
-              size={16}
-              color="#3B82F6"
-              style={{ transform: [{ rotate: '270deg' }] }}
-            />
+          <View className="w-8 h-8 rounded-lg bg-white border border-gray-200/80 items-center justify-center p-1 overflow-hidden">
+            <RemoteImage uri={flight.logoUrl} fallbackIconSize={16} />
           </View>
           <Text className="text-gray-800 font-semibold text-sm ml-2">{flight.airlineName}</Text>
           <Text className="text-gray-400 text-xs ml-2">{flight.flightCode}</Text>

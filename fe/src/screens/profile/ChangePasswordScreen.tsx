@@ -1,3 +1,4 @@
+import { goBack } from "../../navigation/routes";
 import React, { useState } from "react";
 import {
   View,
@@ -10,13 +11,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../../hook/useAuth";
-import type { RootStackParamList } from "../../navigation/types";
 
-type ChangePasswordProps = NativeStackScreenProps<RootStackParamList, "ChangePassword">;
 
-export default function ChangePasswordScreen({ navigation }: ChangePasswordProps) {
+export default function ChangePasswordScreen() {
   const { changePassword } = useAuth();
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -65,7 +63,7 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordProps
 
       if (result.success) {
         Alert.alert("Thành công", result.message || "Đổi mật khẩu thành công.", [
-          { text: "OK", onPress: () => navigation.goBack() },
+          { text: "OK", onPress: () => goBack() },
         ]);
       } else {
         Alert.alert("Thất bại", result.message || "Không thể đổi mật khẩu.");
@@ -83,7 +81,7 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordProps
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 pt-3 pb-3 bg-white border-b border-gray-100">
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => goBack()}
             className="p-2 -ml-2"
           >
             <Ionicons name="arrow-back" size={24} color="#1F2937" />

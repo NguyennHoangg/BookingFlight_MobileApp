@@ -1,14 +1,12 @@
+import { navigate } from "../../navigation/routes";
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../navigation/types';
+
 import { useAuth } from '../../hook/useAuth';
 
 export default function ProfileScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, profile, logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -68,7 +66,7 @@ export default function ProfileScreen() {
               <Text className="text-sm text-gray-500">{user?.phone}</Text>
               <View className="bg-blue-50 px-3 py-1 rounded-full self-start mt-2 flex-row items-center border border-blue-100">
                 <Ionicons name="star" size={12} color="#2563EB" />
-                <Text className="text-xs font-semibold text-blue-600 ml-1">Hội viên Sky {user?.membershipTier}</Text>
+                <Text className="text-xs font-semibold text-blue-600 ml-1">Hội viên {user?.membershipTier}</Text>
               </View>
             </View>
           </View>
@@ -102,7 +100,7 @@ export default function ProfileScreen() {
           
           <TouchableOpacity 
             className="flex-row items-center justify-between p-4 border-b border-gray-50"
-            onPress={() => navigation.navigate('EditProfile')}
+            onPress={() => navigate('EditProfile')}
           >
             <View className="flex-row items-center">
               <View className="w-8 h-8 rounded-full bg-blue-50 items-center justify-center">
@@ -115,7 +113,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity 
             className="flex-row items-center justify-between p-4 border-b border-gray-50"
-            onPress={() => navigation.navigate('MyTickets' as never)}
+            onPress={() => navigate('MyTickets')}
           >
             <View className="flex-row items-center">
               <View className="w-8 h-8 rounded-full bg-blue-50 items-center justify-center">
@@ -133,7 +131,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity 
             className="flex-row items-center justify-between p-4 border-b border-gray-50"
-            onPress={() => navigation.navigate('ChangePassword')}
+            onPress={() => navigate('ChangePassword')}
           >
             <View className="flex-row items-center">
               <View className="w-8 h-8 rounded-full bg-blue-50 items-center justify-center">
