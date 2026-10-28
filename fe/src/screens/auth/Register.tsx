@@ -1,3 +1,4 @@
+import AppHeader from '../../components/common/AppHeader';
 import { navigate, goBack } from "../../navigation/routes";
 import { router } from "expo-router";
 import React, { useState, useRef, useEffect } from "react";
@@ -88,7 +89,8 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={["left", "right", "bottom"]}>
+      <AppHeader title="Tạo tài khoản" back onBack={handleGoBack} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
@@ -102,25 +104,6 @@ export default function RegisterScreen() {
           keyboardDismissMode="on-drag"
           className="flex-1"
         >
-          {/* Top navigation bar */}
-          <View className="px-6 pt-3 flex-row items-center">
-            <TouchableOpacity
-              onPress={handleGoBack}
-              className="w-10 h-10 items-center justify-center rounded-full bg-gray-50 border border-gray-200"
-              activeOpacity={0.7}
-            >
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M19 12H5M12 19l-7-7 7-7"
-                  stroke="#131B2E"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-            </TouchableOpacity>
-          </View>
-
           {/* Logo & Header */}
           <View className="items-center justify-center mt-2 px-6">
             <Image

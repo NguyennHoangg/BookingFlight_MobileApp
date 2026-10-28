@@ -1,3 +1,4 @@
+import AppHeader from '../../components/common/AppHeader';
 import { navigate, goBack } from "../../navigation/routes";
 import React, { useState, useRef } from "react";
 import {
@@ -147,27 +148,12 @@ export default function EditProfileScreen() {
     }
   };
 
-  const defaultAvatar =
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+  const defaultAvatar = require("../../../assets/default_avt.jpg");
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={["left", "right"]}>
       <View className="flex-1">
-        {/* Header */}
-        <View className="flex-row items-center justify-between px-5 pt-3 pb-3 bg-white border-b border-gray-100">
-          <TouchableOpacity
-            onPress={() => goBack()}
-            className="p-2 -ml-2"
-          >
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
-          </TouchableOpacity>
-          <Text className="text-lg font-bold text-gray-900">
-            Chỉnh sửa hồ sơ
-          </Text>
-          <TouchableOpacity onPress={handleReset}>
-            <Text className="text-sm font-medium text-gray-500">Đặt lại</Text>
-          </TouchableOpacity>
-        </View>
+        <AppHeader title="Chỉnh sửa hồ sơ" back action={{ label: "Đặt lại", onPress: handleReset }} />
 
         <ScrollView
           className="flex-1 px-5"
@@ -178,7 +164,7 @@ export default function EditProfileScreen() {
           <View className="items-center mt-6 mb-6">
             <View className="relative">
               <Image
-                source={{ uri: avatarUrl || defaultAvatar }}
+                source={avatarUrl ? { uri: avatarUrl } : defaultAvatar}
                 className="w-24 h-24 rounded-full border-4 border-white shadow-sm"
               />
               <TouchableOpacity

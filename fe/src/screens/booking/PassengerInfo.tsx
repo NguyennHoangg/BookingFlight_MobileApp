@@ -1,3 +1,4 @@
+import AppHeader from '../../components/common/AppHeader';
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -54,13 +55,16 @@ export default function PassengerInfo() {
   const params = useMemo(() => parsePassengerInfo(readRouteData(data)), [data]);
   if (!params)
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white p-6">
+      <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1 bg-white">
+        <AppHeader title="Thông tin hành khách" back />
+        <View className="flex-1 items-center justify-center p-6">
         <Text className="text-booking-ink">Thông tin gói vé không hợp lệ.</Text>
         <Pressable onPress={goBack} className="mt-4 p-3">
           <Text className="font-semibold text-booking-primary">
             Quay lại chọn gói
           </Text>
         </Pressable>
+        </View>
       </SafeAreaView>
     );
   return <PassengerForm key={data} params={params} />;
@@ -201,30 +205,16 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
     if (!Object.keys(validation).length) setSeatPicker(true);
   };
   return (
-    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
+    <SafeAreaView edges={["left", "right"]} className="flex-1 bg-white">
+      <AppHeader
+        title="Thông tin hành khách"
+        back
+        action={{ label: "Trợ giúp thông tin hành khách", icon: "help-circle-outline", onPress: () => setSheet("help") }}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full max-w-[540px] flex-1 self-center bg-booking-background"
       >
-        <View className="flex-row items-center bg-white px-4 py-4">
-          <Pressable
-            onPress={goBack}
-            accessibilityLabel="Quay lại"
-            hitSlop={12}
-          >
-            <Ionicons name="arrow-back" size={22} color="#12263F" />
-          </Pressable>
-          <Text className="flex-1 text-center text-base font-bold text-booking-ink">
-            Thông tin hành khách
-          </Text>
-          <Pressable
-            onPress={() => setSheet("help")}
-            accessibilityLabel="Trợ giúp thông tin hành khách"
-            hitSlop={12}
-          >
-            <Ionicons name="help-circle-outline" size={21} color="#536F97" />
-          </Pressable>
-        </View>
         <BookingProgress active={seatPicker ? 1 : sheet === "review" ? 3 : 0} />
         <ScrollView
           className="flex-1"
@@ -345,7 +335,7 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
               <Pressable
                 onPress={() => setSheet("phone")}
                 accessibilityLabel="Chọn mã quốc gia điện thoại"
-                className="absolute left-2 top-10 rounded-lg bg-booking-soft px-2 py-1"
+                className="absolute left-2 top-10 rounded-lg bg-booking-soft px-2 py-1 justify-center items-center"
               >
                 <Text className="text-xs text-[#536F97]">{dialCode} ⌄</Text>
               </Pressable>

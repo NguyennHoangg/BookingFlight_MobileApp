@@ -176,6 +176,7 @@ model Airline {
   flights           Flight[]
   ancillaryServices AncillaryService[]
   flightReviews     FlightReview[]
+  taxAndFees        TaxAndFee[]
 }
 
 // Bảng 5: Đội tàu bay
@@ -527,4 +528,18 @@ model Destination {
   description String
   isPopular   Boolean  @default(true)
   createdAt   DateTime @default(now())
+}
+
+// Bảng 25: Thuế và phụ phí theo hãng hàng không
+model TaxAndFee {
+  id             String  @id @default(uuid())
+  airline_id     String?
+  admin_fee      BigInt?
+  airport_fee    BigInt?
+  security_fee   BigInt?
+  fuel_surcharge BigInt?
+  vat_percent    BigInt?
+  currency       String?
+
+  airline        Airline? @relation(fields: [airline_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

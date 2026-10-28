@@ -1,3 +1,4 @@
+import AppHeader from '../../components/common/AppHeader';
 import { goBack } from "../../navigation/routes";
 import React, { useState } from "react";
 import {
@@ -76,19 +77,9 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={["left", "right"]}>
       <View className="flex-1">
-        {/* Header */}
-        <View className="flex-row items-center justify-between px-5 pt-3 pb-3 bg-white border-b border-gray-100">
-          <TouchableOpacity
-            onPress={() => goBack()}
-            className="p-2 -ml-2"
-          >
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
-          </TouchableOpacity>
-          <Text className="text-lg font-bold text-gray-900">Đổi mật khẩu</Text>
-          <View className="w-8" />
-        </View>
+        <AppHeader title="Đổi mật khẩu" back />
 
         <ScrollView
           className="flex-1 px-5"

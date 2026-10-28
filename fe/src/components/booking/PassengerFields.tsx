@@ -33,7 +33,7 @@ export function PassengerField({
         {icon && (
           <View
             pointerEvents="none"
-            className="absolute bottom-0 right-3 top-0 justify-center"
+            className="absolute bottom-0 right-3 top-0 justify-center items-center "
           >
             <Ionicons name={icon} size={18} color="#718099" />
           </View>

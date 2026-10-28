@@ -1,3 +1,4 @@
+import AppHeader from '../../components/common/AppHeader';
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -35,7 +36,9 @@ export default function FareSelection() {
   );
   if (!params)
     return (
-      <SafeAreaView className="flex-1 min-h-[260px] items-center justify-center p-6">
+      <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1 bg-white">
+        <AppHeader title="Chọn gói vé" back />
+        <View className="flex-1 min-h-[260px] items-center justify-center p-6">
         <Text className="text-booking-ink text-[20px] font-extrabold text-center">
           Thông tin chuyến bay không hợp lệ.
         </Text>
@@ -45,6 +48,7 @@ export default function FareSelection() {
         >
           <Text className="text-white font-bold">Tìm chuyến bay</Text>
         </Pressable>
+        </View>
       </SafeAreaView>
     );
   return <FareSelectionScreen key={data ?? flightId} params={params} />;
@@ -99,34 +103,14 @@ function FareSelectionScreen({ params }: { params: FlightDetailParams }) {
   };
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
+    <SafeAreaView edges={["left", "right"]} className="flex-1 bg-white">
+      <AppHeader
+        title="Chọn gói vé"
+        subtitle="Chọn quyền lợi phù hợp cho hành trình"
+        back
+        action={{ label: "Trợ giúp chọn gói vé", icon: "help-circle-outline", onPress: () => setSheet("help") }}
+      />
       <View className="flex-1 w-full max-w-[540px] self-center bg-booking-background">
-        <View className="flex-row items-center px-[13px] pt-[10px] pb-[14px] bg-white">
-          <Pressable
-            onPress={goBack}
-            accessibilityLabel="Quay lại"
-            hitSlop={12}
-            className="p-[5px]"
-          >
-            <Ionicons name="arrow-back" size={24} color={c.ink} />
-          </Pressable>
-          <View className="flex-1 items-center">
-            <Text className="text-booking-ink text-[20px] font-extrabold text-center">
-              Chọn gói vé
-            </Text>
-            <Text className="text-[10px] text-[#536F97] mt-[3px]">
-              Chọn quyền lợi phù hợp cho hành trình
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => setSheet("help")}
-            accessibilityLabel="Trợ giúp chọn gói vé"
-            hitSlop={12}
-            className="p-[5px]"
-          >
-            <Ionicons name="help-circle-outline" size={23} color="#536F97" />
-          </Pressable>
-        </View>
         <View className="bg-white px-[15px] pt-3 pb-[13px] border-t-[1px] border-b-[1px] border-[#F0F2F8]">
           <View className="flex-row items-center gap-[6px]">
             <View className="w-[22px] h-[22px] rounded-[11px] bg-booking-primary items-center justify-center">

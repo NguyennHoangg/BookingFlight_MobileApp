@@ -1,6 +1,6 @@
 import { navigate } from "../../navigation/routes";
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -84,26 +84,7 @@ export default function FavoritesScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={["top"]}>
-      {/* HEADER: App Logo & Notification */}
-      <View className="flex-row items-center justify-between px-5 pt-3 pb-3 bg-white border-b border-gray-100">
-        <View className="flex-row items-center">
-          <Image
-            source={require("../../../assets/Splash_icon.png")}
-            className="w-10 h-10 rounded-xl"
-            resizeMode="contain"
-          />
-          <Text className="text-xl font-black text-[#2563EB] ml-2.5 tracking-tight">
-            SkyJourney
-          </Text>
-        </View>
-        <TouchableOpacity
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center border border-gray-100"
-          activeOpacity={0.7}
-        >
-          <Ionicons name="notifications-outline" size={20} color="#374151" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={["left", "right"]}>
 
       <ScrollView
         className="flex-1 px-5 pt-4"

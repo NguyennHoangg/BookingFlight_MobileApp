@@ -17,6 +17,7 @@ const paths = {
   TicketDetail: "/TicketDetail",
   EditProfile: "/EditProfile",
   ChangePassword: "/ChangePassword",
+  Notifications: "/Notifications",
 } as const;
 
 // URL parameters must be strings on native and web. A single encoder keeps objects

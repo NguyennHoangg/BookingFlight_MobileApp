@@ -1,3 +1,4 @@
+import AppHeader from '../../components/common/AppHeader';
 import { shadows } from "../../styles/shadows";
 import { navigate, goBack, readRouteData } from "../../navigation/routes";
 import { useLocalSearchParams } from "expo-router";
@@ -328,52 +329,27 @@ export default function SearchFlightResultScreen() {
     currentStep === "depart" ? selectedDepartFlight : selectedReturnFlight;
 
   if (!searchParams) return (
-    <SafeAreaView className="flex-1 items-center justify-center bg-white">
+    <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1 bg-white">
+      <AppHeader title="Kết quả chuyến bay" back />
+      <View className="flex-1 items-center justify-center">
       <Text>Thông tin tìm kiếm không hợp lệ.</Text>
       <TouchableOpacity onPress={goBack}><Text className="text-blue-600 p-4">Quay lại tìm chuyến bay</Text></TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC]">
-      {/* 1. HEADER CHUẨN */}
-      <View className="flex-row items-center justify-between px-4 py-2 bg-white border-b border-gray-100">
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => {
-            if (currentStep === "return" && isRoundTrip) {
-              changeStep("depart");
-            } else {
-              goBack();
-            }
-          }}
-          className="w-10 h-10 items-center justify-center rounded-full"
-        >
-          <Ionicons name="arrow-back" size={24} color="#1E293B" />
-        </TouchableOpacity>
-
-        <View className="items-center">
-          <Text className="text-base font-bold text-gray-900">
-            {isRoundTrip
-              ? currentStep === "return"
-                ? "Chọn chuyến về"
-                : "Chọn chuyến đi"
-              : "Kết quả chuyến bay"}
-          </Text>
-          <Text className="text-[11px] text-gray-500 font-medium mt-0.5">
-            {currentDepAirport?.city} ({currentDepAirport?.code}) →{" "}
-            {currentArrAirport?.city} ({currentArrAirport?.code})
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => setFilterModalVisible(true)}
-          className="w-10 h-10 items-center justify-center rounded-full"
-        >
-          <Ionicons name="options-outline" size={22} color="#1E293B" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView className="flex-1 bg-[#F8FAFC]" edges={["left", "right", "bottom"]}>
+      <AppHeader
+        title={isRoundTrip ? currentStep === "return" ? "Chọn chuyến về" : "Chọn chuyến đi" : "Kết quả chuyến bay"}
+        subtitle={`${currentDepAirport?.city} (${currentDepAirport?.code}) → ${currentArrAirport?.city} (${currentArrAirport?.code})`}
+        back
+        onBack={() => {
+          if (currentStep === "return" && isRoundTrip) changeStep("depart");
+          else goBack();
+        }}
+        action={{ label: "Lọc chuyến bay", icon: "options-outline", onPress: () => setFilterModalVisible(true) }}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

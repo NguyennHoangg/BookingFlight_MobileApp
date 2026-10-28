@@ -1,6 +1,6 @@
 import { navigate } from "../../navigation/routes";
 import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -190,29 +190,11 @@ export default function Home() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={['left', 'right']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
       >
-        {/* HEADER */}
-        <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
-          <View className="flex-row items-center">
-            <Image
-              source={{ uri: 'https://i.pravatar.cc/150?img=32' }}
-              className="w-12 h-12 rounded-full mr-3"
-            />
-            <View>
-              <Text className="text-gray-800 text-lg font-bold">Chào buổi sáng!</Text>
-              <Text className="text-gray-500 text-sm">Khám phá thế giới cùng SkyJourney</Text>
-            </View>
-          </View>
-          <TouchableOpacity className="relative bg-white p-2 rounded-full border border-gray-100 shadow-sm">
-            <Ionicons name="notifications-outline" size={24} color="#4B5563" />
-            <View className="absolute top-2 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
-          </TouchableOpacity>
-        </View>
-
         {/* SEARCH FLIGHT CARD */}
         <View className="mx-5 mt-4 bg-white rounded-3xl p-4 shadow-sm border border-gray-100">
           
