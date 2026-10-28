@@ -1,6 +1,6 @@
 import "../../global.css";
-import React, { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import FlightLoadingScreen, { FLIGHT_INTRO_DURATION } from "../components/common/FlightLoadingScreen";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Provider } from "react-redux";
@@ -11,15 +11,19 @@ export const unstable_settings = { anchor: "(tabs)" };
 
 function Routes() {
   const dispatch = useAppDispatch();
+  const [introFinished, setIntroFinished] = useState(false);
   const { isAuthenticated, isInitialized } = useAppSelector(
     (state) => state.auth,
   );
   useEffect(() => {
     void dispatch(initAuth());
+    // Let the startup plane complete a pass even when local auth loads instantly.
+    const introTimer = setTimeout(() => setIntroFinished(true), FLIGHT_INTRO_DURATION + 200);
+    return () => clearTimeout(introTimer);
   }, [dispatch]);
-  if (!isInitialized)
+  if (!isInitialized || !introFinished)
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><ActivityIndicator size="large" color="#2563EB" /></View>
+      <FlightLoadingScreen />
     );
   return (
     <Stack screenOptions={{ headerShown: false }}>
