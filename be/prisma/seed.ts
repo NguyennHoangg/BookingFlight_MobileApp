@@ -273,21 +273,21 @@ async function main() {
 
   const airlinesRaw = [
     // 4 Hãng nội địa
-    { code: 'VN', name: 'Vietnam Airlines', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietnam-Airlines-VNA.png' },
-    { code: 'VJ', name: 'VietJet Air', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietjet-Air.png' },
-    { code: 'QH', name: 'Bamboo Airways', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Bamboo-Airways.png' },
-    { code: 'VU', name: 'Vietravel Airlines', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-Vietravel-Airlines.png' },
+    { id: 'f68864f1-c83a-467a-950f-f869743a5538', code: 'VN', name: 'Vietnam Airlines', logoUrl: 'https://upload.wikimedia.org/wikipedia/vi/b/bc/Vietnam_Airlines_logo.svg', isActive: true },
+    { id: '60cf8028-ece6-4858-9aea-f9bdabf01cb1', code: 'VJ', name: 'VietJet Air', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/19/VietJet_Air_logo.svg', isActive: true },
+    { id: '10ba2626-c2f2-4a46-a66b-0dd1ad352af0', code: 'QH', name: 'Bamboo Airways', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Bamboo_Airways_Logo.svg', isActive: true },
+    { id: '914725f9-8e6b-4f79-b29a-56bd63795f40', code: 'VU', name: 'Vietravel Airlines', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/archive/e/ee/20221103004411%21Vietravel_Airlines_Logo.png', isActive: true },
     // 10 Hãng quốc tế thêm mới
-    { code: 'KE', name: 'Korean Air', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/05/Logo-Korean-Air.png' },
-    { code: 'OZ', name: 'Asiana Airlines', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Asiana_Airlines_logo.svg/1200px-Asiana_Airlines_logo.svg.png' },
-    { code: 'JL', name: 'Japan Airlines', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Japan_Airlines_logo_%282011%29.svg/1200px-Japan_Airlines_logo_%282011%29.svg.png' },
-    { code: 'NH', name: 'All Nippon Airways (ANA)', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/All_Nippon_Airways_Logo.svg/1200px-All_Nippon_Airways_Logo.svg.png' },
-    { code: 'SQ', name: 'Singapore Airlines', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/05/Logo-Singapore-Airlines.png' },
-    { code: 'CX', name: 'Cathay Pacific', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Cathay_Pacific_logo.svg/1200px-Cathay_Pacific_logo.svg.png' },
-    { code: 'BR', name: 'EVA Air', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/EVA_Air_logo.svg/1200px-EVA_Air_logo.svg.png' },
-    { code: 'QR', name: 'Qatar Airways', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/05/Logo-Qatar-Airways.png' },
-    { code: 'EK', name: 'Emirates', logoUrl: 'https://cdn.haitrieu.com/wp-content/uploads/2022/05/Logo-Emirates.png' },
-    { code: 'TG', name: 'Thai Airways', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Thai_Airways_Logo.svg/1200px-Thai_Airways_Logo.svg.png' },
+    { id: '804a4450-e6ef-43f6-a413-e31f2e074eb0', code: 'KE', name: 'Korean Air', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/8f/KoreanAir_logo.svg', isActive: true },
+    { id: 'a5a160ca-2650-441e-999b-f9c63fd8a64c', code: 'OZ', name: 'Asiana Airlines', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/74/Asiana_Airlines.svg', isActive: true },
+    { id: 'bbab447d-d05c-41bd-9003-67a7ff5064dc', code: 'JL', name: 'Japan Airlines', logoUrl: 'https://upload.wikimedia.org/wikipedia/vi/e/e4/Japan_Airlines_Logo.svg', isActive: true },
+    { id: 'eb44362e-8b88-4672-9ed0-23dec638fd38', code: 'NH', name: 'All Nippon Airways (ANA)', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/8d/All_Nippon_Airways_Logo.svg', isActive: true },
+    { id: '5548170d-61e0-4fe2-b7cf-8f004d4d3179', code: 'SQ', name: 'Singapore Airlines', logoUrl: 'https://upload.wikimedia.org/wikipedia/vi/9/9d/Singapore_Airlines_Logo.svg', isActive: true },
+    { id: '58517fc1-06f7-4421-8aa8-f31c4644e734', code: 'CX', name: 'Cathay Pacific', logoUrl: 'https://upload.wikimedia.org/wikipedia/vi/1/17/Cathay_Pacific_logo.svg', isActive: true },
+    { id: '9b8a36eb-621b-4a5d-b64a-3bfebcfd6e2a', code: 'BR', name: 'EVA Air', logoUrl: 'https://upload.wikimedia.org/wikipedia/vi/b/b5/EVA_Air_Logo.svg', isActive: true },
+    { id: '21307c98-abf9-4f6c-b880-f8506c053eaf', code: 'QR', name: 'Qatar Airways', logoUrl: 'https://upload.wikimedia.org/wikipedia/vi/9/9b/Qatar_Airways_Logo.svg', isActive: true },
+    { id: '85dff8fd-57bf-4912-93b3-12f9599241a1', code: 'EK', name: 'Emirates', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Emirates_logo.svg', isActive: true },
+    { id: 'f93538cf-2a7f-4b09-a8f7-888b2bc4d528', code: 'TG', name: 'Thai Airways', logoUrl: 'https://upload.wikimedia.org/wikipedia/vi/5/58/Thai_Airways_Logo.svg', isActive: true },
   ];
 
   await prisma.airline.createMany({
