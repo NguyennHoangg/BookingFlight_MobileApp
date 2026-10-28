@@ -1,6 +1,10 @@
+import { savedPassengersController } from "../controllers/bookingOptions.controller";
 import { Router } from "express";
 import authController from "../controllers/auth.controller";
-import { validateRegister, validateLogin } from "../middlewares/validate.middleware";
+import {
+  validateRegister,
+  validateLogin,
+} from "../middlewares/validate.middleware";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import {
   getUserProfileController,
@@ -28,4 +32,5 @@ router.put("/profile", authMiddleware, updateUserProfileController);
 // Doi mat khau
 router.put("/change-password", authMiddleware, changePasswordController);
 
+router.get("/passengers", authMiddleware, savedPassengersController);
 export default router;
