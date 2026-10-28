@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, Modal, TouchableOpacity } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 
@@ -23,7 +23,12 @@ interface PassengerSelectModalProps {
   onClose: () => void;
 }
 
-export default function PassengerSelectModal({
+export default function PassengerSelectModal(props: PassengerSelectModalProps) {
+  if (!props.visible) return null;
+  return <PassengerSelectModalContent key={JSON.stringify(props.value)} {...props} />;
+}
+
+function PassengerSelectModalContent({
   visible,
   value,
   onApply,
@@ -32,11 +37,6 @@ export default function PassengerSelectModal({
   const [counts, setCounts] = useState<PassengerCounts>(value);
 
   // Sync state whenever modal opens
-  useEffect(() => {
-    if (visible) {
-      setCounts(value);
-    }
-  }, [visible, value]);
 
   const totalPassengers = counts.adults + counts.children;
   const MAX_TOTAL = 9;

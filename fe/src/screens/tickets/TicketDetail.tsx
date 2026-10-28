@@ -1,11 +1,10 @@
+import { goBack, readRouteData } from "../../navigation/routes";
+import { useLocalSearchParams } from "expo-router";
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { RootStackParamList } from '../../navigation/types';
 
-type TicketDetailRouteProp = RouteProp<RootStackParamList, 'TicketDetail'>;
 
 // Dữ liệu mẫu khớp với booking trong MyTickets
 const MOCK_TICKETS: Record<string, any> = {
@@ -66,11 +65,12 @@ const MOCK_TICKETS: Record<string, any> = {
 };
 
 export default function TicketDetailScreen() {
-  const navigation = useNavigation();
-  const route = useRoute<TicketDetailRouteProp>();
-  const bookingId = route.params?.bookingId || 'bk-1';
+  const { data, bookingId: directId } = useLocalSearchParams<{ data?: string; bookingId?: string }>();
+  const params = readRouteData(data);
+  const bookingId = params && typeof params === 'object' && 'bookingId' in params && typeof params.bookingId === 'string' ? params.bookingId : directId;
 
-  const ticketData = MOCK_TICKETS[bookingId] || MOCK_TICKETS['bk-1'];
+  const ticketData = bookingId ? MOCK_TICKETS[bookingId] : undefined;
+  if (!ticketData) return <SafeAreaView className="flex-1 items-center justify-center bg-white"><Text>Không tìm thấy vé.</Text><TouchableOpacity onPress={goBack}><Text className="text-blue-600 p-4">Quay lại</Text></TouchableOpacity></SafeAreaView>;
   const { flight, ticket } = ticketData;
 
   const formatCurrency = (amount: number) => {
@@ -86,7 +86,7 @@ export default function TicketDetailScreen() {
       {/* HEADER */}
       <View className="flex-row items-center justify-between px-5 py-4">
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => goBack()}
           className="w-10 h-10 rounded-full bg-slate-800 items-center justify-center border border-slate-700"
         >
           <Ionicons name="arrow-back" size={20} color="#FFFFFF" />

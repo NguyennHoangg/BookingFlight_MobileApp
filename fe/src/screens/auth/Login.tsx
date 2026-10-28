@@ -1,39 +1,41 @@
-import React, {useState, useEffect}from "react";
+import { navigate } from "../../navigation/routes";
+import React, { useRef, useState } from "react";
 import {
     Image,
     Text,
     View,
     TouchableOpacity,
     TextInput,
-    KeyboardAvoidingView,
-    Platform,
     ScrollView,
     Alert,
-    ActivityIndicator
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../../navigation/types";
+import { Eye, EyeOff } from "lucide-react-native";
+
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { useAuth } from "../../hook/useAuth";
-import { useKeyboardScrollView } from "../../hook/useKeyboardScrollView";
 
-type LoginNavigationProp = NativeStackNavigationProp<RootStackParamList, "Login">;
 
 export default function LoginScreen() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const navigation = useNavigation<LoginNavigationProp>();
-  const { login, loading, error, token } = useAuth();
-  const { scrollViewRef, keyboardPadding, scrollToInput } = useKeyboardScrollView();
+  const [showPassword, setShowPassword] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
+  const { login, loading } = useAuth();
 
   const handleLogin = async () => {
+    if (loading) return;
     if (!identifier.trim() || !password.trim()) {
       Alert.alert("Thông báo", "Vui lòng nhập đầy đủ thông tin tài khoản và mật khẩu!");
       return;
     }
+    Keyboard.dismiss();
+    setShowPassword(false);
     const request = {
       identifierValue: identifier.trim(),
       password: password,
@@ -42,83 +44,114 @@ export default function LoginScreen() {
     if (!result.success) {
       Alert.alert("Đăng nhập thất bại", result.message || "Tài khoản hoặc mật khẩu không đúng!");
     }
-    // Khi dang nhap thanh cong, Redux se cap nhat isAuthenticated = true,
-    // RootNavigator se tu dong chuyen sang MainTabs ma khong can navigate thu cong.
+    // Protected routes remove the login screen when Redux authenticates the session.
   };
 
   const handleRegister = () => {
-    navigation.navigate("Register");
+    navigate("Register");
   };
 
   if(loading){
     return (
-        <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#0066CC" />
+        <View className="flex-1 items-center justify-center bg-white">
+          <ActivityIndicator size="large" color="#2563EB" accessibilityLabel="Đang đăng nhập" />
         </View>
     )
   }
   return (
     <SafeAreaView className="flex-1 bg-white">
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView
-        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: keyboardPadding }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 24, width: "100%", maxWidth: 480, alignSelf: "center" }}
       >
-        <View className="flex items-center justify-center mt-20">
+        <View className="flex items-center justify-center">
               <Image source={require("../../../assets/Splash_icon.png")} className="w-20 h-20" />
           </View>
 
-          <View className="flex items-center justify-center px-10 mt-2">
+          <View className="flex items-center justify-center mt-2">
               <Text className="text-3xl font-bold text-[#131B2E]">SkyJourney</Text>
               <Text className="text-lg text-center text-[#64748B] mt-1">Chào mừng trở lại! Khám phá hành trình bay tuyệt vời</Text>
           </View>
 
-          <View className="justify-start mx-10 mt-10">
+          <View className="justify-start mt-8">
             <Text className="text-2xl font-bold text-[#131B2E]">Đăng nhập</Text>
             <Text className="text-lg text-gray-500 mt-1">Vui lòng nhập thông tin tài khoản SkyJourney</Text>
           </View>
 
-        <View className="justify-start mx-10 mt-6">
+        <View className="justify-start mt-6">
           <Text className="text-base font-semibold text-[#131B2E]">Email hoặc số điện thoại</Text>
           <TextInput
             className="border border-gray-300 rounded-lg px-4 py-3 mt-2"
-            placeholder="Nhập email"
+            placeholder="Nhập email hoặc số điện thoại"
+            accessibilityLabel="Email hoặc số điện thoại"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="username"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
+            submitBehavior="submit"
+            style={{ minHeight: 52, fontSize: 16 }}
             value={identifier}
             onChangeText={setIdentifier}
           />  
 
           <Text className="text-base font-semibold text-[#131B2E] mt-4">Mật khẩu</Text>
+          <View className="flex-row items-center border border-gray-300 rounded-lg mt-2">
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mt-2"
+            ref={passwordRef}
+            className="flex-1 px-4 py-3"
+            style={{ minHeight: 52, minWidth: 0, fontSize: 16 }}
             placeholder="Nhập mật khẩu"
+            accessibilityLabel="Mật khẩu"
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="current-password"
+            returnKeyType="go"
+            onSubmitEditing={handleLogin}
             value={password}
             onChangeText={setPassword}
-          />  
+          />
+          <TouchableOpacity
+            onPress={() => setShowPassword((visible) => !visible)}
+            accessibilityRole="button"
+            accessibilityLabel={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+            style={{ minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" }}
+          >
+            {showPassword ? <EyeOff size={22} color="#64748B" /> : <Eye size={22} color="#64748B" />}
+          </TouchableOpacity>
+          </View>
         </View>
 
-        <View className="items-end justify-end px-10 py-4">
+        <View className="items-end justify-end py-4">
           <Text className="text-blue-500 font-semibold text-base">Quên mật khẩu?</Text>
         </View>
 
-        <View className="mx-10 mt-2">
+        <View className="mt-2">
           <TouchableOpacity
             className="bg-[#2563EB] rounded-lg px-4 py-3 h-[50px] justify-center items-center"
             onPress={handleLogin}
+            accessibilityRole="button"
+            disabled={loading}
           >
             <Text className="text-white text-center font-semibold text-lg">Đăng nhập</Text>
           </TouchableOpacity>
         </View>
 
         {/* Hoặc đăng nhập bằng */}
-        <View className="flex-row items-center mx-10 mt-8 mb-6">
+        <View className="flex-row items-center mt-6 mb-6 gap-3">
           <View className="flex-1 h-[1px] bg-gray-200" />
-          <Text className="text-gray-500 text-xs ml-4 text-right leading-4 font-medium">
-            hoặc đăng{"\n"}nhập bằng
+          <Text className="text-gray-500 text-sm text-center font-medium">
+            hoặc đăng nhập bằng
           </Text>
+          <View className="flex-1 h-[1px] bg-gray-200" />
         </View>
 
         {/* Social login buttons */}
-        <View className="flex-row justify-between mx-10 gap-3">
+        <View className="flex-row justify-between gap-3">
           {/* Google */}
           <TouchableOpacity className="flex-1 h-[60px] border border-gray-200 rounded-2xl items-center justify-center bg-white shadow-sm">
             <Svg width={26} height={26} viewBox="0 0 24 24">
@@ -158,13 +191,14 @@ export default function LoginScreen() {
         </View>
 
         {/* Chưa có tài khoản? Đăng ký ngay */}
-        <View className="flex-row justify-center items-center mt-12 mb-6">
+        <View className="flex-row flex-wrap justify-center items-center mt-8 gap-y-2">
           <Text className="text-gray-500 text-base font-normal">Chưa có tài khoản? </Text>
           <TouchableOpacity onPress={handleRegister}>
             <Text className="text-[#2563EB] font-semibold text-base">Đăng ký ngay</Text>
           </TouchableOpacity>
         </View>
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
   );
 }

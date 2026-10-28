@@ -1,3 +1,5 @@
+import { navigate, goBack } from "../../navigation/routes";
+import { router } from "expo-router";
 import React, { useState, useRef, useEffect } from "react";
 import {
   Image,
@@ -13,17 +15,13 @@ import {
   Keyboard,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../../navigation/types";
+
 import Svg, { Path } from "react-native-svg";
 import { useAuth } from "../../hook/useAuth";
 import { useKeyboardScrollView } from "../../hook/useKeyboardScrollView";
 
-type RegisterNavigationProp = NativeStackNavigationProp<RootStackParamList, "Register">;
 
 export default function RegisterScreen() {
-  const navigation = useNavigation<RegisterNavigationProp>();
   const { register } = useAuth();
   const insets = useSafeAreaInsets();
   
@@ -71,7 +69,7 @@ export default function RegisterScreen() {
 
       if (result.success) {
         Alert.alert("Thành công", "Đăng ký tài khoản thành công! Vui lòng đăng nhập để tiếp tục.", [
-          { text: "Đăng nhập ngay", onPress: () => navigation.navigate("Login") },
+          { text: "Đăng nhập ngay", onPress: () => navigate("Login") },
         ]);
       } else {
         Alert.alert("Đăng ký thất bại", result.message || "Đã có lỗi xảy ra vui lòng thử lại!");
@@ -82,10 +80,10 @@ export default function RegisterScreen() {
   };
 
   const handleGoBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
+    if (router.canGoBack()) {
+      goBack();
     } else {
-      navigation.navigate("Login");
+      navigate("Login");
     }
   };
 
@@ -374,7 +372,7 @@ export default function RegisterScreen() {
             <Text className="text-gray-500 text-base font-normal">
               Đã có tài khoản?{" "}
             </Text>
-            <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+            <TouchableOpacity onPress={() => navigate("Login")}>
               <Text className="text-[#2563EB] font-semibold text-base">
                 Đăng nhập ngay
               </Text>

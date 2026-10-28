@@ -1,9 +1,9 @@
+import { shadows } from "../../styles/shadows";
+import { navigate } from "../../navigation/routes";
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, Clipboard, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/types';
+
 
 // MOCK DATA: Kết hợp từ các bảng Booking, Ticket, Flight, Airline, Airport trong Prisma Schema
 const MOCK_BOOKINGS = [
@@ -121,7 +121,6 @@ const MOCK_BOOKINGS = [
 ];
 
 export default function MyTicketsScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'completed' | 'cancelled'>('upcoming');
 
   // Lọc danh sách theo tab hiện tại
@@ -161,7 +160,8 @@ export default function MyTicketsScreen() {
         {/* TAB SWITCHER */}
         <View className="flex-row bg-gray-100 rounded-xl p-1 mt-5">
           <TouchableOpacity 
-            className={`flex-1 py-2.5 flex-row items-center justify-center rounded-lg ${activeTab === 'upcoming' ? 'bg-[#2563EB] shadow-sm' : ''}`}
+            className={`flex-1 py-2.5 flex-row items-center justify-center rounded-lg ${activeTab === 'upcoming' ? 'bg-[#2563EB]' : ''}`}
+            style={activeTab === 'upcoming' ? shadows.small : undefined}
             onPress={() => setActiveTab('upcoming')}
           >
             <Text className={`font-semibold text-sm ${activeTab === 'upcoming' ? 'text-white' : 'text-gray-500'}`}>Sắp tới</Text>
@@ -169,14 +169,16 @@ export default function MyTicketsScreen() {
           </TouchableOpacity>
           
           <TouchableOpacity 
-            className={`flex-1 py-2.5 items-center justify-center rounded-lg ${activeTab === 'completed' ? 'bg-[#2563EB] shadow-sm' : ''}`}
+            className={`flex-1 py-2.5 items-center justify-center rounded-lg ${activeTab === 'completed' ? 'bg-[#2563EB]' : ''}`}
+            style={activeTab === 'completed' ? shadows.small : undefined}
             onPress={() => setActiveTab('completed')}
           >
             <Text className={`font-semibold text-sm ${activeTab === 'completed' ? 'text-white' : 'text-gray-500'}`}>Đã hoàn thành</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
-            className={`flex-1 py-2.5 items-center justify-center rounded-lg ${activeTab === 'cancelled' ? 'bg-[#2563EB] shadow-sm' : ''}`}
+            className={`flex-1 py-2.5 items-center justify-center rounded-lg ${activeTab === 'cancelled' ? 'bg-[#2563EB]' : ''}`}
+            style={activeTab === 'cancelled' ? shadows.small : undefined}
             onPress={() => setActiveTab('cancelled')}
           >
             <Text className={`font-semibold text-sm ${activeTab === 'cancelled' ? 'text-white' : 'text-gray-500'}`}>Đã hủy</Text>
@@ -301,9 +303,10 @@ export default function MyTicketsScreen() {
                 </View>
                 <TouchableOpacity 
                   className={`px-5 py-2.5 rounded-xl border flex-row items-center ${
-                    booking.status === 'CONFIRMED' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200 shadow-sm'
+                    booking.status === 'CONFIRMED' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'
                   }`}
-                  onPress={() => navigation.navigate('TicketDetail', { bookingId: booking.id })}
+                  style={booking.status !== 'CONFIRMED' ? shadows.small : undefined}
+                  onPress={() => navigate('TicketDetail', { bookingId: booking.id })}
                 >
                   <Text className={`font-bold text-sm mr-1 ${booking.status === 'CONFIRMED' ? 'text-blue-700' : 'text-gray-700'}`}>Chi tiết vé</Text>
                   <Ionicons name="chevron-forward" size={16} color={booking.status === 'CONFIRMED' ? '#1D4ED8' : '#374151'} />

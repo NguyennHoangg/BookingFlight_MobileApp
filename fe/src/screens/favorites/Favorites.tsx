@@ -1,9 +1,8 @@
+import { navigate } from "../../navigation/routes";
 import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../navigation/types";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Mock data dựa trên schema Prisma (bảng Flight, Airline, Airport, FareClass)
@@ -74,8 +73,6 @@ const INITIAL_FAVORITES = [
 ];
 
 export default function FavoritesScreen() {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [favorites, setFavorites] = useState(INITIAL_FAVORITES);
 
   const toggleFavorite = (flightId: string) => {
@@ -283,7 +280,7 @@ export default function FavoritesScreen() {
                 className="bg-blue-600 px-4 py-2.5 rounded-xl flex-row items-center shadow-sm"
                 activeOpacity={0.8}
                 onPress={() =>
-                  navigation.navigate("FlightDetail", {
+                  navigate("FlightDetail", {
                     flightId: flight.id,
                   })
                 }
