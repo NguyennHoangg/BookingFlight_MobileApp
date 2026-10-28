@@ -29,22 +29,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F9FAFB]">
-      {/* Header trang tai khoan */}
-      <View className="flex-row items-center justify-between px-5 pt-4 pb-4 bg-white">
-        <View className="flex-row items-center">
-          <Ionicons name="airplane" size={24} color="#2563EB" />
-          <Text className="text-xl font-bold text-gray-900 ml-2">Tài khoản</Text>
-        </View>
-        <View className="flex-row items-center">
-          <TouchableOpacity className="mr-4">
-            <Ionicons name="notifications-outline" size={24} color="#4B5563" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="qr-code-outline" size={24} color="#4B5563" />
-          </TouchableOpacity>
-        </View>
-      </View>
+    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={["left", "right"]}>
 
       <ScrollView 
         className="flex-1" 
@@ -57,7 +42,7 @@ export default function ProfileScreen() {
         <View className="mx-5 mt-4 bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
           <View className="flex-row items-center mb-5">
             <Image 
-              source={{ uri: user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80' }} 
+              source={user?.avatarUrl ? { uri: user.avatarUrl } : require('../../../assets/default_avt.jpg')}
               className="w-16 h-16 rounded-full"
             />
             <View className="ml-4 flex-1">
@@ -66,7 +51,7 @@ export default function ProfileScreen() {
               <Text className="text-sm text-gray-500">{user?.phone}</Text>
               <View className="bg-blue-50 px-3 py-1 rounded-full self-start mt-2 flex-row items-center border border-blue-100">
                 <Ionicons name="star" size={12} color="#2563EB" />
-                <Text className="text-xs font-semibold text-blue-600 ml-1">Hội viên {user?.membershipTier}</Text>
+                <Text className="text-xs font-semibold text-blue-600 ml-1">{user?.membershipTier}</Text>
               </View>
             </View>
           </View>

@@ -20,14 +20,7 @@ export default function CheckinScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC]">
-      {/* Header */}
-      <View className="px-5 py-4 bg-white border-b border-gray-100 flex-row items-center justify-between">
-        <Text className="text-xl font-bold text-gray-900">Check-in Online</Text>
-        <TouchableOpacity className="w-9 h-9 rounded-full bg-blue-50 items-center justify-center">
-          <Ionicons name="help-circle-outline" size={22} color="#2563EB" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView className="flex-1 bg-[#F8FAFC]" edges={["left", "right"]}>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

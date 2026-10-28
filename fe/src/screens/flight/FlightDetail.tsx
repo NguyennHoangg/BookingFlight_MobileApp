@@ -1,3 +1,4 @@
+import AppHeader from '../../components/common/AppHeader';
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -42,13 +43,16 @@ export default function FlightDetail() {
   );
   if (!params)
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-booking-background px-6">
+      <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1 bg-booking-background">
+        <AppHeader title="Chi tiết chuyến bay" back />
+        <View className="flex-1 items-center justify-center px-6">
         <Text className="text-booking-ink">
           Thông tin chuyến bay không hợp lệ.
         </Text>
         <Pressable onPress={goBack} className="mt-4 p-3">
           <Text className="font-bold text-booking-primary">Quay lại</Text>
         </Pressable>
+        </View>
       </SafeAreaView>
     );
   return <FlightDetails key={data ?? flightId} params={params} />;
@@ -90,36 +94,18 @@ function FlightDetails({ params }: { params: FlightDetailParams }) {
     navigate("FareSelection", params);
   };
   return (
-    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
+    <SafeAreaView edges={["left", "right"]} className="flex-1 bg-white">
+      <AppHeader
+        title="Chi tiết chuyến bay"
+        back
+        action={{
+          label: favorite.favorite ? "Bỏ yêu thích" : "Lưu chuyến bay",
+          icon: favorite.favorite ? "heart" : "heart-outline",
+          onPress: () => authenticated ? void favorite.toggle() : setHelp(true),
+          disabled: favorite.busy,
+        }}
+      />
       <View className="w-full max-w-[540px] flex-1 self-center bg-booking-background">
-        <View className="flex-row items-center bg-white px-4 py-4">
-          <Pressable
-            onPress={goBack}
-            hitSlop={12}
-            accessibilityLabel="Quay lại"
-          >
-            <Ionicons name="arrow-back" size={22} color="#12263F" />
-          </Pressable>
-          <Text className="flex-1 text-center text-lg font-bold text-booking-ink">
-            Chi tiết chuyến bay
-          </Text>
-          <Pressable
-            onPress={() =>
-              authenticated ? void favorite.toggle() : setHelp(true)
-            }
-            disabled={favorite.busy}
-            hitSlop={12}
-            accessibilityLabel={
-              favorite.favorite ? "Bỏ yêu thích" : "Lưu chuyến bay"
-            }
-          >
-            <Ionicons
-              name={favorite.favorite ? "heart" : "heart-outline"}
-              size={22}
-              color="#536F97"
-            />
-          </Pressable>
-        </View>
         {legs.length > 1 && (
           <View className="flex-row gap-2 bg-white px-4 pb-3">
             {legs.map((leg, index) => (

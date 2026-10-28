@@ -1,3 +1,4 @@
+import AppHeader from '../../components/common/AppHeader';
 import { goBack, readRouteData } from "../../navigation/routes";
 import { useLocalSearchParams } from "expo-router";
 import React from 'react';
@@ -70,7 +71,15 @@ export default function TicketDetailScreen() {
   const bookingId = params && typeof params === 'object' && 'bookingId' in params && typeof params.bookingId === 'string' ? params.bookingId : directId;
 
   const ticketData = bookingId ? MOCK_TICKETS[bookingId] : undefined;
-  if (!ticketData) return <SafeAreaView className="flex-1 items-center justify-center bg-white"><Text>Không tìm thấy vé.</Text><TouchableOpacity onPress={goBack}><Text className="text-blue-600 p-4">Quay lại</Text></TouchableOpacity></SafeAreaView>;
+  if (!ticketData) return (
+    <SafeAreaView edges={['left', 'right', 'bottom']} className="flex-1 bg-white">
+      <AppHeader title="Thẻ lên máy bay" back />
+      <View className="flex-1 items-center justify-center">
+        <Text>Không tìm thấy vé.</Text>
+        <TouchableOpacity onPress={goBack}><Text className="text-blue-600 p-4">Quay lại</Text></TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
   const { flight, ticket } = ticketData;
 
   const formatCurrency = (amount: number) => {
@@ -82,23 +91,12 @@ export default function TicketDetailScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0F172A]" edges={['top']}>
-      {/* HEADER */}
-      <View className="flex-row items-center justify-between px-5 py-4">
-        <TouchableOpacity
-          onPress={() => goBack()}
-          className="w-10 h-10 rounded-full bg-slate-800 items-center justify-center border border-slate-700"
-        >
-          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text className="text-white text-lg font-bold">Thẻ lên máy bay</Text>
-        <TouchableOpacity
-          onPress={() => Alert.alert('Chia sẻ', `Mã đặt chỗ: ${ticketData.pnrCode}`)}
-          className="w-10 h-10 rounded-full bg-slate-800 items-center justify-center border border-slate-700"
-        >
-          <Ionicons name="share-social-outline" size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView className="flex-1 bg-[#0F172A]" edges={['left', 'right']}>
+      <AppHeader
+        title="Thẻ lên máy bay"
+        back
+        action={{ label: "Chia sẻ vé", icon: "share-social-outline", onPress: () => Alert.alert('Chia sẻ', `Mã đặt chỗ: ${ticketData.pnrCode}`) }}
+      />
 
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* BOARDING PASS CARD */}

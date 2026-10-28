@@ -1,3 +1,4 @@
+import AppHeader from '../../components/common/AppHeader';
 import { navigate } from "../../navigation/routes";
 import React, { useRef, useState } from "react";
 import {
@@ -59,7 +60,8 @@ export default function LoginScreen() {
     )
   }
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={["left", "right", "bottom"]}>
+      <AppHeader title="Đăng nhập" back />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView
         showsVerticalScrollIndicator={false}

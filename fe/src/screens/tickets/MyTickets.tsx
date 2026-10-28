@@ -1,7 +1,8 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { shadows } from "../../styles/shadows";
 import { navigate } from "../../navigation/routes";
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, Clipboard, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Clipboard, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 
@@ -138,27 +139,10 @@ export default function MyTicketsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#F9FAFB]">
-            
-{/* HEADER TĨNH */}
-<View className="px-5 pt-6 pb-4 bg-white">
-  <View className="flex-row items-center px-5 pt-4 pb-2 bg-white gap-3">
-    {/* Logo nằm bên trái */}
-    <Image 
-      source={require('../../../../fe/assets/Splash_icon.png')} 
-      className="max-w-12 max-h-12"
-      resizeMode="cover"
-    />
-    
-    {/* Cột chứa 2 dòng chữ bên phải logo */}
-    <View className="flex-col">
-      <Text className="text-3xl font-black text-gray-900 tracking-tight">Vé của tôi</Text>
-      <Text className="text-sm text-gray-500 font-medium mt-0.5">Quản lý hành trình bay cá nhân</Text>
-    </View>
-  </View>
-
+    <SafeAreaView className="flex-1 bg-[#F9FAFB]" edges={["left", "right"]}>
+      <View className="px-5 pb-4 bg-white">
         {/* TAB SWITCHER */}
-        <View className="flex-row bg-gray-100 rounded-xl p-1 mt-5">
+        <View className="flex-row bg-gray-100 rounded-xl p-1 mt-4">
           <TouchableOpacity 
             className={`flex-1 py-2.5 flex-row items-center justify-center rounded-lg ${activeTab === 'upcoming' ? 'bg-[#2563EB]' : ''}`}
             style={activeTab === 'upcoming' ? shadows.small : undefined}
@@ -352,6 +336,6 @@ export default function MyTicketsScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
