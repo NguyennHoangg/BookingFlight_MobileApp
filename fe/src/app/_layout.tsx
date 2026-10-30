@@ -24,7 +24,7 @@ function Routes() {
   );
   useEffect(() => {
     void dispatch(initAuth());
-    // Let the startup plane complete a pass even when local auth loads instantly.
+    // Keep the app name and slogan visible briefly while auth initializes.
     const introTimer = setTimeout(() => setIntroFinished(true), FLIGHT_INTRO_DURATION + 200);
     return () => clearTimeout(introTimer);
   }, [dispatch]);
