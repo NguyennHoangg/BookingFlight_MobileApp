@@ -16,7 +16,10 @@ import { goBack, navigate, readRouteData } from "../../navigation/routes";
 import { parsePassengerInfo } from "../../navigation/validation";
 import type { PassengerInfoParams } from "../../navigation/types";
 import { useFareSelection } from "../../hook/useFareSelection";
-import { useAppSelector } from "../../store";
+import { useTaxAndFee } from "../../hook/useTaxAndFee";
+import { TaxAndFeeCard } from "../../components/booking/TaxAndFeeCard";
+import { useAppDispatch, useAppSelector } from "../../store";
+import { startBooking } from "../../store/slices/bookingSlice";
 import {
   getSavedPassengers,
   type SavedPassenger,
@@ -72,28 +75,31 @@ export default function PassengerInfo() {
 
 /** Form giữ PII trong bộ nhớ; các API phụ chỉ đọc hồ sơ đã lưu và tồn ghế. */
 function PassengerForm({ params }: { params: PassengerInfoParams }) {
+  const dispatch = useAppDispatch();
   const account = useAppSelector((state) => state.auth.user);
   const authenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const savedDraft = useAppSelector(state => state.booking.draft);
+  const previous = JSON.stringify(savedDraft?.params) === JSON.stringify(params) ? savedDraft : null;
   const [passengers, setPassengers] = useState(() =>
-    createPassengerDrafts(params.passengers),
+    previous?.passengers ?? createPassengerDrafts(params.passengers),
   );
   const [contact, setContact] = useState<ContactDraft>(() => ({
-    name: account?.fullName ?? "",
-    email: account?.email ?? "",
-    phone: (account?.phone ?? account?.phoneNumber ?? "").replace(/^\+84/, ""),
+    name: previous?.contact.name ?? account?.fullName ?? "",
+    email: previous?.contact.email ?? account?.email ?? "",
+    phone: (previous?.contact.phone ?? account?.phone ?? account?.phoneNumber ?? "").replace(/^\+84/, ""),
   }));
   const [dialCode, setDialCode] = useState("+84");
-  const [mainContact, setMainContact] = useState(true);
+  const [mainContact, setMainContact] = useState(!previous);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sheet, setSheet] = useState<
-    "help" | "saved" | "country" | "phone" | "review" | null
+    "help" | "saved" | "country" | "phone" | null
   >(null);
   const [target, setTarget] = useState(0);
   const [saved, setSaved] = useState<SavedPassenger[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
   const [savedError, setSavedError] = useState<string | null>(null);
   const [seatPicker, setSeatPicker] = useState(false);
-  const [seatChoices, setSeatChoices] = useState<SeatChoice[]>([]);
+  const [seatChoices, setSeatChoices] = useState<SeatChoice[]>(() => previous?.seats ?? []);
   const count = passengerCount(params.passengers);
   const legs = useMemo(
     () =>
@@ -115,6 +121,7 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
     [fares.selected],
   );
   const flight = fares.selected[0];
+  const taxes = useTaxAndFee(loadedFares, count);
   const travelDate = flight?.departure.time ?? "";
   const effectiveContact = {
     ...contact,
@@ -130,7 +137,8 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
     0,
   );
   const total =
-    validFares && fares.total !== null ? fares.total + seatTotal : null;
+    validFares && fares.total !== null && taxes.total !== null
+      ? fares.total + seatTotal + taxes.total : null;
   const labels = { adult: "Người lớn", child: "Trẻ em", infant: "Em bé" };
 
   /** Mọi sửa tên dùng một reducer cục bộ; không ghi vào URL, AsyncStorage hay console. */
@@ -195,7 +203,7 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
   };
   /** Không chuyển sang chọn ghế nếu gói đã hết hoặc thông tin bắt buộc chưa hợp lệ. */
   const continueToSeats = () => {
-    if (!validFares || !flight) return;
+    if (!validFares || !flight || taxes.status !== "ready") return;
     const validation = validatePassengerForm(
       passengers,
       effectiveContact,
@@ -215,7 +223,7 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full max-w-[540px] flex-1 self-center bg-booking-background"
       >
-        <BookingProgress active={seatPicker ? 1 : sheet === "review" ? 3 : 0} />
+        <BookingProgress active={seatPicker ? 1 : 0} />
         <ScrollView
           className="flex-1"
           keyboardShouldPersistTaps="handled"
@@ -390,6 +398,7 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
               ))}
             </View>
           )}
+          {validFares && <TaxAndFeeCard taxes={taxes} fares={loadedFares} />}
           <View className="flex-row items-center justify-center gap-2 py-2">
             <Ionicons name="lock-closed-outline" size={14} color="#087F73" />
             <Text className="text-[10px] text-[#536F97]">
@@ -400,26 +409,31 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
         <FareCheckoutBar
           total={total}
           count={count}
-          disabled={!validFares}
-          note={
-            seatTotal
-              ? "Đã cộng phụ phí ghế đã chọn"
-              : "Theo đơn giá gói vé đang chọn"
-          }
+          disabled={!validFares || taxes.status !== "ready"}
+          note={taxes.total === null ? "Chờ xác nhận thuế và phí" : "Đã gồm thuế/phí và phụ phí ghế đã chọn"}
           label="Tiếp tục chọn ghế"
           onContinue={continueToSeats}
         />
-        {seatPicker && validFares && (
+        {seatPicker && validFares && taxes.total !== null && (
           <FlightSeatPicker
             fares={loadedFares}
             passengers={passengers}
             initial={seatChoices}
-            fareTotal={fares.total ?? 0}
+            fareTotal={(fares.total ?? 0) + taxes.total}
             onClose={() => setSeatPicker(false)}
             onConfirm={(choices) => {
               setSeatChoices(choices);
               setSeatPicker(false);
-              setSheet("review");
+              // Chỉ chuyển bước sau khi picker đã kiểm tra lại ghế với API.
+              // PII ở Redux RAM; route dịch vụ không mang thông tin cá nhân.
+              dispatch(startBooking({
+                params,
+                fares: loadedFares,
+                passengers,
+                contact: effectiveContact,
+                seats: choices,
+              }));
+              navigate("AdditionalServices");
             }}
           />
         )}
@@ -432,9 +446,7 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
                 ? "Chọn quốc tịch"
                 : sheet === "phone"
                   ? "Mã quốc gia"
-                  : sheet === "review"
-                    ? "Kiểm tra thông tin"
-                    : "Thông tin hành khách"
+                  : "Thông tin hành khách"
           }
           onClose={() => setSheet(null)}
         >
@@ -542,59 +554,6 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
                   )}
                 </>
               )}
-            </>
-          )}
-          {sheet === "review" && (
-            <>
-              {loadedFares.map((fare, index) => (
-                <View
-                  key={fare.flightId}
-                  className="mb-3 border-b border-booking-line pb-3"
-                >
-                  <Text className="font-bold text-booking-ink">
-                    {index === 0 ? "Chiều đi" : "Chiều về"} ·{" "}
-                    {fare.departure.airportCode} → {fare.arrival.airportCode}
-                  </Text>
-                  <Text className="mt-1 text-xs text-[#536F97]">
-                    {fare.flightNumber} · {fare.ticket.fareClassName}
-                  </Text>
-                </View>
-              ))}
-              {passengers.map((passenger, index) => (
-                <View key={index} className="mb-3">
-                  <Text className="text-sm font-semibold text-booking-ink">
-                    {fullPassengerName(passenger)}
-                  </Text>
-                  <Text className="mt-1 text-xs text-[#536F97]">
-                    {labels[passenger.kind]} · {passenger.birthday}
-                    {seatChoices
-                      .filter((choice) => choice.passengerIndex === index)
-                      .map((choice) => ` · Ghế ${choice.seatNumber}`)
-                      .join("")}
-                  </Text>
-                </View>
-              ))}
-              <Text className="mt-2 text-sm text-booking-ink">
-                Liên hệ: {effectiveContact.name}
-              </Text>
-              <Text className="mt-1 text-xs text-[#536F97]">
-                {effectiveContact.email} · {effectiveContact.phone}
-              </Text>
-              <Text className="my-4 text-xl font-bold text-booking-primary">
-                Tạm tính: {formatFareMoney(total ?? 0)}
-              </Text>
-              <Text className="text-xs leading-5 text-booking-muted">
-                Lựa chọn được lưu trên thiết bị trong phiên này. Chưa tạo đặt
-                chỗ, giữ ghế hoặc thanh toán.
-              </Text>
-              <Pressable
-                onPress={() => setSheet(null)}
-                className="mt-4 rounded-xl bg-booking-primary py-3"
-              >
-                <Text className="text-center font-bold text-white">
-                  Quay lại chỉnh sửa
-                </Text>
-              </Pressable>
             </>
           )}
         </FareSheet>

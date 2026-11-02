@@ -5,6 +5,7 @@ export interface FlightItem {
   flightNumber: string;
   durationMinutes: number;
   airline: {
+    id?: string;
     code: string;
     name: string;
     logoUrl?: string;

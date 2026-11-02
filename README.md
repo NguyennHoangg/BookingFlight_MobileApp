@@ -211,7 +211,7 @@ Lệnh trên mặc định chỉ báo cáo. Thêm `--apply` để ghi các ghế
 npm run seed:seat-layouts -- --apply
 ```
 
-Script bổ sung ghế không seed lại toàn bộ database và không ghi đè các ghế đã tồn tại.
+Script bổ sung ghế không seed lại toàn bộ database và không ghi đè các ghế đã tồn tại. Script xử lý cả chuyến chưa có ghế trong 30 ngày tới, có giới hạn dung lượng cho Supabase Free. Chi tiết tại [hướng dẫn sơ đồ ghế](be/docs/seat-layouts.md).
 
 ## API hiện có
 

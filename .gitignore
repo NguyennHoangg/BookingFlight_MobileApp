@@ -41,6 +41,11 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# Python cache and Office lock files
+__pycache__/
+*.py[cod]
+~$*
+
 # Temporary / AI files
 .agents/
 .claude/

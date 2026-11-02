@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { Animated, Easing, Platform, StyleSheet, useAnimatedValue } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Animated, Easing, Platform, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useReducedMotionPreference } from './MotionPreferences';
 
@@ -9,7 +9,7 @@ export default function StackScene({ children }: { children: React.ReactNode }) 
 }
 
 function WebScene({ children }: { children: React.ReactNode }) {
-  const opacity = useAnimatedValue(1);
+  const [opacity] = useState(() => new Animated.Value(1));
   const reducedMotion = useReducedMotionPreference();
 
   useFocusEffect(useCallback(() => {

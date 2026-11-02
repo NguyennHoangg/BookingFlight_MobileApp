@@ -16,6 +16,7 @@ import {
   RefundStatus,
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { buildSeatTemplates } from '../src/utils/seatTemplates';
 
 const TicketStatus = {
   CONFIRMED: 'CONFIRMED',
@@ -372,85 +373,7 @@ async function main() {
       isActive: boolean;
     }[] = [];
 
-    const layout = ac.seatLayout || '3-3';
-    let cols: string[] = [];
-    let windowCols: string[] = [];
-    let aisleCols: string[] = [];
-    let middleCols: string[] = [];
-
-    if (layout === '3-3') {
-      cols = ['A', 'B', 'C', 'D', 'E', 'F'];
-      windowCols = ['A', 'F'];
-      aisleCols = ['C', 'D'];
-      middleCols = ['B', 'E'];
-    } else if (layout === '2-4-2') {
-      cols = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'K'];
-      windowCols = ['A', 'K'];
-      aisleCols = ['C', 'D', 'G', 'H'];
-      middleCols = ['E', 'F'];
-    } else if (layout === '3-4-3') {
-      cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K'];
-      windowCols = ['A', 'K'];
-      aisleCols = ['C', 'D', 'G', 'H'];
-      middleCols = ['B', 'E', 'F', 'J'];
-    } else {
-      cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K'];
-      windowCols = ['A', 'K'];
-      aisleCols = ['C', 'D', 'F', 'G'];
-      middleCols = ['B', 'E', 'H'];
-    }
-
-    const seatsPerRow = cols.length;
-    const totalRows = Math.min(Math.ceil(ac.totalSeats / seatsPerRow), 45);
-    const businessRows = layout === '3-3' ? 3 : 4;
-    const exitRowNumbers = [11, 12];
-
-    for (let row = 1; row <= totalRows; row++) {
-      for (const col of cols) {
-        if (templates.length >= ac.totalSeats) break;
-
-        const seatNumber = `${row}${col}`;
-        const isBusiness = row <= businessRows;
-        const isExit = exitRowNumbers.includes(row) && !isBusiness;
-
-        let seatClass: SeatClass = SeatClass.ECONOMY;
-        let seatType: SeatType = SeatType.MIDDLE;
-        let defaultExtraPrice = 0;
-
-        if (isBusiness) {
-          seatClass = SeatClass.BUSINESS;
-          seatType = windowCols.includes(col) ? SeatType.WINDOW : SeatType.AISLE;
-          defaultExtraPrice = 350000;
-        } else if (isExit) {
-          seatClass = SeatClass.ECONOMY;
-          seatType = SeatType.EXIT_ROW;
-          defaultExtraPrice = 120000;
-        } else {
-          seatClass = SeatClass.ECONOMY;
-          if (windowCols.includes(col)) {
-            seatType = SeatType.WINDOW;
-            defaultExtraPrice = 60000;
-          } else if (aisleCols.includes(col)) {
-            seatType = SeatType.AISLE;
-            defaultExtraPrice = 50000;
-          } else {
-            seatType = SeatType.MIDDLE;
-            defaultExtraPrice = 0;
-          }
-        }
-
-        templates.push({
-          aircraftId: ac.id,
-          seatNumber,
-          rowNumber: row,
-          columnLetter: col,
-          seatClass,
-          seatType,
-          defaultExtraPrice,
-          isActive: true,
-        });
-      }
-    }
+    templates.push(...buildSeatTemplates(ac));
 
     await prisma.seatTemplate.createMany({
       data: templates,
@@ -638,10 +561,12 @@ async function main() {
   console.log('📦 Tạo Quỹ vé (FlightFareInventory) cho các chuyến bay...');
 
   const savedFlights = await prisma.flight.findMany({
-    select: { id: true, airlineId: true, basePrice: true, departureTime: true },
+    select: { id: true, airlineId: true, aircraftId: true, basePrice: true, departureTime: true },
   });
 
   const fareInventoriesToCreate: any[] = [];
+  const templatesByAircraft = new Map<string, ReturnType<typeof buildSeatTemplates>>();
+  for (const ac of await prisma.aircraft.findMany()) templatesByAircraft.set(ac.id, buildSeatTemplates(ac));
 
   for (const f of savedFlights) {
     const ecoClass = allFareClasses.find((fc) => fc.airlineId === f.airlineId && fc.name.includes('Phổ thông'));
@@ -652,7 +577,7 @@ async function main() {
         flightId: f.id,
         fareClassId: ecoClass.id,
         price: f.basePrice,
-        totalQuota: 180,
+        totalQuota: templatesByAircraft.get(f.aircraftId)!.filter(s => s.seatClass === "ECONOMY").length,
         soldCount: Math.floor(Math.random() * 25),
         isActive: true,
       });
@@ -663,7 +588,7 @@ async function main() {
         flightId: f.id,
         fareClassId: bizClass.id,
         price: Math.floor(f.basePrice * 2.5),
-        totalQuota: 24,
+        totalQuota: templatesByAircraft.get(f.aircraftId)!.filter(s => s.seatClass === "BUSINESS").length,
         soldCount: Math.floor(Math.random() * 6),
         isActive: true,
       });
@@ -676,38 +601,18 @@ async function main() {
   }
   console.log(`✅ Đã tạo ${fareInventoriesToCreate.length} quỹ vé.`);
 
-  // Tạo sơ đồ ghế chi tiết cho các chuyến bay 14 ngày tới
-  console.log('💺 Tạo sơ đồ ghế chi tiết (FlightSeat) cho các chuyến bay 14 ngày tới...');
-  const upcomingFlights = savedFlights.filter((f) => {
-    const diffDays = (f.departureTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-    return diffDays >= 0 && diffDays <= 14;
-  });
-
-  const flightSeatsToCreate: any[] = [];
-  const seatCols = ['A', 'B', 'C', 'D', 'E', 'F'];
-
-  for (const f of upcomingFlights) {
-    for (let r = 1; r <= 15; r++) {
-      const isBiz = r <= 3;
-      for (const col of seatCols) {
-        flightSeatsToCreate.push({
-          flightId: f.id,
-          seatNumber: `${r}${col}`,
-          seatClass: isBiz ? SeatClass.BUSINESS : SeatClass.ECONOMY,
-          seatType: col === 'A' || col === 'F' ? SeatType.WINDOW : col === 'C' || col === 'D' ? SeatType.AISLE : SeatType.MIDDLE,
-          priceModifier: isBiz ? 0 : col === 'A' || col === 'F' ? 50000 : 0,
-          isBooked: Math.random() < 0.15,
-          isActive: true,
-        });
-      }
-    }
+  // Keep physical seat inventory within a 30-day window for Supabase Free.
+  let createdSeats = 0;
+  for (const f of savedFlights.filter(f => f.departureTime >= now && f.departureTime.getTime() < now.getTime() + 30 * 86400000)) {
+    const flightSeatsToCreate = templatesByAircraft.get(f.aircraftId)!.map(t => ({
+      flightId: f.id, seatNumber: t.seatNumber, seatClass: t.seatClass,
+      seatType: t.seatType, priceModifier: t.defaultExtraPrice,
+      isBooked: false, isActive: true,
+    }));
+    await prisma.flightSeat.createMany({ data: flightSeatsToCreate });
+    createdSeats += flightSeatsToCreate.length;
   }
-
-  for (let i = 0; i < flightSeatsToCreate.length; i += 1000) {
-    const chunk = flightSeatsToCreate.slice(i, i + 1000);
-    await prisma.flightSeat.createMany({ data: chunk });
-  }
-  console.log(`✅ Đã tạo ${flightSeatsToCreate.length} ghế ngồi thực tế.`);
+  console.log(`Created ${createdSeats} flight seats.`);
 
   // =====================================================
   // 8. CÁC BẢNG MỚI: ĐIỂM ĐẾN (DESTINATIONS), YÊU THÍCH, ĐÁNH GIÁ, CẢNH BÁO GIÁ

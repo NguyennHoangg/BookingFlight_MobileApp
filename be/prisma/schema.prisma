@@ -146,6 +146,7 @@ model SavedPassenger {
   isActive       Boolean       @default(true)
 
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
 }
 
 // Bảng 3: Sân bay (VD: SGN - Tân Sơn Nhất, HAN - Nội Bài)
@@ -350,6 +351,9 @@ model Booking {
   isActive       Boolean              @default(true)
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
+  requestKey     String?
+  requestHash    String?
+  details        Json                 @default("{}")
 
   user           User                 @relation(fields: [userId], references: [id])
   promotion      Promotion?           @relation(fields: [promotionId], references: [id])
@@ -357,6 +361,8 @@ model Booking {
   tickets        Ticket[]
   payment        Payment?
   refundRequest  RefundCancelRequest?
+  @@index([userId, createdAt])
+  @@unique([userId, requestKey])
 }
 
 // Bảng 14: Vé điện tử của từng hành khách (Ticket / Boarding Pass)
@@ -365,7 +371,7 @@ model Ticket {
   ticketNumber        String          @unique // Số vé điện tử 13 chữ số IATA: "738-2938401928"
   bookingId           String
   flightId            String
-  flightSeatId        String          @unique // Mỗi vé gắn chặt với 1 ghế duy nhất
+  flightSeatId        String?         @unique // Em bé đi cùng không chiếm ghế; vé hủy giải phóng liên kết ghế.
   fareClassId         String
   direction           FlightDirection @default(OUTBOUND)
   passengerName       String          // Họ tên in hoa không dấu: NGUYEN VAN A
@@ -382,10 +388,12 @@ model Ticket {
 
   booking             Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   flight              Flight          @relation(fields: [flightId], references: [id])
-  seat                FlightSeat      @relation(fields: [flightSeatId], references: [id])
+  seat                FlightSeat?     @relation(fields: [flightSeatId], references: [id])
   fareClass           FareClass       @relation(fields: [fareClassId], references: [id])
   addons              TicketAddon[]
   luggage             LuggageCheckIn?
+  @@index([bookingId])
+  @@index([flightId, fareClassId])
 }
 
 // Bảng 15: Danh mục dịch vụ mua thêm (Hành lý ký gửi, Suất ăn, Bảo hiểm)
@@ -468,6 +476,7 @@ model Notification {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, isRead, createdAt])
 }
 
 // ============================================================================

@@ -17,6 +17,7 @@ function load(file, dependencies = {}) {
   vm.runInNewContext(outputText, {
     exports,
     console,
+    AbortController,
     process: { env: {} },
     require: (id) => {
       if (id in dependencies) {
@@ -551,4 +552,171 @@ test("window and aisle descriptions follow geometry even with legacy seat-type m
   assert.equal(seatMap.seatLocation(seat("12G"), groups), "Lối đi");
   assert.equal(seatMap.seatLocation(seat("12K"), groups), "Cửa sổ");
   assert.equal(seatMap.seatLocation(seat("12K", { seatType: "EXIT_ROW" }), groups), "Hàng thoát hiểm");
+});
+
+const booking = load("src/utils/booking.ts");
+const bookingState = load("src/store/slices/bookingSlice.ts", {
+  "@reduxjs/toolkit": require("@reduxjs/toolkit"),
+  "../../utils/booking": booking,
+});
+function bookingInput() {
+  return {
+    params: { flights: [{ flightId: "out", fareClassId: "eco" }], passengers: { adults: 1, children: 1, infants: 1 } },
+    fares: [{ ...flight("out"), ticket: { price: 1000000 } }, { ...flight("back"), ticket: { price: 900000 } }],
+    passengers: [{ kind: "adult", name: "Adult" }, { kind: "child", name: "Child" }, { kind: "infant", name: "Infant" }],
+    contact: { name: "Adult", phone: "+84912345678", email: "test@example.com" },
+    seats: [{ flightId: "out", passengerIndex: 0, price: 120000 }],
+  };
+}
+test("booking total counts each leg and passenger once, excludes infant and stale service keys", () => {
+  const selection = { baggageKg: 20, insurance: true, priority: false, meal: false };
+  const draft = { ...bookingInput(), services: { "out:0": selection, "back:1": selection, "out:2": selection, "missing:0": selection } };
+  const totals = booking.bookingTotals(draft);
+  assert.equal(totals.fare, 5700000);
+  assert.equal(totals.seats, 120000);
+  assert.equal(totals.services, 750000);
+  assert.equal(totals.total, 6570000);
+});
+test("services remain independent per passenger/leg and survive editing the same booking", () => {
+  const reducer = bookingState.default;
+  let state = reducer(undefined, bookingState.startBooking(bookingInput()));
+  state = reducer(state, bookingState.updateServices({ flightId: "out", passengerIndex: 0, changes: { baggageKg: 15 } }));
+  state = reducer(state, bookingState.updateServices({ flightId: "back", passengerIndex: 1, changes: { meal: true } }));
+  state = reducer(state, bookingState.startBooking({ ...bookingInput(), contact: { name: "Edited" } }));
+  assert.equal(state.draft.services["out:0"].baggageKg, 15);
+  assert.equal(state.draft.services["back:1"].meal, true);
+  assert.equal(state.draft.contact.name, "Edited");
+  assert.equal(booking.bookingTotals(state.draft).services, 295000);
+});
+test("skip clears purchased extras; changed itinerary resets extras; logout removes booking PII", () => {
+  const reducer = bookingState.default;
+  let state = reducer(undefined, bookingState.startBooking(bookingInput()));
+  const add = bookingState.updateServices({ flightId: "out", passengerIndex: 0, changes: { insurance: true } });
+  state = reducer(state, add);
+  state = reducer(state, bookingState.skipServices());
+  assert.equal(booking.bookingTotals(state.draft).services, 0);
+  state = reducer(state, add);
+  state = reducer(state, bookingState.startBooking({ ...bookingInput(), params: { ...bookingInput().params, flights: [{ flightId: "new", fareClassId: "eco" }] } }));
+  assert.equal(Object.keys(state.draft.services).length, 0);
+  state = reducer(state, { type: "auth/resetAuth" });
+  assert.equal(state.draft, null);
+});
+test("infants and unknown flight/passenger cannot receive supplementary services", () => {
+  const reducer = bookingState.default;
+  let state = reducer(undefined, bookingState.startBooking(bookingInput()));
+  for (const target of [{ flightId: "out", passengerIndex: 2 }, { flightId: "missing", passengerIndex: 0 }, { flightId: "out", passengerIndex: 99 }]) {
+    state = reducer(state, bookingState.updateServices({ ...target, changes: { meal: true } }));
+  }
+  assert.equal(Object.keys(state.draft.services).length, 0);
+});
+
+const taxUtils = load("src/utils/taxAndFee.ts");
+const taxConfig = (airlineId, extra = {}) => ({
+  id: `tax-${airlineId}`, airline_id: airlineId,
+  admin_fee: 50000, airport_fee: 100000, security_fee: 20000,
+  fuel_surcharge: 30000, vat_percent: 8, currency: "VND", ...extra,
+});
+const taxedFare = (id, airlineId, price = 1000000) => ({
+  ...flight(id), airline: { id: airlineId, name: airlineId }, ticket: { price },
+});
+
+test("tax includes four fees and VAT on ticket price, rounded per passenger and per leg", () => {
+  const out = taxUtils.calculateLegTaxAndFee(taxedFare("out", "vn", 1000007), 3, taxConfig("vn"));
+  const back = taxUtils.calculateLegTaxAndFee(taxedFare("back", "vj", 900000), 3, taxConfig("vj", { vat_percent: 10 }));
+  assert.equal(out.fixedPerPassenger, 200000);
+  assert.equal(out.vatPerPassenger, 80001);
+  assert.equal(out.total, 840003);
+  assert.equal(back.total, 870000);
+  const draft = { ...bookingInput(), services: { "out:0": { ...booking.emptyServices(), meal: true } } };
+  const totals = booking.bookingTotals(draft, out.total + back.total);
+  assert.equal(totals.taxAndFees, 1710003);
+  assert.equal(totals.total, 5700000 + 120000 + 75000 + 1710003);
+  assert.equal(booking.bookingTotals(draft, null).total, null);
+});
+
+test("zero tax is valid; missing fields, wrong airline/currency and invalid amounts block calculation", () => {
+  const fare = taxedFare("out", "vn");
+  const zero = taxConfig("vn", { admin_fee: 0, airport_fee: 0, security_fee: 0, fuel_surcharge: 0, vat_percent: 0 });
+  assert.equal(taxUtils.calculateLegTaxAndFee(fare, 3, zero).total, 0);
+  for (const config of [undefined, taxConfig("vj"), taxConfig("vn", { currency: "USD" }), taxConfig("vn", { currency: null }), taxConfig("vn", { security_fee: null }), taxConfig("vn", { admin_fee: -1 }), taxConfig("vn", { vat_percent: 101 }), taxConfig("vn", { vat_percent: 8.5 }), taxConfig("vn", { admin_fee: Number.MAX_SAFE_INTEGER })]) {
+    assert.throws(() => taxUtils.calculateLegTaxAndFee(fare, 3, config));
+  }
+});
+
+test("tax API encodes airline ID, passes cancellation and rejects mismatched responses", async () => {
+  const calls = [];
+  const signal = {};
+  let data = { status: 200, data: taxConfig("airline/id") };
+  const api = load("src/api/airport.api.ts", {
+    "./clientApi": { clientApi: { get: async (...args) => { calls.push(args); return { data }; } } },
+  });
+  await api.getTaxAndFee("airline/id", signal);
+  assert.equal(calls[0][0], "/airlines/airline%2Fid/tax-and-fee");
+  assert.equal(calls[0][1].signal, signal);
+  data = { status: 200, data: taxConfig("another-airline") };
+  await assert.rejects(api.getTaxAndFee("airline/id"));
+  data = { status: 404 };
+  await assert.rejects(api.getTaxAndFee("airline/id"));
+});
+
+test("tax loading deduplicates airlines, cancels stale requests and retries failures", async () => {
+  // Minimal hook runner: requests remain pending so itinerary changes can race responses.
+  const states = [];
+  let cursor = 0;
+  let deps;
+  let cleanup;
+  const requests = [];
+  const react = {
+    useState(initial) {
+      const index = cursor++;
+      if (!(index in states)) states[index] = initial;
+      return [states[index], value => { states[index] = typeof value === "function" ? value(states[index]) : value; }];
+    },
+    useCallback: callback => callback,
+    useEffect(effect, nextDeps) {
+      if (!deps || nextDeps.some((value, index) => value !== deps[index])) {
+        cleanup?.();
+        deps = nextDeps;
+        cleanup = effect();
+      }
+    },
+  };
+  const hook = load("src/hook/useTaxAndFee.ts", {
+    react,
+    axios: { isAxiosError: () => false },
+    "../utils/taxAndFee": taxUtils,
+    "../api/airport.api": { getTaxAndFee: (id, signal) => new Promise((resolve, reject) => requests.push({ id, signal, resolve, reject })) },
+  });
+  const render = (fares, count = 3) => { cursor = 0; return hook.useTaxAndFee(fares, count); };
+  const settle = () => new Promise(resolve => setImmediate(resolve));
+  const original = [taxedFare("out", "vn"), taxedFare("back", "vn")];
+  assert.equal(render(original).total, null);
+  assert.equal(requests.length, 1);
+  const changed = [taxedFare("out", "vj")];
+  assert.equal(render(changed).total, null);
+  assert.equal(requests[0].signal.aborted, true);
+  requests[0].resolve({ data: taxConfig("vn") });
+  requests[1].resolve({ data: taxConfig("vj") });
+  await settle();
+  let result = render(changed);
+  assert.equal(result.status, "ready");
+  assert.equal(result.total, 840000);
+  assert.equal(render(changed, 1).total, 280000);
+  assert.equal(requests.length, 2);
+  result.reload();
+  assert.equal(render(changed).total, null);
+  requests[2].reject(new Error("Cannot load fees"));
+  await settle();
+  result = render(changed);
+  assert.equal(result.status, "error");
+  assert.equal(result.total, null);
+  result.reload();
+  render(changed);
+  requests[3].resolve({ data: taxConfig("vj", { security_fee: null }) });
+  await settle();
+  assert.equal(render(changed).status, "error");
+  assert.equal(render(changed).total, null);
+  assert.equal(render([flight("missing-airline-id")]).status, "error");
+  assert.equal(requests.length, 4);
+  cleanup?.();
 });

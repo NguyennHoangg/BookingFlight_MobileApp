@@ -11,6 +11,7 @@ export interface PassengerDraft {
   birthday: string;
   identity: string;
 }
+
 export interface ContactDraft {
   name: string;
   email: string;

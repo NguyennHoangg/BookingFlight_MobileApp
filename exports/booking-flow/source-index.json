@@ -1,0 +1,2060 @@
+[
+  {
+    "file": "fe/src/screens/home/Home.tsx",
+    "name": "Home",
+    "start": 30,
+    "end": 606,
+    "signature": "",
+    "calls": [
+      "useState",
+      "d.setDate",
+      "d.getDate",
+      "d.getFullYear",
+      "String(d.getMonth() + 1).padStart",
+      "String",
+      "d.getMonth",
+      "String(d.getDate()).padStart",
+      "getFormattedDate",
+      "useRef",
+      "useAirport",
+      "setDeparture",
+      "setArrival",
+      "setSelectingType",
+      "setModalVisible",
+      "date.getDay",
+      "date.getDate",
+      "date.getMonth",
+      "Alert.alert",
+      "navigate",
+      "formatPassengerSummary",
+      "ref.current.showPicker",
+      "ref.current.click",
+      "openPicker",
+      "setShowDepartPicker",
+      "setTripType",
+      "setShowReturnPicker",
+      "handleOpenSelectAirport",
+      "formatDateVN",
+      "React.createElement",
+      "setDepartDateRaw",
+      "setReturnDateRaw",
+      "selectedDate.getFullYear",
+      "String(selectedDate.getMonth() + 1).padStart",
+      "selectedDate.getMonth",
+      "String(selectedDate.getDate()).padStart",
+      "selectedDate.getDate",
+      "setPassengerModalVisible",
+      "setSeatClassModalVisible"
+    ],
+    "excerpt": "export default function Home() {\n  const [tripType, setTripType] = useState<\"mot-chieu\" | \"khu-hoi\">(\"khu-hoi\");\n  const [selectedDeparture, setDeparture] = useState<Airport>();\n  const [selectedArrival, setArrival] = useState<Airport>();\n\n  const getFormattedDate = (offsetDays: number = 0) => {\n    const d = new Date();\n    d.setDate(d.getDate() + offsetDays);"
+  },
+  {
+    "file": "fe/src/screens/home/Home.tsx",
+    "name": "getFormattedDate",
+    "start": 35,
+    "end": 42,
+    "signature": "offsetDays: number = 0",
+    "calls": [
+      "d.setDate",
+      "d.getDate",
+      "d.getFullYear",
+      "String(d.getMonth() + 1).padStart",
+      "String",
+      "d.getMonth",
+      "String(d.getDate()).padStart"
+    ],
+    "excerpt": "  const getFormattedDate = (offsetDays: number = 0) => {\n    const d = new Date();\n    d.setDate(d.getDate() + offsetDays);\n    const yyyy = d.getFullYear();\n    const mm = String(d.getMonth() + 1).padStart(2, \"0\");\n    const dd = String(d.getDate()).padStart(2, \"0\");\n    return `${yyyy}-${mm}-${dd}`;\n  };"
+  },
+  {
+    "file": "fe/src/screens/home/Home.tsx",
+    "name": "handleSwapAirports",
+    "start": 73,
+    "end": 77,
+    "signature": "",
+    "calls": [
+      "setDeparture",
+      "setArrival"
+    ],
+    "excerpt": "  const handleSwapAirports = () => {\n    const temp = departure;\n    setDeparture(arrival);\n    setArrival(temp);\n  };"
+  },
+  {
+    "file": "fe/src/screens/home/Home.tsx",
+    "name": "handleOpenSelectAirport",
+    "start": 79,
+    "end": 82,
+    "signature": "type: \"departure\" | \"arrival\"",
+    "calls": [
+      "setSelectingType",
+      "setModalVisible"
+    ],
+    "excerpt": "  const handleOpenSelectAirport = (type: \"departure\" | \"arrival\") => {\n    setSelectingType(type);\n    setModalVisible(true);\n  };"
+  },
+  {
+    "file": "fe/src/screens/home/Home.tsx",
+    "name": "handleSelectAirport",
+    "start": 85,
+    "end": 100,
+    "signature": "airport: Airport",
+    "calls": [
+      "setArrival",
+      "setDeparture",
+      "setModalVisible"
+    ],
+    "excerpt": "  const handleSelectAirport = (airport: Airport) => {\n    if (selectingType === \"departure\") {\n      // Nếu chọn trùng điểm đến hiện tại thì hoán đổi\n      if (arrival && airport.code === arrival.code) {\n        setArrival(departure);\n      }\n      setDeparture(airport);\n    } else {"
+  },
+  {
+    "file": "fe/src/screens/home/Home.tsx",
+    "name": "formatDateVN",
+    "start": 102,
+    "end": 110,
+    "signature": "dateString: string",
+    "calls": [
+      "date.getDay",
+      "date.getDate",
+      "date.getMonth"
+    ],
+    "excerpt": "  const formatDateVN = (dateString: string) => {\n    if (!dateString) return \"\";\n    const date = new Date(dateString);\n    const days = [\"CN\", \"T2\", \"T3\", \"T4\", \"T5\", \"T6\", \"T7\"];\n    const dayOfWeek = days[date.getDay()];\n    const day = date.getDate();\n    const month = date.getMonth() + 1;\n    return `${dayOfWeek}, ${day} Th${month}`;"
+  },
+  {
+    "file": "fe/src/screens/home/Home.tsx",
+    "name": "handleSearch",
+    "start": 112,
+    "end": 131,
+    "signature": "",
+    "calls": [
+      "Alert.alert",
+      "navigate",
+      "formatPassengerSummary"
+    ],
+    "excerpt": "  const handleSearch = () => {\n    if (!departure || !arrival || departure.code === arrival.code) {\n      Alert.alert(\"Thông báo\", \"Vui lòng chọn điểm đi và điểm đến khác nhau.\");\n      return;\n    }\n    if (tripType === \"khu-hoi\" && returnDateRaw < departDateRaw) {\n      Alert.alert(\"Thông báo\", \"Ngày về phải từ ngày đi trở đi.\");\n      return;"
+  },
+  {
+    "file": "fe/src/screens/home/Home.tsx",
+    "name": "openPicker",
+    "start": 133,
+    "end": 141,
+    "signature": "ref: React.RefObject<HTMLInputElement | null>",
+    "calls": [
+      "ref.current.showPicker",
+      "ref.current.click"
+    ],
+    "excerpt": "  const openPicker = (ref: React.RefObject<HTMLInputElement | null>) => {\n    if (ref.current) {\n      if (typeof ref.current.showPicker === \"function\") {\n        ref.current.showPicker();\n      } else {\n        ref.current.click();\n      }\n    }"
+  },
+  {
+    "file": "fe/src/screens/home/Home.tsx",
+    "name": "handleOpenDepartPicker",
+    "start": 143,
+    "end": 149,
+    "signature": "",
+    "calls": [
+      "openPicker",
+      "setShowDepartPicker"
+    ],
+    "excerpt": "  const handleOpenDepartPicker = () => {\n    if (Platform.OS === \"web\") {\n      openPicker(departInputRef);\n    } else {\n      setShowDepartPicker(true);\n    }\n  };"
+  },
+  {
+    "file": "fe/src/screens/home/Home.tsx",
+    "name": "handleOpenReturnPicker",
+    "start": 151,
+    "end": 160,
+    "signature": "",
+    "calls": [
+      "setTripType",
+      "openPicker",
+      "setShowReturnPicker"
+    ],
+    "excerpt": "  const handleOpenReturnPicker = () => {\n    if (tripType === \"mot-chieu\") {\n      setTripType(\"khu-hoi\");\n    }\n    if (Platform.OS === \"web\") {\n      openPicker(returnInputRef);\n    } else {\n      setShowReturnPicker(true);"
+  },
+  {
+    "file": "fe/src/screens/search/SearchFlightResult.tsx",
+    "name": "SearchFlightResultScreen",
+    "start": 31,
+    "end": 1044,
+    "signature": "",
+    "calls": [
+      "useLocalSearchParams",
+      "useMemo",
+      "parseSearchParams",
+      "readRouteData",
+      "useState",
+      "setLoading",
+      "setCalendarLoading",
+      "setCurrentStep",
+      "useCallback",
+      "Promise.resolve",
+      "searchFlights",
+      "setFlightError",
+      "setFlights",
+      "setSelectedDepartFlight",
+      "list.find",
+      "getFlightKey",
+      "setSelectedReturnFlight",
+      "isAxiosError",
+      "useEffect",
+      "fetchFlights",
+      "controller.abort",
+      "isNaN",
+      "base.getTime",
+      "d.setDate",
+      "validBase.getDate",
+      "d.getFullYear",
+      "String(d.getMonth() + 1).padStart",
+      "String",
+      "d.getMonth",
+      "String(d.getDate()).padStart",
+      "d.getDate",
+      "d.getDay",
+      "list.push",
+      "getFlightCalendar",
+      "setCalendar",
+      "setCalendarError",
+      "calendar.map",
+      "flights.map",
+      "d.getTime",
+      "validDate.getMonth",
+      "validDate.getFullYear",
+      "result.filter",
+      "filterState.selectedAirlines.includes",
+      "new Date(f.departure.time).getHours",
+      "result.sort",
+      "new Date(a.departure.time).getTime",
+      "new Date(b.departure.time).getTime",
+      "String(d.getHours()).padStart",
+      "d.getHours",
+      "String(d.getMinutes()).padStart",
+      "d.getMinutes",
+      "Number.isFinite",
+      "Math.floor",
+      "changeStep",
+      "goBack",
+      "setFilterModalVisible",
+      "formatDateShort",
+      "selectedDepartFlight.ticket.price.toLocaleString",
+      "formatTime",
+      "formatDateWithDay",
+      "selectedReturnFlight.ticket.price.toLocaleString",
+      "nearbyDates.map",
+      "setSelectedReturnDate",
+      "setSelectedDepartDate",
+      "calendarByDate.get",
+      "calendarByDate.get(item.dateStr)!.minPrice!.toLocaleString",
+      "setReloadVersion",
+      "setQuickSort",
+      "processedFlights.map",
+      "handleSelectFlight",
+      "formatDuration",
+      "flight.ticket?.price?.toLocaleString",
+      "totalPrice.toLocaleString",
+      "navigate",
+      "setFilterState"
+    ],
+    "excerpt": "export default function SearchFlightResultScreen() {\n  const { data } = useLocalSearchParams<{ data?: string }>();\n  const searchParams = useMemo(() => parseSearchParams(readRouteData(data)), [data]);\n  // Dữ liệu từ màn hình tìm kiếm truyền sang\n  const {\n    tripType = \"khu-hoi\",\n    departure = { id: \"\", country: \"\", code: \"\", city: \"\", name: \"\" },\n    arrival = { id: \"\", country: \"\", code: \"\", city: \"\", name: \"\" },"
+  },
+  {
+    "file": "fe/src/screens/search/SearchFlightResult.tsx",
+    "name": "changeStep",
+    "start": 58,
+    "end": 63,
+    "signature": "step: \"depart\" | \"return\"",
+    "calls": [
+      "setLoading",
+      "setCalendarLoading",
+      "setCurrentStep"
+    ],
+    "excerpt": "  const changeStep = (step: \"depart\" | \"return\") => {\n    if (step === currentStep) return;\n    setLoading(true);\n    setCalendarLoading(true);\n    setCurrentStep(step);\n  };"
+  },
+  {
+    "file": "fe/src/screens/search/SearchFlightResult.tsx",
+    "name": "fetchFlights",
+    "start": 103,
+    "end": 134,
+    "signature": "dateToFetch: string, depCode: string, arrCode: string, signal: AbortSignal",
+    "calls": [
+      "Promise.resolve",
+      "searchFlights",
+      "setFlightError",
+      "setFlights",
+      "setSelectedDepartFlight",
+      "list.find",
+      "getFlightKey",
+      "setSelectedReturnFlight",
+      "isAxiosError",
+      "setLoading"
+    ],
+    "excerpt": "  const fetchFlights = useCallback(\n    (dateToFetch: string, depCode: string, arrCode: string, signal: AbortSignal) => {\n      if (!searchParams || signal.aborted) return Promise.resolve();\n      return searchFlights({\n        departureCode: depCode,\n        arrivalCode: arrCode,\n        departDate: dateToFetch,\n        passengers: totalPassengers,"
+  },
+  {
+    "file": "fe/src/screens/search/SearchFlightResult.tsx",
+    "name": "formatTime",
+    "start": 269,
+    "end": 275,
+    "signature": "isoString?: string",
+    "calls": [
+      "String(d.getHours()).padStart",
+      "String",
+      "d.getHours",
+      "String(d.getMinutes()).padStart",
+      "d.getMinutes"
+    ],
+    "excerpt": "  const formatTime = (isoString?: string) => {\n    if (!isoString) return \"--:--\";\n    const d = new Date(isoString);\n    const h = String(d.getHours()).padStart(2, \"0\");\n    const m = String(d.getMinutes()).padStart(2, \"0\");\n    return `${h}:${m}`;\n  };"
+  },
+  {
+    "file": "fe/src/screens/search/SearchFlightResult.tsx",
+    "name": "formatDuration",
+    "start": 278,
+    "end": 283,
+    "signature": "mins?: number",
+    "calls": [
+      "Number.isFinite",
+      "Math.floor"
+    ],
+    "excerpt": "  const formatDuration = (mins?: number) => {\n    if (mins === undefined || !Number.isFinite(mins)) return \"--\";\n    const h = Math.floor(mins / 60);\n    const m = mins % 60;\n    return `${h}h ${m}m`;\n  };"
+  },
+  {
+    "file": "fe/src/screens/search/SearchFlightResult.tsx",
+    "name": "formatDateShort",
+    "start": 286,
+    "end": 292,
+    "signature": "isoString?: string",
+    "calls": [
+      "String(d.getDate()).padStart",
+      "String",
+      "d.getDate",
+      "String(d.getMonth() + 1).padStart",
+      "d.getMonth"
+    ],
+    "excerpt": "  const formatDateShort = (isoString?: string) => {\n    if (!isoString) return \"\";\n    const d = new Date(isoString);\n    const dd = String(d.getDate()).padStart(2, \"0\");\n    const mm = String(d.getMonth() + 1).padStart(2, \"0\");\n    return `${dd}/${mm}`;\n  };"
+  },
+  {
+    "file": "fe/src/screens/search/SearchFlightResult.tsx",
+    "name": "formatDateWithDay",
+    "start": 295,
+    "end": 302,
+    "signature": "isoString?: string",
+    "calls": [
+      "d.getDay",
+      "String(d.getDate()).padStart",
+      "String",
+      "d.getDate",
+      "String(d.getMonth() + 1).padStart",
+      "d.getMonth"
+    ],
+    "excerpt": "  const formatDateWithDay = (isoString?: string) => {\n    if (!isoString) return \"\";\n    const d = new Date(isoString);\n    const day = DAY_SHORT_NAMES[d.getDay()];\n    const dd = String(d.getDate()).padStart(2, \"0\");\n    const mm = String(d.getMonth() + 1).padStart(2, \"0\");\n    return `${day}, ${dd}/${mm}`;\n  };"
+  },
+  {
+    "file": "fe/src/screens/search/SearchFlightResult.tsx",
+    "name": "handleSelectFlight",
+    "start": 315,
+    "end": 325,
+    "signature": "flight: FlightItem",
+    "calls": [
+      "setSelectedDepartFlight",
+      "changeStep",
+      "setSelectedReturnFlight"
+    ],
+    "excerpt": "  const handleSelectFlight = (flight: FlightItem) => {\n    if (currentStep === \"depart\") {\n      setSelectedDepartFlight(flight);\n      if (isRoundTrip) {\n        // Sau khi chọn chuyến đi, tự động chuyển tiếp sang chọn chuyến về\n        changeStep(\"return\");\n      }\n    } else {"
+  },
+  {
+    "file": "fe/src/screens/flight/FlightDetail.tsx",
+    "name": "FlightDetail",
+    "start": 35,
+    "end": 59,
+    "signature": "",
+    "calls": [
+      "useLocalSearchParams",
+      "useMemo",
+      "parseFlightDetail",
+      "readRouteData"
+    ],
+    "excerpt": "export default function FlightDetail() {\n  const { data, flightId } = useLocalSearchParams<{\n    data?: string;\n    flightId?: string;\n  }>();\n  const params = useMemo(\n    () => parseFlightDetail(readRouteData(data) ?? { flightId }),\n    [data, flightId],"
+  },
+  {
+    "file": "fe/src/screens/flight/FlightDetail.tsx",
+    "name": "FlightDetails",
+    "start": 62,
+    "end": 419,
+    "signature": "{ params }: { params: FlightDetailParams }",
+    "calls": [
+      "useState",
+      "passengerCount",
+      "useMemo",
+      "useFareSelection",
+      "useAppSelector",
+      "useFlightFavorite",
+      "navigate",
+      "favorite.toggle",
+      "setHelp",
+      "legs.map",
+      "setActiveLeg",
+      "flightDate",
+      "flightTime",
+      "flightDuration",
+      "formatFareMoney",
+      "fares.selected.map"
+    ],
+    "excerpt": "function FlightDetails({ params }: { params: FlightDetailParams }) {\n  const [activeLeg, setActiveLeg] = useState(0);\n  const [help, setHelp] = useState(false);\n  const counts = params.selection?.search.passengers ?? {\n    adults: 1,\n    children: 0,\n    infants: 0,\n  };"
+  },
+  {
+    "file": "fe/src/screens/flight/FlightDetail.tsx",
+    "name": "proceed",
+    "start": 92,
+    "end": 95,
+    "signature": "",
+    "calls": [
+      "navigate"
+    ],
+    "excerpt": "  const proceed = () => {\n    if (fares.total === null) return;\n    navigate(\"FareSelection\", params);\n  };"
+  },
+  {
+    "file": "fe/src/screens/flight/FareSelection.tsx",
+    "name": "FareSelection",
+    "start": 28,
+    "end": 55,
+    "signature": "",
+    "calls": [
+      "useLocalSearchParams",
+      "useMemo",
+      "parseFlightDetail",
+      "readRouteData",
+      "router.replace"
+    ],
+    "excerpt": "export default function FareSelection() {\n  const { data, flightId } = useLocalSearchParams<{\n    data?: string;\n    flightId?: string;\n  }>();\n  const params = useMemo(\n    () => parseFlightDetail(readRouteData(data) ?? { flightId }),\n    [data, flightId],"
+  },
+  {
+    "file": "fe/src/screens/flight/FareSelection.tsx",
+    "name": "FareSelectionScreen",
+    "start": 58,
+    "end": 305,
+    "signature": "{ params }: { params: FlightDetailParams }",
+    "calls": [
+      "useState",
+      "passengerCount",
+      "useMemo",
+      "useFareSelection",
+      "setActiveLeg",
+      "navigate",
+      "fares.selected.map",
+      "setSheet",
+      "legs.map",
+      "flightDate",
+      "options.map"
+    ],
+    "excerpt": "function FareSelectionScreen({ params }: { params: FlightDetailParams }) {\n  const [activeLeg, setActiveLeg] = useState(0);\n  const [sheet, setSheet] = useState<\"compare\" | \"help\" | null>(null);\n  const counts = params.selection?.search.passengers ?? {\n    adults: 1,\n    children: 0,\n    infants: 0,\n  };"
+  },
+  {
+    "file": "fe/src/screens/flight/FareSelection.tsx",
+    "name": "handleContinue",
+    "start": 90,
+    "end": 103,
+    "signature": "",
+    "calls": [
+      "setActiveLeg",
+      "navigate",
+      "fares.selected.map"
+    ],
+    "excerpt": "  const handleContinue = () => {\n    if (fares.status !== \"ready\" || fares.total === null) return;\n    if (roundTrip && activeLeg === 0) {\n      setActiveLeg(1);\n      return;\n    }\n    navigate(\"PassengerInfo\", {\n      flights: fares.selected.map((fare) => ({"
+  },
+  {
+    "file": "fe/src/screens/booking/PassengerInfo.tsx",
+    "name": "PassengerInfo",
+    "start": 56,
+    "end": 74,
+    "signature": "",
+    "calls": [
+      "useLocalSearchParams",
+      "useMemo",
+      "parsePassengerInfo",
+      "readRouteData"
+    ],
+    "excerpt": "export default function PassengerInfo() {\n  const { data } = useLocalSearchParams<{ data?: string }>();\n  const params = useMemo(() => parsePassengerInfo(readRouteData(data)), [data]);\n  if (!params)\n    return (\n      <SafeAreaView edges={[\"left\", \"right\", \"bottom\"]} className=\"flex-1 bg-white\">\n        <AppHeader title=\"Thông tin hành khách\" back />\n        <View className=\"flex-1 items-center justify-center p-6\">"
+  },
+  {
+    "file": "fe/src/screens/booking/PassengerInfo.tsx",
+    "name": "PassengerForm",
+    "start": 77,
+    "end": 561,
+    "signature": "{ params }: { params: PassengerInfoParams }",
+    "calls": [
+      "useAppDispatch",
+      "useAppSelector",
+      "useState",
+      "createPassengerDrafts",
+      "(account?.phone ?? account?.phoneNumber ?? \"\").replace",
+      "passengerCount",
+      "useMemo",
+      "params.flights.map",
+      "useFareSelection",
+      "fares.selected.every",
+      "fares.selected.flatMap",
+      "useTaxAndFee",
+      "fullPassengerName",
+      "contact.phone.startsWith",
+      "seatChoices.reduce",
+      "setPassengers",
+      "old.map",
+      "setMainContact",
+      "setContact",
+      "setSheet",
+      "setSavedError",
+      "setSavedLoading",
+      "setSaved",
+      "getSavedPassengers",
+      "profile.dateOfBirth\r\n      .slice(0, 10)\r\n      .split(\"-\")\r\n      .reverse",
+      "profile.dateOfBirth\r\n      .slice(0, 10)\r\n      .split",
+      "profile.dateOfBirth\r\n      .slice",
+      "splitPassengerName",
+      "validatePassengerForm",
+      "setErrors",
+      "Object.keys",
+      "setSeatPicker",
+      "loadedFares.map",
+      "flightDate",
+      "flightTime",
+      "flightDuration",
+      "formatFareMoney",
+      "openSaved",
+      "passengers.map",
+      "updatePassenger",
+      "setTarget",
+      "updateContact",
+      "seatChoices.map",
+      "setSeatChoices",
+      "dispatch",
+      "startBooking",
+      "navigate",
+      "[\"+84\", \"+1\", \"+44\", \"+65\", \"+81\", \"+82\", \"+61\"].map",
+      "setDialCode",
+      "countries.map",
+      "saved.map",
+      "applySaved",
+      "profile.dateOfBirth\r\n                            .slice"
+    ],
+    "excerpt": "function PassengerForm({ params }: { params: PassengerInfoParams }) {\n  const dispatch = useAppDispatch();\n  const account = useAppSelector((state) => state.auth.user);\n  const authenticated = useAppSelector((state) => state.auth.isAuthenticated);\n  const [passengers, setPassengers] = useState(() =>\n    createPassengerDrafts(params.passengers),\n  );\n  const [contact, setContact] = useState<ContactDraft>(() => ({"
+  },
+  {
+    "file": "fe/src/screens/booking/PassengerInfo.tsx",
+    "name": "updatePassenger",
+    "start": 143,
+    "end": 152,
+    "signature": "index: number, field: keyof PassengerDraft, value: string",
+    "calls": [
+      "setPassengers",
+      "old.map"
+    ],
+    "excerpt": "  const updatePassenger = (\n    index: number,\n    field: keyof PassengerDraft,\n    value: string,\n  ) =>\n    setPassengers((old) =>\n      old.map((passenger, item) =>\n        item === index ? { ...passenger, [field]: value } : passenger,"
+  },
+  {
+    "file": "fe/src/screens/booking/PassengerInfo.tsx",
+    "name": "updateContact",
+    "start": 153,
+    "end": 156,
+    "signature": "field: keyof ContactDraft, value: string",
+    "calls": [
+      "setMainContact",
+      "setContact"
+    ],
+    "excerpt": "  const updateContact = (field: keyof ContactDraft, value: string) => {\n    if (field === \"name\") setMainContact(false);\n    setContact((old) => ({ ...old, [field]: value }));\n  };"
+  },
+  {
+    "file": "fe/src/screens/booking/PassengerInfo.tsx",
+    "name": "openSaved",
+    "start": 157,
+    "end": 169,
+    "signature": "",
+    "calls": [
+      "setSheet",
+      "setSavedError",
+      "setSavedLoading",
+      "setSaved",
+      "getSavedPassengers"
+    ],
+    "excerpt": "  const openSaved = async () => {\n    setSheet(\"saved\");\n    setSavedError(null);\n    if (!authenticated) return;\n    setSavedLoading(true);\n    try {\n      setSaved(await getSavedPassengers());\n    } catch {"
+  },
+  {
+    "file": "fe/src/screens/booking/PassengerInfo.tsx",
+    "name": "applySaved",
+    "start": 170,
+    "end": 201,
+    "signature": "profile: SavedPassenger",
+    "calls": [
+      "setSavedError",
+      "profile.dateOfBirth\r\n      .slice(0, 10)\r\n      .split(\"-\")\r\n      .reverse",
+      "profile.dateOfBirth\r\n      .slice(0, 10)\r\n      .split",
+      "profile.dateOfBirth\r\n      .slice",
+      "setPassengers",
+      "old.map",
+      "splitPassengerName",
+      "setSheet"
+    ],
+    "excerpt": "  const applySaved = (profile: SavedPassenger) => {\n    const expected = {\n      adult: \"ADULT\",\n      child: \"CHILD\",\n      infant: \"INFANT\",\n    } as const;\n    if (profile.passengerType !== expected[passengers[target].kind]) {\n      setSavedError("
+  },
+  {
+    "file": "fe/src/screens/booking/PassengerInfo.tsx",
+    "name": "continueToSeats",
+    "start": 203,
+    "end": 212,
+    "signature": "",
+    "calls": [
+      "validatePassengerForm",
+      "setErrors",
+      "Object.keys",
+      "setSeatPicker"
+    ],
+    "excerpt": "  const continueToSeats = () => {\n    if (!validFares || !flight || taxes.status !== \"ready\") return;\n    const validation = validatePassengerForm(\n      passengers,\n      effectiveContact,\n      flight.departure.time,\n    );\n    setErrors(validation);"
+  },
+  {
+    "file": "fe/src/screens/booking/AdditionalServices.tsx",
+    "name": "AdditionalServices",
+    "start": 28,
+    "end": 247,
+    "signature": "",
+    "calls": [
+      "useAppDispatch",
+      "useAppSelector",
+      "useState",
+      "useTaxAndFee",
+      "serviceKey",
+      "emptyServices",
+      "bookingTotals",
+      "dispatch",
+      "updateServices",
+      "navigate",
+      "skipServices",
+      "next",
+      "flightDate",
+      "draft.seats.find",
+      "draft.fares.map",
+      "setLegIndex",
+      "draft.passengers.map",
+      "setPassengerIndex",
+      "fullPassengerName",
+      "BAGGAGE_OPTIONS.map",
+      "update",
+      "formatFareMoney",
+      "setDetails"
+    ],
+    "excerpt": "export default function AdditionalServices() {\n  const dispatch = useAppDispatch();\n  const draft = useAppSelector((state) => state.booking.draft);\n  const [legIndex, setLegIndex] = useState(0);\n  const [passengerIndex, setPassengerIndex] = useState(0);\n  const [details, setDetails] = useState(false);\n  const taxes = useTaxAndFee(draft?.fares ?? [], draft?.passengers.length ?? 0);\n  if (!draft) return <MissingBooking />;"
+  },
+  {
+    "file": "fe/src/screens/booking/AdditionalServices.tsx",
+    "name": "update",
+    "start": 42,
+    "end": 45,
+    "signature": "changes: Partial<ServiceSelection>",
+    "calls": [
+      "dispatch",
+      "updateServices"
+    ],
+    "excerpt": "  const update = (changes: Partial<ServiceSelection>) =>\n    dispatch(\n      updateServices({ flightId: fare.flightId, passengerIndex, changes }),\n    );"
+  },
+  {
+    "file": "fe/src/screens/booking/AdditionalServices.tsx",
+    "name": "next",
+    "start": 46,
+    "end": 48,
+    "signature": "",
+    "calls": [
+      "navigate"
+    ],
+    "excerpt": "  const next = () => {\n    if (taxes.status === \"ready\") navigate(\"BookingConfirmation\");\n  };"
+  },
+  {
+    "file": "fe/src/screens/booking/AdditionalServices.tsx",
+    "name": "ServiceToggle",
+    "start": 248,
+    "end": 276,
+    "signature": "{\n  label,\n  price,\n  value,\n  onChange,\n}: {\n  label: string;\n  price: number;\n  value: boolean;\n  onChange: (value: boolean) => void;\n}",
+    "calls": [
+      "formatFareMoney"
+    ],
+    "excerpt": "function ServiceToggle({\n  label,\n  price,\n  value,\n  onChange,\n}: {\n  label: string;\n  price: number;"
+  },
+  {
+    "file": "fe/src/screens/booking/BookingConfirmation.tsx",
+    "name": "BookingConfirmation",
+    "start": 33,
+    "end": 302,
+    "signature": "",
+    "calls": [
+      "useAppSelector",
+      "useState",
+      "useTaxAndFee",
+      "bookingTotals",
+      "navigate",
+      "setSheet",
+      "draft.fares.map",
+      "setDetail",
+      "flightDate",
+      "flightTime",
+      "flightDuration",
+      "draft.passengers.map",
+      "fullPassengerName",
+      "serviceKey",
+      "emptyServices",
+      "draft.seats.find",
+      "BAGGAGE_OPTIONS.find",
+      "formatFareMoney"
+    ],
+    "excerpt": "export default function BookingConfirmation() {\n  const draft = useAppSelector((state) => state.booking.draft);\n  const [sheet, setSheet] = useState<\"payment\" | \"terms\" | \"privacy\" | null>(\n    null,\n  );\n  const [detail, setDetail] = useState<FlightFare | null>(null);\n  const taxes = useTaxAndFee(draft?.fares ?? [], draft?.passengers.length ?? 0);\n  if (!draft) return <MissingBooking />;"
+  },
+  {
+    "file": "fe/src/screens/booking/BookingConfirmation.tsx",
+    "name": "editPassengers",
+    "start": 42,
+    "end": 42,
+    "signature": "",
+    "calls": [
+      "navigate"
+    ],
+    "excerpt": "  const editPassengers = () => navigate(\"PassengerInfo\", draft.params);"
+  },
+  {
+    "file": "fe/src/screens/booking/BookingConfirmation.tsx",
+    "name": "ContactRow",
+    "start": 303,
+    "end": 323,
+    "signature": "{\n  label,\n  value,\n  blue = false,\n}: {\n  label: string;\n  value: string;\n  blue?: boolean;\n}",
+    "calls": [],
+    "excerpt": "function ContactRow({\n  label,\n  value,\n  blue = false,\n}: {\n  label: string;\n  value: string;\n  blue?: boolean;"
+  },
+  {
+    "file": "fe/src/navigation/routes.ts",
+    "name": "navigate",
+    "start": 27,
+    "end": 42,
+    "signature": "name: K, ...args: RootStackParamList[K] extends undefined\n    ? []\n    : [params: RootStackParamList[K]]",
+    "calls": [
+      "router.navigate",
+      "JSON.stringify"
+    ],
+    "excerpt": "export function navigate<K extends keyof RootStackParamList>(\n  name: K,\n  ...args: RootStackParamList[K] extends undefined\n    ? []\n    : [params: RootStackParamList[K]]\n) {\n  const params = args[0];\n  router.navigate("
+  },
+  {
+    "file": "fe/src/navigation/routes.ts",
+    "name": "readRouteData",
+    "start": 44,
+    "end": 51,
+    "signature": "value: string | string[] | undefined",
+    "calls": [
+      "JSON.parse"
+    ],
+    "excerpt": "export function readRouteData(value: string | string[] | undefined): unknown {\n  if (typeof value !== \"string\") return undefined;\n  try {\n    return JSON.parse(value);\n  } catch {\n    return undefined;\n  }\n}"
+  },
+  {
+    "file": "fe/src/navigation/routes.ts",
+    "name": "goBack",
+    "start": 53,
+    "end": 56,
+    "signature": "",
+    "calls": [
+      "router.canGoBack",
+      "router.back",
+      "router.replace"
+    ],
+    "excerpt": "export function goBack() {\n  if (router.canGoBack()) router.back();\n  else router.replace(\"/\");\n}"
+  },
+  {
+    "file": "fe/src/navigation/validation.ts",
+    "name": "object",
+    "start": 9,
+    "end": 11,
+    "signature": "value: unknown",
+    "calls": [
+      "Array.isArray"
+    ],
+    "excerpt": "function object(value: unknown): value is Record<string, unknown> {\n  return typeof value === \"object\" && value !== null && !Array.isArray(value);\n}"
+  },
+  {
+    "file": "fe/src/navigation/validation.ts",
+    "name": "airport",
+    "start": 12,
+    "end": 20,
+    "signature": "value: unknown",
+    "calls": [
+      "object",
+      "/^[A-Z]{3}$/.test"
+    ],
+    "excerpt": "function airport(value: unknown): value is Airport {\n  return (\n    object(value) &&\n    typeof value.code === \"string\" &&\n    /^[A-Z]{3}$/.test(value.code) &&\n    typeof value.city === \"string\" &&\n    typeof value.name === \"string\"\n  );"
+  },
+  {
+    "file": "fe/src/navigation/validation.ts",
+    "name": "date",
+    "start": 21,
+    "end": 29,
+    "signature": "value: unknown",
+    "calls": [
+      "/^\\d{4}-\\d{2}-\\d{2}$/.test",
+      "Number.isNaN",
+      "parsed.getTime",
+      "parsed.toISOString().slice",
+      "parsed.toISOString"
+    ],
+    "excerpt": "function date(value: unknown): value is string {\n  if (typeof value !== \"string\" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value))\n    return false;\n  const parsed = new Date(`${value}T00:00:00Z`);\n  return (\n    !Number.isNaN(parsed.getTime()) &&\n    parsed.toISOString().slice(0, 10) === value\n  );"
+  },
+  {
+    "file": "fe/src/navigation/validation.ts",
+    "name": "parseSearchParams",
+    "start": 30,
+    "end": 72,
+    "signature": "value: unknown",
+    "calls": [
+      "object",
+      "airport",
+      "date",
+      "[counts.adults, counts.children, counts.infants].every",
+      "Number.isInteger"
+    ],
+    "excerpt": "export function parseSearchParams(\n  value: unknown,\n): SearchFlightParams | undefined {\n  if (\n    !object(value) ||\n    !airport(value.departure) ||\n    !airport(value.arrival) ||\n    value.departure.code === value.arrival.code ||"
+  },
+  {
+    "file": "fe/src/navigation/validation.ts",
+    "name": "flight",
+    "start": 73,
+    "end": 94,
+    "signature": "value: unknown",
+    "calls": [
+      "object",
+      "[value.departure, value.arrival].every",
+      "Number.isFinite"
+    ],
+    "excerpt": "function flight(value: unknown): value is FlightItem {\n  if (\n    !object(value) ||\n    typeof value.flightId !== \"string\" ||\n    typeof value.flightNumber !== \"string\" ||\n    !object(value.airline) ||\n    typeof value.airline.name !== \"string\" ||\n    !object(value.departure) ||"
+  },
+  {
+    "file": "fe/src/navigation/validation.ts",
+    "name": "parseFlightDetail",
+    "start": 95,
+    "end": 126,
+    "signature": "value: unknown",
+    "calls": [
+      "object",
+      "value.flightId.trim",
+      "flight",
+      "parseSearchParams"
+    ],
+    "excerpt": "export function parseFlightDetail(\n  value: unknown,\n): FlightDetailParams | undefined {\n  if (\n    !object(value) ||\n    typeof value.flightId !== \"string\" ||\n    !value.flightId.trim()\n  )"
+  },
+  {
+    "file": "fe/src/navigation/validation.ts",
+    "name": "parsePassengerInfo",
+    "start": 129,
+    "end": 176,
+    "signature": "value: unknown",
+    "calls": [
+      "object",
+      "Array.isArray",
+      "flights.every",
+      "flights.map",
+      "[adults, children, infants].every",
+      "Number.isInteger",
+      "Number"
+    ],
+    "excerpt": "export function parsePassengerInfo(\n  value: unknown,\n): PassengerInfoParams | undefined {\n  if (\n    !object(value) ||\n    !Array.isArray(value.flights) ||\n    value.flights.length < 1 ||\n    value.flights.length > 2 ||"
+  },
+  {
+    "file": "fe/src/hook/useAirport.ts",
+    "name": "useAirport",
+    "start": 7,
+    "end": 47,
+    "signature": "",
+    "calls": [
+      "useState",
+      "useAppSelector",
+      "useAppDispatch",
+      "useEffect",
+      "setLoading",
+      "getAirportList",
+      "setAirports",
+      "setError",
+      "setDestinationsLoading",
+      "setDestinationsError",
+      "getDestinations",
+      "dispatch",
+      "setDestinations",
+      "fetchAirports",
+      "fetchDestinations"
+    ],
+    "excerpt": "const useAirport = () => {\n  const [airports, setAirports] = useState<Airport[]>([]);\n  const [loading, setLoading] = useState(false);\n  const [error, setError] = useState<Error | null>(null);\n  const [destinationsLoading, setDestinationsLoading] = useState(true);\n  const [destinationsError, setDestinationsError] = useState<string | null>(null);\n  const destinations = useAppSelector((state) => state.destination);\n  const dispatch = useAppDispatch();"
+  },
+  {
+    "file": "fe/src/hook/useAirport.ts",
+    "name": "fetchAirports",
+    "start": 17,
+    "end": 27,
+    "signature": "",
+    "calls": [
+      "setLoading",
+      "getAirportList",
+      "setAirports",
+      "setError"
+    ],
+    "excerpt": "    const fetchAirports = async () => {\n      setLoading(true);\n      try {\n        const result = await getAirportList();\n        setAirports(result.data);\n      } catch (error) {\n        setError(error as Error);\n      } finally {"
+  },
+  {
+    "file": "fe/src/hook/useAirport.ts",
+    "name": "fetchDestinations",
+    "start": 29,
+    "end": 40,
+    "signature": "",
+    "calls": [
+      "setDestinationsLoading",
+      "setDestinationsError",
+      "getDestinations",
+      "dispatch",
+      "setDestinations"
+    ],
+    "excerpt": "    const fetchDestinations = async () => {\n      setDestinationsLoading(true);\n      setDestinationsError(null);\n      try {\n        const data = await getDestinations();\n        dispatch(setDestinations(data.data));\n      } catch {\n        setDestinationsError(\"Không thể tải điểm đến. Vui lòng thử lại sau.\");"
+  },
+  {
+    "file": "fe/src/hook/useFareSelection.ts",
+    "name": "useFareSelection",
+    "start": 20,
+    "end": 82,
+    "signature": "legs: FareLegRequest[], count: number",
+    "calls": [
+      "useState",
+      "useEffect",
+      "Promise.all",
+      "legs.map",
+      "getFlightFares",
+      "setState",
+      "isAxiosError",
+      "controller.abort",
+      "useMemo",
+      "resolveSelectedFare",
+      "useCallback",
+      "setChoices",
+      "setVersion",
+      "calculateFareTotal"
+    ],
+    "excerpt": "export function useFareSelection(legs: FareLegRequest[], count: number) {\n  const [state, setState] = useState<LoadState>({\n    status: \"loading\",\n    options: [],\n  });\n  const [choices, setChoices] = useState<Record<string, string>>({});\n  const [version, setVersion] = useState(0);\n  useEffect(() => {"
+  },
+  {
+    "file": "fe/src/hook/useFareSelection.ts",
+    "name": "select",
+    "start": 62,
+    "end": 69,
+    "signature": "fare: FlightFare",
+    "calls": [
+      "setChoices"
+    ],
+    "excerpt": "  const select = useCallback(\n    (fare: FlightFare) =>\n      setChoices((previous) => ({\n        ...previous,\n        [fare.flightId]: fare.ticket.fareClassId,\n      })),\n    [],\n  );"
+  },
+  {
+    "file": "fe/src/hook/useFareSelection.ts",
+    "name": "reload",
+    "start": 70,
+    "end": 73,
+    "signature": "",
+    "calls": [
+      "setState",
+      "setVersion"
+    ],
+    "excerpt": "  const reload = useCallback(() => {\n    setState({ status: \"loading\", options: [] });\n    setVersion((value) => value + 1);\n  }, []);"
+  },
+  {
+    "file": "fe/src/hook/useTaxAndFee.ts",
+    "name": "useTaxAndFee",
+    "start": 15,
+    "end": 65,
+    "signature": "fares: FlightFare[], count: number",
+    "calls": [
+      "JSON.stringify",
+      "[...new Set(fares.map(fare => fare.airline.id ?? \"\"))].sort",
+      "fares.map",
+      "useState",
+      "useEffect",
+      "JSON.parse",
+      "ids.some",
+      "controller.abort",
+      "Promise.all",
+      "ids.map",
+      "getTaxAndFee",
+      "setState",
+      "Object.fromEntries",
+      "isAxiosError",
+      "useCallback",
+      "setAttempt",
+      "fares.some",
+      "calculateLegTaxAndFee",
+      "legs.reduce",
+      "Number.isSafeInteger"
+    ],
+    "excerpt": "export function useTaxAndFee(fares: FlightFare[], count: number) {\n  const key = JSON.stringify([...new Set(fares.map(fare => fare.airline.id ?? \"\"))].sort());\n  const [attempt, setAttempt] = useState(0);\n  const [state, setState] = useState<LoadState>({ key: \"\", status: \"loading\", configs: {} });\n  useEffect(() => {\n    const controller = new AbortController();\n    const ids = JSON.parse(key) as string[];\n    if (!ids.length || ids.some(id => !id)) {"
+  },
+  {
+    "file": "fe/src/hook/useTaxAndFee.ts",
+    "name": "reload",
+    "start": 39,
+    "end": 42,
+    "signature": "",
+    "calls": [
+      "setState",
+      "setAttempt"
+    ],
+    "excerpt": "  const reload = useCallback(() => {\n    setState({ key: \"\", status: \"loading\", configs: {} });\n    setAttempt(value => value + 1);\n  }, []);"
+  },
+  {
+    "file": "fe/src/hook/useFlightFavorite.ts",
+    "name": "useFlightFavorite",
+    "start": 10,
+    "end": 61,
+    "signature": "flightId: string, authenticated: boolean",
+    "calls": [
+      "useState",
+      "useEffect",
+      "getFavorite(flightId, controller.signal)\n      .then",
+      "getFavorite",
+      "setValues",
+      "controller.abort",
+      "useMemo",
+      "useCallback",
+      "setFavorite"
+    ],
+    "excerpt": "export function useFlightFavorite(flightId: string, authenticated: boolean) {\n  const [values, setValues] = useState<Record<string, FavoriteState>>({});\n  useEffect(() => {\n    if (!authenticated) return;\n    const controller = new AbortController();\n    void getFavorite(flightId, controller.signal)\n      .then((favorite) => {\n        if (!controller.signal.aborted)"
+  },
+  {
+    "file": "fe/src/hook/useFlightFavorite.ts",
+    "name": "toggle",
+    "start": 40,
+    "end": 59,
+    "signature": "",
+    "calls": [
+      "setValues",
+      "setFavorite"
+    ],
+    "excerpt": "  const toggle = useCallback(async () => {\n    if (!authenticated || current.busy) return;\n    setValues((old) => ({\n      ...old,\n      [flightId]: { ...current, busy: true, error: undefined },\n    }));\n    try {\n      const favorite = await setFavorite(flightId, !current.favorite);"
+  },
+  {
+    "file": "fe/src/api/flight.api.ts",
+    "name": "getFlightKey",
+    "start": 72,
+    "end": 73,
+    "signature": "flight: FlightItem",
+    "calls": [],
+    "excerpt": "export const getFlightKey = (flight: FlightItem) =>\n  `${flight.flightId}:${flight.ticket.fareClassId ?? flight.ticket.fareClassName}`;"
+  },
+  {
+    "file": "fe/src/api/flight.api.ts",
+    "name": "searchFlights",
+    "start": 75,
+    "end": 88,
+    "signature": "input: FlightSearchRequest, signal?: AbortSignal",
+    "calls": [
+      "clientApi.post",
+      "Array.isArray"
+    ],
+    "excerpt": "export async function searchFlights(\n  input: FlightSearchRequest,\n  signal?: AbortSignal,\n): Promise<FlightItem[]> {\n  const { data } = await clientApi.post<FlightResponse<FlightItem[]>>(\n    \"/flights/conditions\",\n    input,\n    { signal },"
+  },
+  {
+    "file": "fe/src/api/flight.api.ts",
+    "name": "getFlightCalendar",
+    "start": 89,
+    "end": 102,
+    "signature": "input: FlightCalendarRequest, signal?: AbortSignal",
+    "calls": [
+      "clientApi.post",
+      "Array.isArray"
+    ],
+    "excerpt": "export async function getFlightCalendar(\n  input: FlightCalendarRequest,\n  signal?: AbortSignal,\n): Promise<FlightCalendarDay[]> {\n  const { data } = await clientApi.post<FlightResponse<FlightCalendarDay[]>>(\n    \"/flights/calendar\",\n    input,\n    { signal },"
+  },
+  {
+    "file": "fe/src/api/flight.api.ts",
+    "name": "getFlightFares",
+    "start": 110,
+    "end": 125,
+    "signature": "flightId: string, passengers: number, signal?: AbortSignal",
+    "calls": [
+      "clientApi.get",
+      "encodeURIComponent",
+      "Array.isArray"
+    ],
+    "excerpt": "export async function getFlightFares(\n  flightId: string,\n  passengers: number,\n  signal?: AbortSignal,\n): Promise<FlightFare[]> {\n  const { data } = await clientApi.get<FlightResponse<FlightFare[]>>(\n    `/flights/${encodeURIComponent(flightId)}/fares`,\n    {"
+  },
+  {
+    "file": "fe/src/api/airport.api.ts",
+    "name": "getAirportList",
+    "start": 36,
+    "end": 43,
+    "signature": "",
+    "calls": [
+      "clientApi.get"
+    ],
+    "excerpt": "export const getAirportList = async () => {\n  try {\n    const response = await clientApi.get<AirportResponse>(\"/airports\");\n    return response.data;\n  } catch (error) {\n    throw error;\n  }\n}"
+  },
+  {
+    "file": "fe/src/api/airport.api.ts",
+    "name": "getTaxAndFee",
+    "start": 45,
+    "end": 54,
+    "signature": "airlineId: string, signal?: AbortSignal",
+    "calls": [
+      "clientApi.get",
+      "encodeURIComponent"
+    ],
+    "excerpt": "export const getTaxAndFee = async (airlineId: string, signal?: AbortSignal) => {\n  const response = await clientApi.get<TaxAndFeeResponse>(\n    `/airlines/${encodeURIComponent(airlineId)}/tax-and-fee`,\n    { signal },\n  );\n  if (response.data.status !== 200 || response.data.data?.airline_id !== airlineId) {\n    throw new Error(\"Phản hồi thuế và phí không hợp lệ.\");\n  }"
+  },
+  {
+    "file": "fe/src/api/bookingOptions.api.ts",
+    "name": "getSavedPassengers",
+    "start": 31,
+    "end": 41,
+    "signature": "signal?: AbortSignal",
+    "calls": [
+      "clientApi.get",
+      "Array.isArray"
+    ],
+    "excerpt": "export async function getSavedPassengers(\n  signal?: AbortSignal,\n): Promise<SavedPassenger[]> {\n  const { data } = await clientApi.get<Response<SavedPassenger[]>>(\n    \"/auth/passengers\",\n    { signal },\n  );\n  if (!Array.isArray(data.data))"
+  },
+  {
+    "file": "fe/src/api/bookingOptions.api.ts",
+    "name": "getFlightSeats",
+    "start": 42,
+    "end": 52,
+    "signature": "flightId: string, signal?: AbortSignal",
+    "calls": [
+      "clientApi.get",
+      "encodeURIComponent",
+      "Array.isArray"
+    ],
+    "excerpt": "export async function getFlightSeats(\n  flightId: string,\n  signal?: AbortSignal,\n): Promise<FlightSeat[]> {\n  const { data } = await clientApi.get<Response<FlightSeat[]>>(\n    `/flights/${encodeURIComponent(flightId)}/seats`,\n    { signal },\n  );"
+  },
+  {
+    "file": "fe/src/api/bookingOptions.api.ts",
+    "name": "getFavorite",
+    "start": 53,
+    "end": 59,
+    "signature": "flightId: string, signal?: AbortSignal",
+    "calls": [
+      "clientApi.get",
+      "encodeURIComponent"
+    ],
+    "excerpt": "export async function getFavorite(flightId: string, signal?: AbortSignal) {\n  const { data } = await clientApi.get<Response<{ favorite: boolean }>>(\n    `/flights/${encodeURIComponent(flightId)}/favorite`,\n    { signal },\n  );\n  return data.data.favorite;\n}"
+  },
+  {
+    "file": "fe/src/api/bookingOptions.api.ts",
+    "name": "getFlightSeatMap",
+    "start": 61,
+    "end": 71,
+    "signature": "flightId: string, signal?: AbortSignal",
+    "calls": [
+      "clientApi.get",
+      "encodeURIComponent",
+      "Array.isArray",
+      "map.columnGroups.some",
+      "group.some",
+      "/^[A-Z]+$/.test"
+    ],
+    "excerpt": "export async function getFlightSeatMap(flightId: string, signal?: AbortSignal): Promise<FlightSeatMap> {\n  const { data } = await clientApi.get<Response<FlightSeatMap>>(\n    `/flights/${encodeURIComponent(flightId)}/seat-map`, { signal },\n  );\n  const map = data.data;\n  if (!map?.aircraft || !Array.isArray(map.seats) || !Array.isArray(map.columnGroups) ||\n      !map.columnGroups.length || map.columnGroups.some((group) => !Array.isArray(group) || !group.length || group.some((column) => typeof column !== \"string\" || !/^[A-Z]+$/.test(column)))) {\n    throw new Error(\"Sơ đồ ghế của máy bay chưa được cấu hình hợp lệ.\");"
+  },
+  {
+    "file": "fe/src/api/bookingOptions.api.ts",
+    "name": "setFavorite",
+    "start": 72,
+    "end": 78,
+    "signature": "flightId: string, favorite: boolean",
+    "calls": [
+      "encodeURIComponent",
+      "clientApi.put",
+      "clientApi.delete"
+    ],
+    "excerpt": "export async function setFavorite(flightId: string, favorite: boolean) {\n  const url = `/flights/${encodeURIComponent(flightId)}/favorite`;\n  const { data } = favorite\n    ? await clientApi.put<Response<{ favorite: boolean }>>(url)\n    : await clientApi.delete<Response<{ favorite: boolean }>>(url);\n  return data.data.favorite;\n}"
+  },
+  {
+    "file": "fe/src/api/clientApi.ts",
+    "name": "getBaseUrl",
+    "start": 8,
+    "end": 39,
+    "signature": "",
+    "calls": [
+      "process.env.EXPO_PUBLIC_API_URL.trim",
+      "envUrl.endsWith",
+      "hostUri.split"
+    ],
+    "excerpt": "const getBaseUrl = (): string => {\n  // 1. Uu tien bien moi truong (neu co tunnel nhu ngrok/cloudflare hoac moi truong production)\n  if (process.env.EXPO_PUBLIC_API_URL) {\n    const envUrl = process.env.EXPO_PUBLIC_API_URL.trim();\n    return envUrl.endsWith(\"/api/v1\") ? envUrl : `${envUrl}/api/v1`;\n  }\n\n  // 2. Chay tren trinh duyet Web"
+  },
+  {
+    "file": "fe/src/utils/fare.ts",
+    "name": "formatFareMoney",
+    "start": 5,
+    "end": 6,
+    "signature": "value: number",
+    "calls": [
+      "value.toLocaleString"
+    ],
+    "excerpt": "export const formatFareMoney = (value: number) =>\n  `${value.toLocaleString(\"vi-VN\")} ₫`;"
+  },
+  {
+    "file": "fe/src/utils/fare.ts",
+    "name": "isBusinessFare",
+    "start": 7,
+    "end": 8,
+    "signature": "fare: FlightFare",
+    "calls": [
+      "/business|thương gia/i.test"
+    ],
+    "excerpt": "export const isBusinessFare = (fare: FlightFare) =>\n  /business|thương gia/i.test(fare.ticket.fareClassName);"
+  },
+  {
+    "file": "fe/src/utils/fare.ts",
+    "name": "passengerCount",
+    "start": 9,
+    "end": 10,
+    "signature": "counts: PassengerCounts",
+    "calls": [],
+    "excerpt": "export const passengerCount = (counts: PassengerCounts) =>\n  counts.adults + counts.children + counts.infants;"
+  },
+  {
+    "file": "fe/src/utils/fare.ts",
+    "name": "resolveSelectedFare",
+    "start": 13,
+    "end": 29,
+    "signature": "options: FlightFare[], preferredId: string | undefined, count: number",
+    "calls": [
+      "options.filter",
+      "available.find",
+      "available.reduce"
+    ],
+    "excerpt": "export function resolveSelectedFare(\n  options: FlightFare[],\n  preferredId: string | undefined,\n  count: number,\n) {\n  const available = options.filter(\n    (fare) => fare.ticket.availableSeats >= count,\n  );"
+  },
+  {
+    "file": "fe/src/utils/fare.ts",
+    "name": "calculateFareTotal",
+    "start": 32,
+    "end": 38,
+    "signature": "fares: (FlightFare | undefined)[], count: number",
+    "calls": [
+      "fares.some",
+      "fares.reduce"
+    ],
+    "excerpt": "export function calculateFareTotal(\n  fares: (FlightFare | undefined)[],\n  count: number,\n): number | null {\n  if (!fares.length || fares.some((fare) => !fare)) return null;\n  return fares.reduce((total, fare) => total + fare!.ticket.price * count, 0);\n}"
+  },
+  {
+    "file": "fe/src/utils/fare.ts",
+    "name": "flightTime",
+    "start": 41,
+    "end": 47,
+    "signature": "iso: string",
+    "calls": [
+      "new Date(iso).toLocaleTimeString"
+    ],
+    "excerpt": "export const flightTime = (iso: string) =>\n  new Date(iso).toLocaleTimeString(\"vi-VN\", {\n    timeZone: \"Asia/Ho_Chi_Minh\",\n    hour: \"2-digit\",\n    minute: \"2-digit\",\n    hour12: false,\n  });"
+  },
+  {
+    "file": "fe/src/utils/fare.ts",
+    "name": "flightDate",
+    "start": 48,
+    "end": 49,
+    "signature": "iso: string",
+    "calls": [
+      "new Date(iso).toLocaleDateString"
+    ],
+    "excerpt": "export const flightDate = (iso: string) =>\n  new Date(iso).toLocaleDateString(\"vi-VN\", { timeZone: \"Asia/Ho_Chi_Minh\" });"
+  },
+  {
+    "file": "fe/src/utils/fare.ts",
+    "name": "flightDuration",
+    "start": 50,
+    "end": 51,
+    "signature": "minutes: number",
+    "calls": [
+      "Math.floor"
+    ],
+    "excerpt": "export const flightDuration = (minutes: number) =>\n  `${Math.floor(minutes / 60)}g ${minutes % 60}p`;"
+  },
+  {
+    "file": "fe/src/utils/passengerForm.ts",
+    "name": "createPassengerDrafts",
+    "start": 22,
+    "end": 40,
+    "signature": "counts: PassengerCounts",
+    "calls": [
+      "([\"adult\", \"child\", \"infant\"] as const).flatMap",
+      "Array.from"
+    ],
+    "excerpt": "export function createPassengerDrafts(\n  counts: PassengerCounts,\n): PassengerDraft[] {\n  return ([\"adult\", \"child\", \"infant\"] as const).flatMap((kind, index) =>\n    Array.from(\n      { length: [counts.adults, counts.children, counts.infants][index] },\n      () => ({\n        kind,"
+  },
+  {
+    "file": "fe/src/utils/passengerForm.ts",
+    "name": "fullPassengerName",
+    "start": 43,
+    "end": 47,
+    "signature": "passenger: PassengerDraft",
+    "calls": [
+      "`${passenger.surname ?? \"\"} ${passenger.givenName ?? \"\"}`.trim",
+      "passenger.name.trim"
+    ],
+    "excerpt": "export function fullPassengerName(passenger: PassengerDraft) {\n  return passenger.surname !== undefined || passenger.givenName !== undefined\n    ? `${passenger.surname ?? \"\"} ${passenger.givenName ?? \"\"}`.trim()\n    : passenger.name.trim();\n}"
+  },
+  {
+    "file": "fe/src/utils/passengerForm.ts",
+    "name": "splitPassengerName",
+    "start": 50,
+    "end": 53,
+    "signature": "name: string",
+    "calls": [
+      "name.trim().split",
+      "name.trim",
+      "rest.join"
+    ],
+    "excerpt": "export function splitPassengerName(name: string) {\n  const [surname = \"\", ...rest] = name.trim().split(/\\s+/);\n  return { surname, givenName: rest.join(\" \") };\n}"
+  },
+  {
+    "file": "fe/src/utils/passengerForm.ts",
+    "name": "parseBirthday",
+    "start": 56,
+    "end": 65,
+    "signature": "value: string",
+    "calls": [
+      "/^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/.exec",
+      "value.trim",
+      "Number.isFinite",
+      "date.getTime",
+      "date.toISOString().slice",
+      "date.toISOString"
+    ],
+    "excerpt": "export function parseBirthday(value: string): string | undefined {\n  const match = /^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/.exec(value.trim());\n  if (!match) return undefined;\n  const iso = `${match[3]}-${match[2]}-${match[1]}`;\n  const date = new Date(`${iso}T00:00:00Z`);\n  return Number.isFinite(date.getTime()) &&\n    date.toISOString().slice(0, 10) === iso\n    ? iso"
+  },
+  {
+    "file": "fe/src/utils/passengerForm.ts",
+    "name": "ageOnDate",
+    "start": 68,
+    "end": 79,
+    "signature": "birthday: string, travelDate: string",
+    "calls": [
+      "birthday.split(\"-\").map",
+      "birthday.split",
+      "travelDate\n    .slice(0, 10)\n    .split(\"-\")\n    .map",
+      "travelDate\n    .slice(0, 10)\n    .split",
+      "travelDate\n    .slice"
+    ],
+    "excerpt": "export function ageOnDate(birthday: string, travelDate: string) {\n  const [year, month, day] = birthday.split(\"-\").map(Number);\n  const [travelYear, travelMonth, travelDay] = travelDate\n    .slice(0, 10)\n    .split(\"-\")\n    .map(Number);\n  return (\n    travelYear -"
+  },
+  {
+    "file": "fe/src/utils/passengerForm.ts",
+    "name": "validatePassengerForm",
+    "start": 82,
+    "end": 132,
+    "signature": "passengers: PassengerDraft[], contact: ContactDraft, travelDate: string",
+    "calls": [
+      "passengers.forEach",
+      "fullPassengerName",
+      "/^[\\p{L}\\p{M} .’'-]+$/u.test",
+      "passenger.surname.trim",
+      "passenger.givenName?.trim",
+      "passenger.nationality?.trim",
+      "passenger.identity.trim",
+      "parseBirthday",
+      "travelDate.slice",
+      "ageOnDate",
+      "contact.name.trim",
+      "/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test",
+      "contact.email.trim",
+      "/^\\+?\\d{7,15}$/.test",
+      "contact.phone.replace"
+    ],
+    "excerpt": "export function validatePassengerForm(\n  passengers: PassengerDraft[],\n  contact: ContactDraft,\n  travelDate: string,\n) {\n  const errors: Record<string, string> = {};\n  passengers.forEach((passenger, index) => {\n    const key = `passengers.${index}`;"
+  },
+  {
+    "file": "fe/src/utils/seatMap.ts",
+    "name": "seatPosition",
+    "start": 12,
+    "end": 16,
+    "signature": "seat: FlightSeat",
+    "calls": [
+      "/^(\\d+)([A-Z]+)$/.exec",
+      "Number"
+    ],
+    "excerpt": "export function seatPosition(seat: FlightSeat) {\n  const match = /^(\\d+)([A-Z]+)$/.exec(seat.seatNumber);\n  if (!match) return null;\n  return { row: Number(match[1]), column: match[2] };\n}"
+  },
+  {
+    "file": "fe/src/utils/seatMap.ts",
+    "name": "buildSeatRows",
+    "start": 19,
+    "end": 34,
+    "signature": "seats: FlightSeat[], groups: string[][]",
+    "calls": [
+      "groups.flat",
+      "seatPosition",
+      "columns.includes",
+      "rows.get",
+      "row.set",
+      "rows.set",
+      "[...rows.entries()].sort(([a], [b]) => a - b).map",
+      "[...rows.entries()].sort",
+      "rows.entries",
+      "[...cells.values()].some",
+      "cells.values",
+      "groups.map",
+      "columns.map",
+      "cells.get"
+    ],
+    "excerpt": "export function buildSeatRows(seats: FlightSeat[], groups: string[][]) {\n  const rows = new Map<number, Map<string, FlightSeat>>();\n  const columns = groups.flat();\n  for (const seat of seats) {\n    const position = seatPosition(seat);\n    if (!position || !columns.includes(position.column)) continue;\n    const row = rows.get(position.row) ?? new Map<string, FlightSeat>();\n    row.set(position.column, seat);"
+  },
+  {
+    "file": "fe/src/utils/seatMap.ts",
+    "name": "assignSeat",
+    "start": 36,
+    "end": 44,
+    "signature": "choices: SeatChoice[], leg: SeatLeg, passengerIndex: number, seat: FlightSeat",
+    "calls": [
+      "choices.some",
+      "choices.find",
+      "choices.filter"
+    ],
+    "excerpt": "export function assignSeat(choices: SeatChoice[], leg: SeatLeg, passengerIndex: number, seat: FlightSeat): SeatChoice[] {\n  if (!seat.available || seat.seatClass !== leg.seatClass || choices.some((choice) =>\n    choice.flightId === leg.flightId && choice.seatId === seat.id && choice.passengerIndex !== passengerIndex)) return choices;\n  const mine = choices.find((choice) => choice.flightId === leg.flightId && choice.passengerIndex === passengerIndex);\n  const remaining = choices.filter((choice) => !(choice.flightId === leg.flightId && choice.passengerIndex === passengerIndex));\n  return mine?.seatId === seat.id ? remaining : [...remaining, {\n    flightId: leg.flightId, passengerIndex, seatId: seat.id, seatNumber: seat.seatNumber, price: seat.priceModifier,\n  }];"
+  },
+  {
+    "file": "fe/src/utils/seatMap.ts",
+    "name": "reconcileSeatChoices",
+    "start": 47,
+    "end": 60,
+    "signature": "choices: SeatChoice[], maps: FlightSeatMap[], legs: SeatLeg[], passengerIndices: number[]",
+    "calls": [
+      "choices.flatMap",
+      "legs.findIndex",
+      "maps[index]?.seats.find",
+      "maps[index].columnGroups.flat().includes",
+      "maps[index].columnGroups.flat",
+      "seatPosition",
+      "passengerIndices.includes",
+      "occupied.has",
+      "assigned.has",
+      "occupied.add",
+      "assigned.add"
+    ],
+    "excerpt": "export function reconcileSeatChoices(choices: SeatChoice[], maps: FlightSeatMap[], legs: SeatLeg[], passengerIndices: number[]) {\n  const occupied = new Set<string>();\n  const assigned = new Set<string>();\n  return choices.flatMap((choice) => {\n    const index = legs.findIndex((leg) => leg.flightId === choice.flightId);\n    const seat = index < 0 ? undefined : maps[index]?.seats.find((item) => item.id === choice.seatId);\n    const key = `${choice.flightId}:${choice.seatId}`;\n    const passengerKey = `${choice.flightId}:${choice.passengerIndex}`;"
+  },
+  {
+    "file": "fe/src/utils/seatMap.ts",
+    "name": "seatSelectionComplete",
+    "start": 62,
+    "end": 65,
+    "signature": "choices: SeatChoice[], legs: SeatLeg[], passengers: number[]",
+    "calls": [
+      "legs.every",
+      "passengers.every",
+      "choices.some"
+    ],
+    "excerpt": "export function seatSelectionComplete(choices: SeatChoice[], legs: SeatLeg[], passengers: number[]) {\n  return legs.length > 0 && passengers.length > 0 && legs.every((leg) => passengers.every((index) =>\n    choices.some((choice) => choice.flightId === leg.flightId && choice.passengerIndex === index)));\n}"
+  },
+  {
+    "file": "fe/src/utils/seatMap.ts",
+    "name": "seatLocation",
+    "start": 67,
+    "end": 73,
+    "signature": "seat: FlightSeat, groups: string[][]",
+    "calls": [
+      "seatPosition",
+      "groups.at(-1)?.at",
+      "groups.at",
+      "groups.some",
+      "group.at"
+    ],
+    "excerpt": "export function seatLocation(seat: FlightSeat, groups: string[][]) {\n  if (seat.seatType === \"EXIT_ROW\") return \"Hàng thoát hiểm\";\n  const column = seatPosition(seat)?.column;\n  if (column === groups[0]?.[0] || column === groups.at(-1)?.at(-1)) return \"Cửa sổ\";\n  if (groups.some((group, index) => (index > 0 && column === group[0]) || (index < groups.length - 1 && column === group.at(-1)))) return \"Lối đi\";\n  return \"Ghế giữa\";\n}"
+  },
+  {
+    "file": "fe/src/utils/booking.ts",
+    "name": "emptyServices",
+    "start": 25,
+    "end": 30,
+    "signature": "",
+    "calls": [],
+    "excerpt": "export const emptyServices = (): ServiceSelection => ({\n  baggageKg: 0,\n  insurance: false,\n  priority: false,\n  meal: false,\n});"
+  },
+  {
+    "file": "fe/src/utils/booking.ts",
+    "name": "serviceKey",
+    "start": 31,
+    "end": 32,
+    "signature": "flightId: string, passengerIndex: number",
+    "calls": [],
+    "excerpt": "export const serviceKey = (flightId: string, passengerIndex: number) =>\n  `${flightId}:${passengerIndex}`;"
+  },
+  {
+    "file": "fe/src/utils/booking.ts",
+    "name": "servicePrice",
+    "start": 41,
+    "end": 49,
+    "signature": "selection: ServiceSelection",
+    "calls": [
+      "BAGGAGE_OPTIONS.find"
+    ],
+    "excerpt": "export function servicePrice(selection: ServiceSelection) {\n  return (\n    (BAGGAGE_OPTIONS.find((option) => option.kg === selection.baggageKg)\n      ?.price ?? 0) +\n    (selection.insurance ? SERVICE_PRICES.insurance : 0) +\n    (selection.priority ? SERVICE_PRICES.priority : 0) +\n    (selection.meal ? SERVICE_PRICES.meal : 0)\n  );"
+  },
+  {
+    "file": "fe/src/utils/booking.ts",
+    "name": "bookingTotals",
+    "start": 51,
+    "end": 74,
+    "signature": "draft: BookingDraft, taxAndFees: number | null = 0",
+    "calls": [
+      "draft.fares.reduce",
+      "draft.seats.reduce",
+      "draft.passengers.reduce",
+      "servicePrice",
+      "serviceKey",
+      "emptyServices"
+    ],
+    "excerpt": "export function bookingTotals(draft: BookingDraft, taxAndFees: number | null = 0) {\n  const fare = draft.fares.reduce(\n    (sum, leg) => sum + leg.ticket.price * draft.passengers.length,\n    0,\n  );\n  const seats = draft.seats.reduce((sum, seat) => sum + seat.price, 0);\n  const services = draft.fares.reduce(\n    (sum, leg) =>"
+  },
+  {
+    "file": "fe/src/utils/taxAndFee.ts",
+    "name": "calculateLegTaxAndFee",
+    "start": 12,
+    "end": 37,
+    "signature": "fare: FlightFare, count: number, config: TaxAndFee",
+    "calls": [
+      "config.currency?.toUpperCase",
+      "Object.keys",
+      "Number.isSafeInteger",
+      "feeFields.reduce",
+      "Math.round"
+    ],
+    "excerpt": "export function calculateLegTaxAndFee(fare: FlightFare, count: number, config: TaxAndFee) {\n  if (!config || !fare.airline.id || config.airline_id !== fare.airline.id) {\n    throw new Error(\"Cấu hình thuế và phí không khớp hãng bay.\");\n  }\n  if (config.currency?.toUpperCase() !== \"VND\") {\n    throw new Error(\"Chưa hỗ trợ tính thuế và phí cho đơn vị tiền tệ này.\");\n  }\n  const feeFields = Object.keys(FEE_LABELS) as (keyof typeof FEE_LABELS)[];"
+  },
+  {
+    "file": "fe/src/store/slices/bookingSlice.ts",
+    "name": "startBooking",
+    "start": 15,
+    "end": 24,
+    "signature": "state, action: PayloadAction<Omit<BookingDraft, \"services\">>",
+    "calls": [
+      "JSON.stringify"
+    ],
+    "excerpt": "    startBooking(state, action: PayloadAction<Omit<BookingDraft, \"services\">>) {\n      // Giữ dịch vụ khi sửa thông tin/ghế của cùng hành trình; đổi gói thì bắt đầu lại.\n      const sameTrip =\n        JSON.stringify(state.draft?.params) ===\n        JSON.stringify(action.payload.params);\n      state.draft = {\n        ...action.payload,\n        services: sameTrip ? (state.draft?.services ?? {}) : {},"
+  },
+  {
+    "file": "fe/src/store/slices/bookingSlice.ts",
+    "name": "updateServices",
+    "start": 25,
+    "end": 47,
+    "signature": "state, action: PayloadAction<{\n        flightId: string;\n        passengerIndex: number;\n        changes: Partial<ServiceSelection>;\n      }>",
+    "calls": [
+      "state.draft.fares.some",
+      "serviceKey",
+      "emptyServices"
+    ],
+    "excerpt": "    updateServices(\n      state,\n      action: PayloadAction<{\n        flightId: string;\n        passengerIndex: number;\n        changes: Partial<ServiceSelection>;\n      }>,\n    ) {"
+  },
+  {
+    "file": "fe/src/store/slices/bookingSlice.ts",
+    "name": "skipServices",
+    "start": 48,
+    "end": 50,
+    "signature": "state",
+    "calls": [],
+    "excerpt": "    skipServices(state) {\n      if (state.draft) state.draft.services = {};\n    },"
+  },
+  {
+    "file": "fe/src/components/booking/FlightSeatPicker.tsx",
+    "name": "FlightSeatPicker",
+    "start": 51,
+    "end": 533,
+    "signature": "{\n  fares,\n  passengers,\n  initial,\n  fareTotal,\n  onClose,\n  onConfirm,\n}: Props",
+    "calls": [
+      "useState",
+      "useMemo",
+      "passengers\n        .map((passenger, index) => ({ ...passenger, index }))\n        .filter",
+      "passengers\n        .map",
+      "seatedPassengers.map",
+      "fares.map",
+      "isBusinessFare",
+      "useRef",
+      "useCallback",
+      "setLoading",
+      "setLoadError",
+      "setError",
+      "setAttempt",
+      "useEffect",
+      "Promise.all",
+      "getFlightSeatMap",
+      "setInventory",
+      "setChoices",
+      "reconcileSeatChoices",
+      "cause.message.includes",
+      "controller.abort",
+      "confirmRequest.current?.abort",
+      "(map?.seats ?? []).filter",
+      "choices.find",
+      "seats.find",
+      "seatSelectionComplete",
+      "choices.reduce",
+      "assignSeat",
+      "setChecking",
+      "legs.findIndex",
+      "passengerIndices.some",
+      "valid.some",
+      "setActiveLeg",
+      "passengerIndices.find",
+      "setActivePassenger",
+      "onConfirm",
+      "onClose",
+      "setShowHelp",
+      "choices.filter",
+      "flightDate",
+      "fullPassengerName",
+      "passengerIndices.indexOf",
+      "passengers.some",
+      "Math.max",
+      "seatLocation",
+      "choose",
+      "formatFareMoney",
+      "confirm"
+    ],
+    "excerpt": "export function FlightSeatPicker({\n  fares,\n  passengers,\n  initial,\n  fareTotal,\n  onClose,\n  onConfirm,\n}: Props) {"
+  },
+  {
+    "file": "fe/src/components/booking/FlightSeatPicker.tsx",
+    "name": "reload",
+    "start": 93,
+    "end": 98,
+    "signature": "",
+    "calls": [
+      "setLoading",
+      "setLoadError",
+      "setError",
+      "setAttempt"
+    ],
+    "excerpt": "  const reload = useCallback(() => {\n    setLoading(true);\n    setLoadError(null);\n    setError(null);\n    setAttempt((value) => value + 1);\n  }, []);"
+  },
+  {
+    "file": "fe/src/components/booking/FlightSeatPicker.tsx",
+    "name": "choose",
+    "start": 147,
+    "end": 153,
+    "signature": "seat: FlightSeat",
+    "calls": [
+      "setError",
+      "setChoices",
+      "assignSeat"
+    ],
+    "excerpt": "  const choose = (seat: FlightSeat) => {\n    if (checking || loading || !fare) return;\n    setError(null);\n    setChoices((old) =>\n      assignSeat(old, legs[activeLeg], activePassenger, seat),\n    );\n  };"
+  },
+  {
+    "file": "fe/src/components/booking/FlightSeatPicker.tsx",
+    "name": "confirm",
+    "start": 155,
+    "end": 225,
+    "signature": "",
+    "calls": [
+      "setChecking",
+      "setError",
+      "Promise.all",
+      "fares.map",
+      "getFlightSeatMap",
+      "reconcileSeatChoices",
+      "setInventory",
+      "setChoices",
+      "seatSelectionComplete",
+      "legs.findIndex",
+      "passengerIndices.some",
+      "valid.some",
+      "setActiveLeg",
+      "passengerIndices.find",
+      "setActivePassenger",
+      "choices.find",
+      "onConfirm"
+    ],
+    "excerpt": "  const confirm = async () => {\n    if (!complete || checking || loading) return;\n    const controller = new AbortController();\n    confirmRequest.current = controller;\n    setChecking(true);\n    setError(null);\n    try {\n      const latest = await Promise.all("
+  },
+  {
+    "file": "fe/src/components/booking/FlightSeatPicker.tsx",
+    "name": "Legend",
+    "start": 535,
+    "end": 580,
+    "signature": "{\n  label,\n  variant,\n}: {\n  label: string;\n  variant: \"selected\" | \"available\" | \"booked\" | \"exit\" | \"assigned\";\n}",
+    "calls": [],
+    "excerpt": "function Legend({\n  label,\n  variant,\n}: {\n  label: string;\n  variant: \"selected\" | \"available\" | \"booked\" | \"exit\" | \"assigned\";\n}) {\n  const icon ="
+  },
+  {
+    "file": "fe/src/components/booking/CabinSeatMap.tsx",
+    "name": "CabinSeatMap",
+    "start": 19,
+    "end": 242,
+    "signature": "{\n  seats,\n  groups,\n  choices,\n  flightId,\n  passengerIndex,\n  disabled,\n  onChoose,\n}: {\n  seats: FlightSeat[];\n  groups: string[][];\n  choices: SeatChoice[];\n  flightId: string;\n  passengerIndex: number;\n  disabled: boolean;\n  onChoose: (seat: FlightSeat) => void;\n}",
+    "calls": [
+      "useMemo",
+      "buildSeatRows",
+      "groups.reduce",
+      "useWindowDimensions",
+      "Math.min",
+      "choices.filter",
+      "groups.map",
+      "group.map",
+      "rows.map",
+      "visibleChoices.some",
+      "row.groups.flat().some",
+      "row.groups.flat",
+      "row.groups\n              .flat()\n              .filter",
+      "row.groups\n              .flat",
+      "formatFareMoney",
+      "row.groups.map",
+      "visibleChoices.find",
+      "onChoose",
+      "groups.map((group) => group.length).join"
+    ],
+    "excerpt": "export function CabinSeatMap({\n  seats,\n  groups,\n  choices,\n  flightId,\n  passengerIndex,\n  disabled,\n  onChoose,"
+  },
+  {
+    "file": "fe/src/components/booking/PassengerFields.tsx",
+    "name": "PassengerField",
+    "start": 8,
+    "end": 53,
+    "signature": "{\n  label,\n  error,\n  icon,\n  hasPrefix,\n  children,\n  ...props\n}: React.PropsWithChildren<\n  React.ComponentProps<typeof TextInput> & {\n    label: string;\n    error?: string;\n    icon?: React.ComponentProps<typeof Ionicons>[\"name\"];\n    hasPrefix?: boolean;\n  }\n>",
+    "calls": [],
+    "excerpt": "export function PassengerField({\n  label,\n  error,\n  icon,\n  hasPrefix,\n  children,\n  ...props\n}: React.PropsWithChildren<"
+  },
+  {
+    "file": "fe/src/components/booking/PassengerFields.tsx",
+    "name": "BirthdayField",
+    "start": 56,
+    "end": 129,
+    "signature": "{\n  value,\n  onChange,\n  error,\n  travelDate,\n}: {\n  value: string;\n  onChange: (value: string) => void;\n  error?: string;\n  travelDate: string;\n}",
+    "calls": [
+      "useState",
+      "parseBirthday",
+      "onChange",
+      "String(date.getDate()).padStart",
+      "String",
+      "date.getDate",
+      "String(date.getMonth() + 1).padStart",
+      "date.getMonth",
+      "date.getFullYear",
+      "travelDate.slice",
+      "event.target.value.split(\"-\").reverse().join",
+      "event.target.value.split(\"-\").reverse",
+      "event.target.value.split",
+      "setOpen",
+      "changeDate"
+    ],
+    "excerpt": "export function BirthdayField({\n  value,\n  onChange,\n  error,\n  travelDate,\n}: {\n  value: string;\n  onChange: (value: string) => void;"
+  },
+  {
+    "file": "fe/src/components/booking/PassengerFields.tsx",
+    "name": "changeDate",
+    "start": 69,
+    "end": 72,
+    "signature": "date: Date",
+    "calls": [
+      "onChange",
+      "String(date.getDate()).padStart",
+      "String",
+      "date.getDate",
+      "String(date.getMonth() + 1).padStart",
+      "date.getMonth",
+      "date.getFullYear"
+    ],
+    "excerpt": "  const changeDate = (date: Date) =>\n    onChange(\n      `${String(date.getDate()).padStart(2, \"0\")}/${String(date.getMonth() + 1).padStart(2, \"0\")}/${date.getFullYear()}`,\n    );"
+  },
+  {
+    "file": "fe/src/components/booking/PassengerFields.tsx",
+    "name": "PassengerCard",
+    "start": 132,
+    "end": 269,
+    "signature": "{\n  passenger,\n  index,\n  errors,\n  travelDate,\n  onChange,\n  onNationality,\n}: {\n  passenger: PassengerDraft;\n  index: number;\n  errors: Record<string, string>;\n  travelDate: string;\n  onChange: (field: keyof PassengerDraft, value: string) => void;\n  onNationality: () => void;\n}",
+    "calls": [
+      "countries.some",
+      "onChange",
+      "countryLabel"
+    ],
+    "excerpt": "export function PassengerCard({\n  passenger,\n  index,\n  errors,\n  travelDate,\n  onChange,\n  onNationality,\n}: {"
+  },
+  {
+    "file": "fe/src/components/booking/PassengerFields.tsx",
+    "name": "countryLabel",
+    "start": 285,
+    "end": 287,
+    "signature": "code: string",
+    "calls": [
+      "countries.find"
+    ],
+    "excerpt": "export const countryLabel = (code: string) =>\n  countries.find((country) => country.code === code)?.name ??\n  (code && code !== \"OTHER\" ? code : \"Chọn quốc tịch\");"
+  },
+  {
+    "file": "fe/src/components/booking/BookingLayout.tsx",
+    "name": "BookingLayout",
+    "start": 12,
+    "end": 66,
+    "signature": "{\n  title,\n  step,\n  total,\n  count,\n  onContinue,\n  children,\n  footer,\n  label = \"Tiếp tục\",\n}: {\n  title: string;\n  step: number;\n  total: number | null;\n  count: number;\n  onContinue: () => void;\n  children: ReactNode;\n  footer?: ReactNode;\n  label?: string;\n}",
+    "calls": [
+      "Alert.alert"
+    ],
+    "excerpt": "export function BookingLayout({\n  title,\n  step,\n  total,\n  count,\n  onContinue,\n  children,\n  footer,"
+  },
+  {
+    "file": "fe/src/components/booking/BookingLayout.tsx",
+    "name": "BookingCard",
+    "start": 67,
+    "end": 92,
+    "signature": "{\n  title,\n  icon,\n  action,\n  children,\n}: {\n  title?: string;\n  icon?: ComponentProps<typeof Ionicons>[\"name\"];\n  action?: ReactNode;\n  children: ReactNode;\n}",
+    "calls": [],
+    "excerpt": "export function BookingCard({\n  title,\n  icon,\n  action,\n  children,\n}: {\n  title?: string;\n  icon?: ComponentProps<typeof Ionicons>[\"name\"];"
+  },
+  {
+    "file": "fe/src/components/booking/BookingLayout.tsx",
+    "name": "BookingLink",
+    "start": 93,
+    "end": 111,
+    "signature": "{\n  children,\n  onPress,\n}: {\n  children: string;\n  onPress: () => void;\n}",
+    "calls": [],
+    "excerpt": "export function BookingLink({\n  children,\n  onPress,\n}: {\n  children: string;\n  onPress: () => void;\n}) {\n  return ("
+  },
+  {
+    "file": "fe/src/components/booking/BookingLayout.tsx",
+    "name": "PriceRow",
+    "start": 112,
+    "end": 139,
+    "signature": "{\n  label,\n  value,\n  strong = false,\n}: {\n  label: string;\n  value: number;\n  strong?: boolean;\n}",
+    "calls": [
+      "formatFareMoney"
+    ],
+    "excerpt": "export function PriceRow({\n  label,\n  value,\n  strong = false,\n}: {\n  label: string;\n  value: number;\n  strong?: boolean;"
+  },
+  {
+    "file": "fe/src/components/booking/BookingLayout.tsx",
+    "name": "MissingBooking",
+    "start": 141,
+    "end": 162,
+    "signature": "",
+    "calls": [
+      "navigate"
+    ],
+    "excerpt": "export function MissingBooking() {\n  return (\n    <SafeAreaView\n      edges={[\"left\", \"right\", \"bottom\"]}\n      className=\"flex-1 bg-white\"\n    >\n      <AppHeader title=\"Đặt vé\" back />\n      <View className=\"flex-1 items-center justify-center p-6\">"
+  },
+  {
+    "file": "fe/src/components/booking/BookingProgress.tsx",
+    "name": "BookingProgress",
+    "start": 6,
+    "end": 34,
+    "signature": "{ active = 0 }: { active?: number }",
+    "calls": [
+      "[\"Hành khách\", \"Chọn ghế\", \"Dịch vụ\", \"Tóm tắt\", \"Thanh toán\"].map"
+    ],
+    "excerpt": "export function BookingProgress({ active = 0 }: { active?: number }) {\n  return (\n    <View className=\"flex-row bg-white px-3 pb-4 pt-1\">\n      {[\"Hành khách\", \"Chọn ghế\", \"Dịch vụ\", \"Tóm tắt\", \"Thanh toán\"].map(\n        (label, index) => (\n          <View key={label} className=\"flex-1 items-center\">\n            <View className=\"relative w-full items-center\">\n              <View className=\"absolute left-0 right-0 top-[11px] h-px bg-booking-line\" />"
+  },
+  {
+    "file": "fe/src/components/booking/TaxAndFeeCard.tsx",
+    "name": "TaxAndFeeCard",
+    "start": 8,
+    "end": 41,
+    "signature": "{ taxes, fares }: {\n  taxes: ReturnType<typeof useTaxAndFee>;\n  fares: FlightFare[];\n}",
+    "calls": [
+      "taxes.legs.map",
+      "fares.find",
+      "(Object.keys(FEE_LABELS) as (keyof typeof FEE_LABELS)[]).map",
+      "Object.keys"
+    ],
+    "excerpt": "export function TaxAndFeeCard({ taxes, fares }: {\n  taxes: ReturnType<typeof useTaxAndFee>;\n  fares: FlightFare[];\n}) {\n  return (\n    <BookingCard title=\"Thuế và phí\" icon=\"receipt-outline\">\n      {taxes.status === \"loading\" ? (\n        <Text accessibilityLiveRegion=\"polite\" className=\"text-xs text-booking-muted\">Đang tải thuế và phí theo hãng bay…</Text>"
+  },
+  {
+    "file": "fe/src/components/flight/AirportSelectModal.tsx",
+    "name": "AirportSelectModal",
+    "start": 22,
+    "end": 73,
+    "signature": "{\r\n  visible,\r\n  title = 'Chọn sân bay',\r\n  airports,\r\n  excludeCode,\r\n  onSelect,\r\n  onClose,\r\n}: AirportSelectModalProps",
+    "calls": [
+      "airports.filter",
+      "onSelect"
+    ],
+    "excerpt": "export default function AirportSelectModal({\n  visible,\n  title = 'Chọn sân bay',\n  airports,\n  excludeCode,\n  onSelect,\n  onClose,\n}: AirportSelectModalProps) {"
+  },
+  {
+    "file": "fe/src/components/flight/PassengerSelectModal.tsx",
+    "name": "formatPassengerSummary",
+    "start": 11,
+    "end": 17,
+    "signature": "counts: PassengerCounts",
+    "calls": [
+      "parts.push",
+      "parts.join"
+    ],
+    "excerpt": "export const formatPassengerSummary = (counts: PassengerCounts): string => {\n  const parts: string[] = [];\n  if (counts.adults > 0) parts.push(`${counts.adults} Người lớn`);\n  if (counts.children > 0) parts.push(`${counts.children} Trẻ em`);\n  if (counts.infants > 0) parts.push(`${counts.infants} Em bé`);\n  return parts.join(', ') || '1 Người lớn';\n};"
+  },
+  {
+    "file": "fe/src/components/flight/PassengerSelectModal.tsx",
+    "name": "PassengerSelectModal",
+    "start": 26,
+    "end": 29,
+    "signature": "props: PassengerSelectModalProps",
+    "calls": [
+      "JSON.stringify"
+    ],
+    "excerpt": "export default function PassengerSelectModal(props: PassengerSelectModalProps) {\n  if (!props.visible) return null;\n  return <PassengerSelectModalContent key={JSON.stringify(props.value)} {...props} />;\n}"
+  },
+  {
+    "file": "fe/src/components/flight/PassengerSelectModal.tsx",
+    "name": "PassengerSelectModalContent",
+    "start": 31,
+    "end": 201,
+    "signature": "{\r\n  visible,\r\n  value,\r\n  onApply,\r\n  onClose,\r\n}: PassengerSelectModalProps",
+    "calls": [
+      "useState",
+      "setCounts",
+      "onApply",
+      "onClose",
+      "passengerTypes.map",
+      "handleUpdate"
+    ],
+    "excerpt": "function PassengerSelectModalContent({\n  visible,\n  value,\n  onApply,\n  onClose,\n}: PassengerSelectModalProps) {\n  const [counts, setCounts] = useState<PassengerCounts>(value);\n"
+  },
+  {
+    "file": "fe/src/components/flight/PassengerSelectModal.tsx",
+    "name": "handleUpdate",
+    "start": 44,
+    "end": 66,
+    "signature": "type: keyof PassengerCounts, delta: number",
+    "calls": [
+      "setCounts"
+    ],
+    "excerpt": "  const handleUpdate = (type: keyof PassengerCounts, delta: number) => {\n    setCounts((prev) => {\n      const next = { ...prev };\n      if (type === 'adults') {\n        const newVal = next.adults + delta;\n        if (newVal < 1 || newVal + next.children > MAX_TOTAL) return prev;\n        next.adults = newVal;\n        // Số em bé không được vượt quá số người lớn"
+  },
+  {
+    "file": "fe/src/components/flight/PassengerSelectModal.tsx",
+    "name": "handleConfirm",
+    "start": 95,
+    "end": 98,
+    "signature": "",
+    "calls": [
+      "onApply",
+      "onClose"
+    ],
+    "excerpt": "  const handleConfirm = () => {\n    onApply(counts);\n    onClose();\n  };"
+  },
+  {
+    "file": "fe/src/components/flight/FlightFilterModal.tsx",
+    "name": "FlightFilterModal",
+    "start": 34,
+    "end": 37,
+    "signature": "props: FlightFilterModalProps",
+    "calls": [
+      "JSON.stringify"
+    ],
+    "excerpt": "export default function FlightFilterModal(props: FlightFilterModalProps) {\n  if (!props.visible) return null;\n  return <FlightFilterModalContent key={JSON.stringify(props.value)} {...props} />;\n}"
+  },
+  {
+    "file": "fe/src/components/flight/FlightFilterModal.tsx",
+    "name": "FlightFilterModalContent",
+    "start": 39,
+    "end": 315,
+    "signature": "{\r\n  visible,\r\n  value,\r\n  availableAirlines,\r\n  totalMatchesCount,\r\n  onApply,\r\n  onClose,\r\n}: FlightFilterModalProps",
+    "calls": [
+      "useState",
+      "setLocalFilters",
+      "prev.selectedAirlines.includes",
+      "prev.selectedAirlines.filter",
+      "onApply",
+      "onClose",
+      "availableAirlines.map",
+      "localFilters.selectedAirlines.includes",
+      "handleToggleAirline"
+    ],
+    "excerpt": "function FlightFilterModalContent({\n  visible,\n  value,\n  availableAirlines,\n  totalMatchesCount,\n  onApply,\n  onClose,\n}: FlightFilterModalProps) {"
+  },
+  {
+    "file": "fe/src/components/flight/FlightFilterModal.tsx",
+    "name": "handleToggleAirline",
+    "start": 50,
+    "end": 65,
+    "signature": "airline: string",
+    "calls": [
+      "setLocalFilters",
+      "prev.selectedAirlines.includes",
+      "prev.selectedAirlines.filter"
+    ],
+    "excerpt": "  const handleToggleAirline = (airline: string) => {\n    setLocalFilters((prev) => {\n      const exists = prev.selectedAirlines.includes(airline);\n      if (exists) {\n        return {\n          ...prev,\n          selectedAirlines: prev.selectedAirlines.filter((a) => a !== airline),\n        };"
+  },
+  {
+    "file": "fe/src/components/flight/FlightFilterModal.tsx",
+    "name": "handleReset",
+    "start": 67,
+    "end": 69,
+    "signature": "",
+    "calls": [
+      "setLocalFilters"
+    ],
+    "excerpt": "  const handleReset = () => {\n    setLocalFilters(DEFAULT_FILTER_STATE);\n  };"
+  },
+  {
+    "file": "fe/src/components/flight/FlightFilterModal.tsx",
+    "name": "handleConfirm",
+    "start": 71,
+    "end": 74,
+    "signature": "",
+    "calls": [
+      "onApply",
+      "onClose"
+    ],
+    "excerpt": "  const handleConfirm = () => {\n    onApply(localFilters);\n    onClose();\n  };"
+  },
+  {
+    "file": "fe/src/components/flight/fares/FareCheckoutBar.tsx",
+    "name": "FareCheckoutBar",
+    "start": 8,
+    "end": 54,
+    "signature": "{\n  total,\n  count,\n  disabled,\n  label = \"Tiếp tục\",\n  onContinue,\n  note = \"Theo đơn giá gói vé đang chọn\",\n}: {\n  total: number | null;\n  count: number;\n  disabled?: boolean;\n  label?: string;\n  note?: string;\n  onContinue: () => void;\n}",
+    "calls": [
+      "formatFareMoney"
+    ],
+    "excerpt": "export function FareCheckoutBar({\n  total,\n  count,\n  disabled,\n  label = \"Tiếp tục\",\n  onContinue,\n  note = \"Theo đơn giá gói vé đang chọn\",\n}: {"
+  },
+  {
+    "file": "fe/src/components/flight/fares/FareOptionCard.tsx",
+    "name": "Benefit",
+    "start": 17,
+    "end": 46,
+    "signature": "{\n  icon,\n  label,\n  value,\n  positive = false,\n}: {\n  icon: IconName;\n  label: string;\n  value: string;\n  positive?: boolean;\n}",
+    "calls": [],
+    "excerpt": "function Benefit({\n  icon,\n  label,\n  value,\n  positive = false,\n}: {\n  icon: IconName;\n  label: string;"
+  },
+  {
+    "file": "fe/src/components/flight/fares/FareOptionCard.tsx",
+    "name": "FareOptionCard",
+    "start": 52,
+    "end": 212,
+    "signature": "{ fare, selected, onSelect }: Props",
+    "calls": [
+      "useState",
+      "isBusinessFare",
+      "formatFareMoney",
+      "onSelect",
+      "event.stopPropagation",
+      "setExpanded"
+    ],
+    "excerpt": "export function FareOptionCard({ fare, selected, onSelect }: Props) {\n  const [expanded, setExpanded] = useState(false);\n  const { ticket } = fare;\n  const business = isBusinessFare(fare);\n  const changeFee =\n    ticket.changeFee === 0\n      ? \"Miễn phí + chênh lệch giá\"\n      : `${formatFareMoney(ticket.changeFee)} + chênh lệch`;"
+  },
+  {
+    "file": "fe/src/components/flight/fares/FareSheet.tsx",
+    "name": "FareSheet",
+    "start": 10,
+    "end": 53,
+    "signature": "{\n  title,\n  visible,\n  onClose,\n  children,\n}: React.PropsWithChildren<{\n  title: string;\n  visible: boolean;\n  onClose: () => void;\n}>",
+    "calls": [],
+    "excerpt": "export function FareSheet({\n  title,\n  visible,\n  onClose,\n  children,\n}: React.PropsWithChildren<{\n  title: string;\n  visible: boolean;"
+  },
+  {
+    "file": "fe/src/components/flight/fares/FareSheet.tsx",
+    "name": "FareComparison",
+    "start": 56,
+    "end": 93,
+    "signature": "{ fares }: { fares: FlightFare[] }",
+    "calls": [
+      "fares.map",
+      "formatFareMoney"
+    ],
+    "excerpt": "export function FareComparison({ fares }: { fares: FlightFare[] }) {\n  return (\n    <ScrollView horizontal showsHorizontalScrollIndicator>\n      <View className=\"flex-row gap-3\">\n        {fares.map((fare) => (\n          <View\n            key={fare.ticket.fareClassId}\n            className=\"w-[205px] bg-booking-background border border-booking-line rounded-[12px] p-[15px]\""
+  },
+  {
+    "file": "fe/src/components/flight/fares/FlightSummary.tsx",
+    "name": "FlightSummary",
+    "start": 10,
+    "end": 82,
+    "signature": "{ flight }: { flight: FlightFare }",
+    "calls": [
+      "flightTime",
+      "flightDuration",
+      "flightDate",
+      "[\"flex-1 items-end\"].join"
+    ],
+    "excerpt": "export function FlightSummary({ flight }: { flight: FlightFare }) {\n  return (\n    <View className=\"bg-white border border-booking-line p-[15px] rounded-[14px] mb-6\">\n      <View className=\"flex-row items-center gap-[5px] flex-wrap\">\n        <View className=\"bg-booking-soft p-1 rounded-[5px] mr-[3px]\">\n          <RemoteImage\n            uri={flight.airline.logoUrl}\n            width={25}"
+  }
+]

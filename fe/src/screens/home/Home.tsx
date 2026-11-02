@@ -522,25 +522,9 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
-        {/* PROMO BANNER */}
-        <View className="mx-5 mt-6 bg-[#2563EB] rounded-2xl p-5 flex-row justify-between items-center shadow-sm">
-          <View>
-            <Text className="text-blue-100 text-xs font-bold uppercase mb-1">
-              Khuyến mãi mùa thu
-            </Text>
-            <Text className="text-white text-lg font-bold">
-              Giảm đến 25% vé nội địa
-            </Text>
-            <Text className="text-blue-100 text-xs mt-1">
-              Đặt ngay hôm nay cho chuyến đi mơ ước
-            </Text>
-          </View>
-          <MaterialCommunityIcons
-            name="ticket-percent-outline"
-            size={40}
-            color="white"
-            opacity={0.8}
-          />
+        {/*Menu chonj nhanh */}
+        <View className="">
+            
         </View>
 
         {/* POPULAR FLIGHTS SECTION */}
