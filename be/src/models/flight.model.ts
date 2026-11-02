@@ -40,6 +40,7 @@ const flightColumns = `
       f.terminal,
       f.gate,
       ROUND(EXTRACT(EPOCH FROM (f."arrivalTime" - f."departureTime")) / 60)::int AS "durationMinutes",
+      al.id AS "airlineId",
       al.code AS "airlineCode",
       al.name AS "airlineName",
       al."logoUrl" AS "airlineLogo",
@@ -74,6 +75,7 @@ function formatFlight(row: Record<string, any>) {
     flightNumber: row.flightNumber,
     durationMinutes: Number(row.durationMinutes),
     airline: {
+      id: row.airlineId,
       code: row.airlineCode,
       name: row.airlineName,
       logoUrl: row.airlineLogo,

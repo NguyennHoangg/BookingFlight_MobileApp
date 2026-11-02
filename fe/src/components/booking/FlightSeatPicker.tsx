@@ -521,8 +521,8 @@ export function FlightSeatPicker({
             label={checking ? "Đang kiểm tra…" : "Tiếp tục"}
             note={
               seatTotal
-                ? `Đã gồm vé + ${formatFareMoney(seatTotal)} phí ghế`
-                : "Đã gồm vé và lựa chọn ghế"
+                ? `Gồm vé, thuế/phí + ${formatFareMoney(seatTotal)} phí ghế`
+                : "Đã gồm vé và thuế/phí"
             }
             onContinue={() => void confirm()}
           />

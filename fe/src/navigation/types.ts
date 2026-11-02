@@ -40,6 +40,10 @@ export type RootStackParamList = {
   FlightDetail: FlightDetailParams;
   FareSelection: FlightDetailParams;
   PassengerInfo: PassengerInfoParams;
+  AdditionalServices: undefined;
+  BookingConfirmation: undefined;
+  Payment: undefined;
+  PaymentResult: { status: "success"; bookingId: string } | { status: "failed" };
   SearchFlightResult: SearchFlightParams;
   TicketDetail: { bookingId: string };
   EditProfile: undefined;

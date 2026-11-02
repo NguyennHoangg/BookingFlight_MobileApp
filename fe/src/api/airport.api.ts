@@ -1,4 +1,4 @@
-import clientApi from "./clientApi";
+import {clientApi} from "./clientApi";
 
 export interface Airport {
   id: string;
@@ -14,6 +14,25 @@ export interface AirportResponse{
     data: Airport[];
 }
 
+export interface TaxAndFee {
+  id: string;
+  airline_id: string;
+  admin_fee: number | null;
+  airport_fee: number | null;
+  security_fee: number | null;
+  fuel_surcharge: number | null;
+  vat_percent: number | null;
+  currency: string | null;
+}
+
+export interface TaxAndFeeResponse{
+  status: number;
+  message: string;
+  data: TaxAndFee;
+}
+
+
+
 export const getAirportList = async () => {
   try {
     const response = await clientApi.get<AirportResponse>("/airports");
@@ -23,6 +42,18 @@ export const getAirportList = async () => {
   }
 }
 
+export const getTaxAndFee = async (airlineId: string, signal?: AbortSignal) => {
+  const response = await clientApi.get<TaxAndFeeResponse>(
+    `/airlines/${encodeURIComponent(airlineId)}/tax-and-fee`,
+    { signal },
+  );
+  if (response.data.status !== 200 || response.data.data?.airline_id !== airlineId) {
+    throw new Error("Phản hồi thuế và phí không hợp lệ.");
+  }
+  return response.data;
+};
+
 export default {
-  getAirportList
+  getAirportList,
+  getTaxAndFee,
 }

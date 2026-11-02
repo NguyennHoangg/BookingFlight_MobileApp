@@ -24,7 +24,7 @@ function Routes() {
   );
   useEffect(() => {
     void dispatch(initAuth());
-    // Let the startup plane complete a pass even when local auth loads instantly.
+    // Keep the app name and slogan visible briefly while auth initializes.
     const introTimer = setTimeout(() => setIntroFinished(true), FLIGHT_INTRO_DURATION + 200);
     return () => clearTimeout(introTimer);
   }, [dispatch]);
@@ -48,12 +48,16 @@ function Routes() {
       <Stack.Screen name="FlightDetail" />
       <Stack.Screen name="FareSelection" />
       <Stack.Screen name="PassengerInfo" />
+      <Stack.Screen name="AdditionalServices" />
+      <Stack.Screen name="BookingConfirmation" />
+      <Stack.Screen name="Payment" />
       <Stack.Screen name="Notifications" />
       <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="Login" />
         <Stack.Screen name="Register" />
       </Stack.Protected>
       <Stack.Protected guard={isAuthenticated}>
+        <Stack.Screen name="PaymentResult" />
         <Stack.Screen name="TicketDetail" />
         <Stack.Screen name="EditProfile" />
         <Stack.Screen name="ChangePassword" />

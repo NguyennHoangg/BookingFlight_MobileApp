@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
-    "seed:seat-layouts": "tsx prisma/seed-seat-layouts.ts"
+    "seed:seat-layouts": "tsx prisma/seed-seat-layouts.ts",
+    "booking:migrate": "tsx scripts/apply-booking-schema.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

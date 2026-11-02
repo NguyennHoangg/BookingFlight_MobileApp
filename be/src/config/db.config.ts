@@ -59,4 +59,4 @@ const transactionQuery = async (queries: string[]) => {
   }
 };
 
-export { query, transactionQuery };
+export { query, transactionQuery, connectPool };
