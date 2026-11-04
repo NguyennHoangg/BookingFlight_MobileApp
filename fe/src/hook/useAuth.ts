@@ -4,6 +4,7 @@ import AuthAPI, {
   UpdateProfileRequest,
   ChangePasswordRequest,
 } from "../api/auth.api";
+import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../store";
 import {
   loginUser,
@@ -86,7 +87,7 @@ export const useAuth = (): UseAuth => {
   };
 
   // Tai thong tin ho so
-  const profile = async (): Promise<ProfileResult> => {
+  const profile = useCallback(async (): Promise<ProfileResult> => {
     const resultAction = await dispatch(profileUser());
     if (profileUser.fulfilled.match(resultAction)) {
       return { success: true };
@@ -96,7 +97,7 @@ export const useAuth = (): UseAuth => {
         message: (resultAction.payload as string) || "Lấy thông tin hồ sơ thất bại!",
       };
     }
-  };
+  }, [dispatch]);
 
   // Cap nhat thong tin ho so
   const updateProfile = async (

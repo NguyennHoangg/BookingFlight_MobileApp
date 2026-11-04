@@ -11,9 +11,9 @@ SkyJourney là dự án ứng dụng đặt vé máy bay, gồm ứng dụng Rea
 | Tài khoản | Đăng ký, đăng nhập bằng email hoặc số điện thoại, đăng xuất, xem và cập nhật hồ sơ, đổi mật khẩu. |
 | Tìm kiếm chuyến bay | Tra cứu sân bay, tìm chuyến một chiều hoặc khứ hồi, lọc kết quả và xem lịch giá qua API. |
 | Gói vé | Tải giá vé, hạn mức chỗ và điều kiện hành lý, hoàn đổi theo từng chuyến bay. |
-| Hành khách | Nhập và kiểm tra thông tin hành khách, thông tin liên hệ; chọn nhanh từ danh bạ đã lưu. |
+| Hành khách | Nhập và kiểm tra thông tin hành khách, thông tin liên hệ; thêm, sửa, xóa danh bạ trong hồ sơ, lưu trực tiếp khi đặt vé và chọn nhanh từ danh bạ đã lưu. Danh bạ lưu họ tên, loại khách, ngày sinh và giấy tờ; giới tính, quốc tịch được kiểm tra lại khi đặt vé. |
 | Chọn ghế | Hiển thị sơ đồ ghế theo tàu bay, ghế đã đặt và phụ phí; kiểm tra lựa chọn cho từng hành khách, từng chặng. |
-| Yêu thích | Thao tác lưu và bỏ lưu tại màn chi tiết chuyến bay đã kết nối API; danh sách tại tab Yêu thích còn dùng dữ liệu mẫu. |
+| Yêu thích | Lưu và bỏ lưu qua API, tải danh sách theo tài khoản tại tab Yêu thích, làm mới khi quay lại tab và mở chi tiết chuyến đã lưu. |
 | Vé và thông báo | Danh sách vé, chi tiết vé và hộp thông báo dùng dữ liệu mẫu. Thông báo hỗ trợ bộ lọc, xem chi tiết và đánh dấu đã đọc trong phiên sử dụng. |
 | Check-in | Đã có giao diện nhập thông tin; chưa tích hợp xử lý làm thủ tục trực tuyến. |
 | Điều hướng | Expo Router, phân quyền theo trạng thái đăng nhập, header dùng chung và hiệu ứng chuyển màn có xét tùy chọn giảm chuyển động. |
@@ -225,7 +225,9 @@ Các endpoint dưới đây dùng tiền tố `/api/v1`, ngoại trừ `/health`
 | POST | `/auth/logout` | Đăng xuất và xử lý token được gửi kèm |
 | GET, PUT | `/auth/profile` | Xem và cập nhật hồ sơ |
 | PUT | `/auth/change-password` | Đổi mật khẩu |
-| GET | `/auth/passengers` | Lấy hành khách đã lưu |
+| GET, POST | `/auth/passengers` | Lấy danh bạ hoặc thêm hành khách đã lưu |
+| PUT, DELETE | `/auth/passengers/:passengerId` | Sửa hoặc xóa hành khách thuộc tài khoản đăng nhập |
+| GET | `/flights/favorites` | Lấy danh sách chuyến bay yêu thích của tài khoản |
 | GET | `/airports` | Lấy danh sách sân bay |
 | POST | `/flights/conditions` | Tìm chuyến bay theo điều kiện |
 | POST | `/flights/calendar` | Lấy lịch giá chuyến bay |

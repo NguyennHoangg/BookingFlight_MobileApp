@@ -80,9 +80,11 @@ const AuthAPI = {
   },
 
   // Dang xuat tai khoan
-  logout: async (): Promise<void> => {
+  logout: async (accessToken?: string | null, refreshToken?: string | null): Promise<void> => {
     try {
-      await clientApi.post("/auth/logout");
+      await clientApi.post("/auth/logout", { refreshToken }, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      });
     } catch (error) {
       console.log("Logout error", error);
       throw error;

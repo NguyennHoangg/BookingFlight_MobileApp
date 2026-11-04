@@ -1,31 +1,30 @@
 import { navigate } from "../../navigation/routes";
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, Modal, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useAuth } from '../../hook/useAuth';
 
 export default function ProfileScreen() {
-  const { user, profile, logout } = useAuth();
+  const { user, profile, logout, isAuthenticated, token } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   // Tự động tải thông tin mới nhất khi vào trang
   useEffect(() => {
-    profile();
-  }, []);
+    if (isAuthenticated && token) void profile();
+  }, [profile, isAuthenticated, token]);
 
   const onRefresh = async () => {
+    if (!isAuthenticated || !token) return;
     setRefreshing(true);
     await profile();
     setRefreshing(false);
   };
 
   const handleLogout = () => {
-    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Đăng xuất', style: 'destructive', onPress: () => logout() },
-    ]);
+    setConfirmLogout(true);
   };
 
   return (
@@ -127,7 +126,7 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
           </TouchableOpacity>
 
-          <TouchableOpacity className="flex-row items-center justify-between p-4">
+          <TouchableOpacity onPress={() => navigate('SavedPassengers')} className="flex-row items-center justify-between p-4">
             <View className="flex-row items-center">
               <View className="w-8 h-8 rounded-full bg-blue-50 items-center justify-center">
                 <Ionicons name="people-outline" size={16} color="#2563EB" />
@@ -166,6 +165,8 @@ export default function ProfileScreen() {
         <TouchableOpacity 
           className="mx-5 bg-red-50 border border-red-100 rounded-2xl p-4 flex-row items-center justify-center mb-6"
           onPress={handleLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Đăng xuất"
         >
           <Ionicons name="log-out-outline" size={20} color="#DC2626" />
           <Text className="font-bold text-red-600 ml-2">Đăng xuất</Text>
@@ -173,6 +174,30 @@ export default function ProfileScreen() {
 
         <Text className="text-center text-xs text-gray-400 mb-10">SkyJourney Vietnam v2.4.0 (Build 382)</Text>
       </ScrollView>
+      <Modal
+        visible={confirmLogout}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmLogout(false)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/40 px-6">
+          <View accessibilityViewIsModal className="w-full max-w-[400px] rounded-2xl bg-white p-6">
+            <Text accessibilityRole="header" className="text-xl font-bold text-gray-900">Đăng xuất</Text>
+            <Text className="mt-3 text-sm leading-6 text-gray-600">Bạn có chắc chắn muốn đăng xuất không?</Text>
+            <View className="mt-6 flex-row justify-end gap-3">
+              <TouchableOpacity accessibilityRole="button" onPress={() => setConfirmLogout(false)} className="rounded-xl bg-gray-100 px-5 py-3">
+                <Text className="font-semibold text-gray-700">Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" onPress={() => {
+                setConfirmLogout(false);
+                void logout();
+              }} className="rounded-xl bg-red-600 px-5 py-3">
+                <Text className="font-semibold text-white">Đăng xuất</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

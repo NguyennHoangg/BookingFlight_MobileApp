@@ -7,6 +7,36 @@ export interface SavedPassenger {
   dateOfBirth: string;
   identityNumber: string | null;
 }
+export type SavedPassengerInput = Omit<SavedPassenger, "id">;
+export async function savePassenger(input: SavedPassengerInput, id?: string): Promise<SavedPassenger> {
+  const url = id ? `/auth/passengers/${encodeURIComponent(id)}` : "/auth/passengers";
+  const { data } = id
+    ? await clientApi.put<Response<SavedPassenger>>(url, input)
+    : await clientApi.post<Response<SavedPassenger>>(url, input);
+  return data.data;
+}
+export async function deleteSavedPassenger(id: string) {
+  await clientApi.delete(`/auth/passengers/${encodeURIComponent(id)}`);
+}
+export interface FavoriteFlight {
+  flightId: string;
+  flightNumber: string;
+  departureTime: string;
+  arrivalTime: string;
+  status: string;
+  airlineName: string;
+  airlineCode: string;
+  aircraft: string;
+  departureCode: string;
+  departureCity: string;
+  arrivalCode: string;
+  arrivalCity: string;
+}
+export async function getFavoriteFlights(signal?: AbortSignal): Promise<FavoriteFlight[]> {
+  const { data } = await clientApi.get<Response<FavoriteFlight[]>>("/flights/favorites", { signal });
+  if (!Array.isArray(data.data)) throw new Error("Danh sách yêu thích không hợp lệ.");
+  return data.data;
+}
 export interface FlightSeat {
   id: string;
   seatNumber: string;
