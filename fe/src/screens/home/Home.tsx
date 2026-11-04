@@ -166,6 +166,15 @@ export default function Home() {
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
       >
         {/* SEARCH FLIGHT CARD */}
+        <TouchableOpacity accessibilityRole="button" onPress={() => navigate("FlightAssistant")}
+          className="mx-5 mt-4 flex-row items-center rounded-2xl border border-blue-100 bg-blue-50 p-4">
+          <Ionicons name="sparkles" size={24} color="#2563EB" />
+          <View className="ml-3 flex-1">
+            <Text className="font-bold text-blue-900">Tìm vé cùng AI</Text>
+            <Text className="mt-1 text-sm text-blue-800">Nói nơi bạn muốn đến, trợ lý sẽ giúp tìm chuyến.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#2563EB" />
+        </TouchableOpacity>
         <View className="mx-5 mt-4 bg-white rounded-3xl p-4 shadow-sm border border-gray-100">
           {/* Trip Type Toggle */}
           <View

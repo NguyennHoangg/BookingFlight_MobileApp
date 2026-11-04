@@ -45,6 +45,7 @@ function Routes() {
     >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="SearchFlightResult" />
+      <Stack.Screen name="FlightAssistant" />
       <Stack.Screen name="FlightDetail" />
       <Stack.Screen name="FareSelection" />
       <Stack.Screen name="PassengerInfo" />
