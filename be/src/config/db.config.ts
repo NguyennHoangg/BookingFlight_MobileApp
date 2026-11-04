@@ -10,6 +10,8 @@ const pool = process.env.DATABASE_URL
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
     })
   : new pg.Pool({
       user: process.env.DB_USER,
@@ -21,16 +23,39 @@ const pool = process.env.DATABASE_URL
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
     });
 
+// pg removes broken idle clients automatically; handle the event so it cannot
+// become an uncaught exception and terminate the API process.
+pool.on("error", (error) => {
+  console.error("Unexpected idle database connection error:", error);
+});
+
 // thuc thi query
-const query = async (text: string, params?: any[]) => {
-  try {
-    const res = await pool.query(text, params);
-    return res;
-  } catch (error) {
-    console.error("Error executing query:", error);
-    throw error;
+// Opt in only for standalone, read-only statements. A failed write may have
+// committed before the socket reset, so replaying it could duplicate changes.
+const query = async (
+  text: string,
+  params?: any[],
+  options: { retryOnConnectionReset?: boolean } = {},
+) => {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await pool.query(text, params);
+    } catch (error) {
+      if (
+        attempt === 0 &&
+        options.retryOnConnectionReset &&
+        (error as NodeJS.ErrnoException).code === "ECONNRESET"
+      ) {
+        // pool.query discards the failed client; the next checkout can reconnect.
+        continue;
+      }
+      console.error("Error executing query:", error);
+      throw error;
+    }
   }
 };
 

@@ -33,6 +33,36 @@ function load(file, dependencies = {}) {
   return exports;
 }
 const validation = load("src/navigation/validation.ts");
+
+test("assistant API sends conversation and confirmation separately, with cancellation and AI timeout", async () => {
+  const calls = [];
+  const expected = { status: "ready", message: "SGN → HAN", plan: { departureCode: "SGN" } };
+  const api = load("src/api/assistant.api.ts", {
+    "./clientApi": { clientApi: { post: async (...args) => { calls.push(args); return { data: { data: expected } }; } } },
+  });
+  const signal = new AbortController().signal;
+  const messages = [{ role: "user", content: "Đi Hà Nội ngày mai" }];
+  assert.equal(await api.interpretFlightRequest(messages, signal), expected);
+  assert.equal(await api.searchAssistantFlights(expected.plan, signal), expected);
+  assert.equal(calls[0][0], "/assistant/interpret");
+  assert.equal(calls[0][1].messages, messages);
+  assert.equal(calls[1][0], "/assistant/search");
+  assert.equal(calls[1][1].plan, expected.plan);
+  for (const call of calls) {
+    assert.equal(call[2].signal, signal);
+    assert.equal(call[2].timeout, 35000);
+  }
+});
+
+test("assistant API propagates configuration and connection errors for the retry UI", async () => {
+  const failure = new Error("AI unavailable");
+  const api = load("src/api/assistant.api.ts", {
+    "./clientApi": { clientApi: { post: async () => { throw failure; } } },
+  });
+  const signal = new AbortController().signal;
+  await assert.rejects(api.interpretFlightRequest([], signal), error => error === failure);
+  await assert.rejects(api.searchAssistantFlights({}, signal), error => error === failure);
+});
 const airport = (code) => ({
   id: code,
   code,

@@ -50,4 +50,5 @@ export type RootStackParamList = {
   SavedPassengers: undefined;
   ChangePassword: undefined;
   Notifications: undefined;
+  FlightAssistant: undefined;
 };

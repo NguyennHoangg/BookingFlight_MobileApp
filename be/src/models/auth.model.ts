@@ -39,7 +39,7 @@ const registerUser = async ({
       createdAt: new Date(),
       updatedAt: new Date(),
       gender: null,
-      dateOfBirth: null
+      dateOfBirth: null,
     };
     // bắt đầu transaction
     await query("BEGIN");
@@ -84,7 +84,7 @@ const checkUserExits = async (email: string) => {
   try {
     const text = `SELECT id, "passwordHash", role, "fullName" FROM "User" WHERE email = $1`;
     const values = [email];
-    const result = await query(text, values);
+    const result = await query(text, values, { retryOnConnectionReset: true });
     return result.rows[0];
   } catch (error) {
     console.error("Error checking user existence:", error);
@@ -100,13 +100,13 @@ const checkUserExits = async (email: string) => {
 const findByIdentifier = async (identifierValue: string, type: string) => {
   try {
     let text = "";
-    if(type == "email"){
+    if (type == "email") {
       text = `SELECT id, email, "fullName", phone, "avatarUrl", "loyaltyPoints", "membershipTier", role, "isActive", "createdAt", "updatedAt" FROM "User" WHERE email = $1`;
-    }else if(type == "phone"){
+    } else if (type == "phone") {
       text = `SELECT id, email, "fullName", phone, "avatarUrl", "loyaltyPoints", "membershipTier", role, "isActive", "createdAt", "updatedAt" FROM "User" WHERE phone = $1`;
     }
     const values = [identifierValue];
-    const result = await query(text, values);
+    const result = await query(text, values, { retryOnConnectionReset: true });
     return result.rows[0];
   } catch (error) {
     console.error("Error finding user by identifier:", error);
@@ -118,7 +118,7 @@ const checkUserExitsByPhone = async (phone: string) => {
   try {
     const text = `SELECT id, "passwordHash", role, "fullName", phone, email FROM "User" WHERE phone = $1`;
     const values = [phone];
-    const result = await query(text, values);
+    const result = await query(text, values, { retryOnConnectionReset: true });
     return result.rows[0];
   } catch (error) {
     console.error("Error finding user by phone:", error);
