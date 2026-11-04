@@ -70,7 +70,7 @@ export default function LoginScreen() {
         contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 24, width: "100%", maxWidth: 480, alignSelf: "center" }}
       >
         <View className="flex items-center justify-center">
-              <Image source={require("../../../assets/Splash_icon.png")} className="w-20 h-20" />
+              <Image source={require("../../../assets/Splash_icon.png")} className="max-w-20 max-h-20" />
           </View>
 
           <View className="flex items-center justify-center mt-2">

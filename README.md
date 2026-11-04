@@ -4,6 +4,8 @@ SkyJourney là dự án ứng dụng đặt vé máy bay, gồm ứng dụng Rea
 
 Ứng dụng đang trong quá trình phát triển. Một số màn hình sử dụng dữ liệu mẫu; luồng đặt chỗ và thanh toán chưa được tích hợp hoàn chỉnh.
 
+> Hướng dẫn coding standard, cài đặt và chạy dự án: [docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md).
+
 ## Chức năng
 
 | Nhóm chức năng | Phạm vi hiện tại |
