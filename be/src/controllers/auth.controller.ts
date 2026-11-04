@@ -71,7 +71,7 @@ const logoutController = asyncHandler(
       ? authHeader.split(" ")[1]
       : (req as any).cookies?.token;
 
-    const { refreshToken } = req.body;
+    const { refreshToken } = req.body ?? {};
 
     if (accessToken) {
       await authService.logoutService(accessToken, refreshToken);

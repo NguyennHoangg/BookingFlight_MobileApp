@@ -47,6 +47,7 @@ export type RootStackParamList = {
   SearchFlightResult: SearchFlightParams;
   TicketDetail: { bookingId: string };
   EditProfile: undefined;
+  SavedPassengers: undefined;
   ChangePassword: undefined;
   Notifications: undefined;
 };

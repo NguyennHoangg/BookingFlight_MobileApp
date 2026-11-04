@@ -54,11 +54,16 @@ clientApi.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const url = originalRequest?.url || "";
+    const status = error.response?.status;
+    // Older backend versions used 403 for invalid JWTs. Keep real permission errors intact.
+    const invalidSession = status === 401 || (
+      status === 403 && error.response?.data?.message === "Token không hợp lệ hoặc đã hết hạn"
+    );
 
     // Tu dong dang xuat cuc bo khi token het han hoac khong hop le
     // Khong goi lai tren cac endpoint auth de tranh vong lap vo tan
     if (
-      error.response?.status === 401 &&
+      invalidSession &&
       !url.includes("/auth/logout") &&
       !url.includes("/auth/login")
     ) {
@@ -86,7 +91,7 @@ clientApi.interceptors.request.use(
       // Lazy import or store getState to avoid circular dependencies
       const { store } = require("../store");
       const token = store.getState()?.auth?.token;
-      if (token && request.headers) {
+      if (token && request.headers && !request.headers.Authorization) {
         request.headers.Authorization = `Bearer ${token}`;
       }
     } catch (e) {

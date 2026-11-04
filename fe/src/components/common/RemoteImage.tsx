@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, ImageResizeMode, StyleProp, ViewStyle, ImageStyle } from 'react-native';
+import { View, Image, Platform, ImageResizeMode, StyleProp, ViewStyle, ImageStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SvgCss } from 'react-native-svg/css';
 import { isSvgUrl, fetchSvgXml, DEFAULT_IMAGE_HEADERS } from '../../utils/svg';
@@ -23,6 +23,7 @@ export default function RemoteImage(props: RemoteImageProps) {
 
 function RemoteImageContent({
   uri,
+  alt,
   width = '100%',
   height = '100%',
   resizeMode = 'contain',
@@ -34,9 +35,24 @@ function RemoteImageContent({
 }: RemoteImageProps) {
   const [svgXml, setSvgXml] = useState<string | null>(null);
   const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(() => isSvgUrl(uri));
+  const [loading, setLoading] = useState(() => Platform.OS !== 'web' && isSvgUrl(uri));
 
-  const isSvg = isSvgUrl(uri);
+  // Browsers load SVG as an image, without XML parsing or a CORS fetch.
+  const isSvg = Platform.OS !== 'web' && isSvgUrl(uri);
+  const frameStyle: StyleProp<ViewStyle> = [
+    { width: width as ViewStyle['width'], height: height as ViewStyle['height'], overflow: 'hidden' },
+    containerStyle,
+  ];
+  const fallback = (
+    <View style={[frameStyle, { alignItems: 'center', justifyContent: 'center' }]} accessibilityLabel={alt}>
+      <Ionicons
+        name={fallbackIconName}
+        size={fallbackIconSize}
+        color={fallbackIconColor}
+        style={{ transform: [{ rotate: '270deg' }] }}
+      />
+    </View>
+  );
 
   useEffect(() => {
     if (!uri) return;
@@ -61,49 +77,39 @@ function RemoteImageContent({
 
   // Nếu không có URI hoặc bị lỗi -> Hiển thị icon fallback
   if (!uri || error) {
-    return (
-      <View style={[{ alignItems: 'center', justifyContent: 'center' }, containerStyle]}>
-        <Ionicons
-          name={fallbackIconName}
-          size={fallbackIconSize}
-          color={fallbackIconColor}
-          style={{ transform: [{ rotate: '270deg' }] }}
-        />
-      </View>
-    );
+    return fallback;
   }
 
   // Nếu là file SVG
   if (isSvg) {
     if (loading || !svgXml) {
-      return (
-        <View style={[{ alignItems: 'center', justifyContent: 'center' }, containerStyle]}>
-          <Ionicons
-            name={fallbackIconName}
-            size={fallbackIconSize}
-            color="#9CA3AF"
-            style={{ transform: [{ rotate: '270deg' }] }}
-          />
-        </View>
-      );
+      return fallback;
     }
     return (
-      <View style={[{ width: width as any, height: height as any, overflow: 'hidden' }, containerStyle]}>
-        <SvgCss xml={svgXml} width="100%" height="100%" />
+      <View style={frameStyle} accessibilityLabel={alt}>
+        <SvgCss
+          xml={svgXml}
+          width="100%"
+          height="100%"
+          fallback={fallback}
+          // SvgCss calls onError during render; use its fallback instead of setting state here.
+          onError={() => undefined}
+        />
       </View>
     );
   }
 
   // Nếu là ảnh thông thường (PNG, JPG, WebP)
   return (
-    <View style={[{ width: width as any, height: height as any, overflow: 'hidden' }, containerStyle]}>
+    <View style={frameStyle}>
       <Image
         source={{
           uri,
-          headers: DEFAULT_IMAGE_HEADERS,
+          ...(Platform.OS === 'web' ? {} : { headers: DEFAULT_IMAGE_HEADERS }),
         }}
         style={[{ width: '100%', height: '100%' }, imageStyle]}
         resizeMode={resizeMode}
+        accessibilityLabel={alt}
         onError={(e) => {
           console.log('[RemoteImage] Lỗi tải ảnh:', e.nativeEvent?.error);
           setError(true);
