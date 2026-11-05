@@ -11,6 +11,7 @@ function load(file, dependencies = {}) {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022,
+      jsx: ts.JsxEmit.React,
     },
   });
   const exports = {};
@@ -163,14 +164,17 @@ function authModule(api, storage) {
 test("login and restored sessions authenticate; logout removes access before the server responds", async () => {
   const { configureStore } = require("@reduxjs/toolkit");
   let resolveLogout;
+  let logoutCredentials;
   let cleared = false;
   const user = { id: "user-1", fullName: "Test", email: "test@example.com" };
   const auth = authModule(
     {
-      logout: () =>
-        new Promise((resolve) => {
+      logout: (...credentials) => {
+        logoutCredentials = credentials;
+        return new Promise((resolve) => {
           resolveLogout = resolve;
-        }),
+        });
+      },
     },
     {
       clearAuth: async () => {
@@ -186,6 +190,7 @@ test("login and restored sessions authenticate; logout removes access before the
   assert.equal(store.getState().auth.isInitialized, true);
   assert.equal(store.getState().auth.isAuthenticated, true);
   const logout = store.dispatch(auth.logoutUser());
+  assert.deepEqual(logoutCredentials, ["saved", "refresh"]);
   assert.equal(store.getState().auth.isAuthenticated, false);
   assert.equal(store.getState().auth.token, null);
   assert.equal(cleared, true);
@@ -203,7 +208,103 @@ test("login and restored sessions authenticate; logout removes access before the
   assert.equal(store.getState().auth.token, "new-session");
 });
 
-test("403 and stale 401 responses preserve the session; current-token 401 resets it", async () => {
+test("logout keeps its original credentials when a new session starts before the request is sent", async () => {
+  let requestHandler;
+  const client = { interceptors: {
+    request: { use: handler => { requestHandler = handler; } },
+    response: { use() {} },
+  } };
+  load("src/api/clientApi.ts", {
+    axios: { default: { create: () => client } },
+    "react-native": { Platform: { OS: "web" } },
+    "expo-constants": { default: {} },
+    "../store": { store: { getState: () => ({ auth: { token: "new-session" } }) } },
+  });
+  const outgoing = [];
+  const api = load("src/api/auth.api.ts", {
+    "./clientApi": { default: { post: async (url, body, config) => {
+      const request = requestHandler({ url, ...config });
+      outgoing.push({ request, body });
+    } } },
+  }).default;
+  await api.logout("old-session", "old-refresh");
+  assert.equal(outgoing[0].request.headers.Authorization, "Bearer old-session");
+  assert.equal(outgoing[0].body.refreshToken, "old-refresh");
+  assert.equal(requestHandler({ headers: {} }).headers.Authorization, "Bearer new-session");
+});
+
+test("profile logout confirmation opens on web, can be cancelled, and invokes logout on confirmation", () => {
+  const React = require("react");
+  const states = [];
+  let cursor = 0;
+  let logouts = 0;
+  const screen = load("src/screens/profile/Profile.tsx", {
+    react: { default: React, useEffect() {}, useState(initial) {
+      const index = cursor++;
+      if (!(index in states)) states[index] = initial;
+      return [states[index], value => { states[index] = value; }];
+    } },
+    "../../navigation/routes": { navigate() {} },
+    "react-native": Object.fromEntries(["View", "Text", "ScrollView", "Image", "TouchableOpacity", "Modal", "RefreshControl"].map(name => [name, name])),
+    "react-native-safe-area-context": { SafeAreaView: "SafeAreaView" },
+    "@expo/vector-icons": { Ionicons: "Icon", MaterialCommunityIcons: "Icon" },
+    "../../hook/useAuth": { useAuth: () => ({ user: { avatarUrl: "https://example.com/avatar.png" },
+      isAuthenticated: true, token: "session", profile() {}, logout() { logouts++; } }) },
+  });
+  const render = () => { cursor = 0; return screen.default(); };
+  const find = (node, predicate) => {
+    if (!node || typeof node !== "object") return undefined;
+    if (Array.isArray(node)) {
+      for (const child of node) { const match = find(child, predicate); if (match) return match; }
+      return undefined;
+    }
+    return predicate(node) ? node : find(node.props?.children, predicate);
+  };
+  const modal = tree => find(tree, node => node.type === "Modal");
+  const open = tree => find(tree, node => node.props?.accessibilityLabel === "Đăng xuất").props.onPress();
+  const button = (tree, label) => find(tree, node => node.type === "TouchableOpacity" && node.props.children?.props?.children === label);
+  let tree = render();
+  assert.equal(modal(tree).props.visible, false);
+  open(tree);
+  tree = render();
+  assert.equal(modal(tree).props.visible, true);
+  button(modal(tree), "Hủy").props.onPress();
+  tree = render();
+  assert.equal(modal(tree).props.visible, false);
+  assert.equal(logouts, 0);
+  open(tree);
+  tree = render();
+  button(modal(tree), "Đăng xuất").props.onPress();
+  assert.equal(logouts, 1);
+  assert.equal(modal(render()).props.visible, false);
+});
+
+test("profile requests stop after logout and late responses cannot restore another session's user", async () => {
+  const { configureStore } = require("@reduxjs/toolkit");
+  let calls = 0;
+  let resolveProfile;
+  let writes = 0;
+  const auth = authModule({ getProfileApi: () => {
+    calls++;
+    return new Promise(resolve => { resolveProfile = resolve; });
+  } }, { setUser: async () => { writes++; } });
+  const store = configureStore({ reducer: { auth: auth.default } });
+  await store.dispatch(auth.fetchProfile());
+  assert.equal(calls, 0);
+  store.dispatch(auth.setCredentials({ user: { id: "old-user" }, token: "old-token" }));
+  const pending = store.dispatch(auth.fetchProfile());
+  assert.equal(calls, 1);
+  store.dispatch(auth.resetAuth());
+  await store.dispatch(auth.fetchProfile());
+  assert.equal(calls, 1);
+  store.dispatch(auth.setCredentials({ user: { id: "new-user" }, token: "new-token" }));
+  resolveProfile({ data: { id: "old-user", fullName: "Stale profile" } });
+  await pending;
+  assert.equal(store.getState().auth.user.id, "new-user");
+  assert.equal(writes, 0);
+});
+
+test("permission errors and stale credentials preserve the session; current-token auth failures reset it", async () => {
   let responseError;
   let token = "current";
   let resets = 0;
@@ -242,9 +343,9 @@ test("403 and stale 401 responses preserve the session; current-token 401 resets
       },
     },
   });
-  const fail = async (status, requestToken, url = "/auth/profile") => {
+  const fail = async (status, requestToken, url = "/auth/profile", message) => {
     const error = {
-      response: { status },
+      response: { status, data: { message } },
       config: { url, headers: { Authorization: `Bearer ${requestToken}` } },
     };
     await assert.rejects(responseError(error));
@@ -256,6 +357,15 @@ test("403 and stale 401 responses preserve the session; current-token 401 resets
   await fail(401, "current");
   assert.equal(resets, 1);
   assert.equal(clears, 1);
+  token = "new-session";
+  const expiredMessage = "Token không hợp lệ hoặc đã hết hạn";
+  await fail(403, "old-session", "/flights/flight/favorite", expiredMessage);
+  await fail(403, "new-session", "/auth/login", expiredMessage);
+  await fail(403, "new-session", "/auth/passengers", "Bạn không có quyền truy cập");
+  assert.equal(resets, 1);
+  await fail(403, "new-session", "/auth/passengers", expiredMessage);
+  assert.equal(resets, 2);
+  assert.equal(clears, 2);
 });
 
 test("flight API uses backend endpoints and propagates failures instead of returning mock data", async () => {
@@ -657,6 +767,94 @@ test("tax API encodes airline ID, passes cancellation and rejects mismatched res
   await assert.rejects(api.getTaxAndFee("airline/id"));
   data = { status: 404 };
   await assert.rejects(api.getTaxAndFee("airline/id"));
+});
+
+test("saved passengers and favorites use persistent API endpoints and propagate write failures", async () => {
+  const calls = [];
+  const profile = { id: "saved/id", fullName: "Nguyễn Văn An", passengerType: "ADULT", dateOfBirth: "1990-01-01", identityNumber: null };
+  const client = Object.fromEntries(["get", "post", "put", "delete"].map(method => [method, async (...args) => {
+    calls.push({ method, args });
+    return { data: { status: "success", data: method === "get" ? [] : profile } };
+  }]));
+  const api = load("src/api/bookingOptions.api.ts", { "./clientApi": { clientApi: client } });
+  const signal = new AbortController().signal;
+  assert.equal((await api.savePassenger(profile)).id, profile.id);
+  await api.savePassenger(profile, profile.id);
+  await api.deleteSavedPassenger(profile.id);
+  await api.getFavoriteFlights(signal);
+  await api.setFavorite("flight/id", false);
+  assert.deepEqual(calls.map(call => [call.method, call.args[0]]), [
+    ["post", "/auth/passengers"], ["put", "/auth/passengers/saved%2Fid"],
+    ["delete", "/auth/passengers/saved%2Fid"], ["get", "/flights/favorites"], ["delete", "/flights/flight%2Fid/favorite"],
+  ]);
+  assert.equal(calls[3].args[1].signal, signal);
+  client.post = async () => { throw new Error("offline"); };
+  await assert.rejects(api.savePassenger(profile), /offline/);
+});
+
+test("favorite hook blocks duplicate taps, ignores stale legs and retries after a read failure", async () => {
+  const slots = [];
+  let cursor = 0;
+  let focusedCallback;
+  let cleanup;
+  const reads = [];
+  const writes = [];
+  const memo = (factory, deps) => {
+    const index = cursor++;
+    if (!slots[index] || deps.some((value, i) => value !== slots[index].deps[i])) slots[index] = { deps, value: factory() };
+    return slots[index].value;
+  };
+  const hook = load("src/hook/useFlightFavorite.ts", {
+    react: {
+      useState(initial) {
+        const index = cursor++;
+        if (!(index in slots)) slots[index] = initial;
+        return [slots[index], value => { slots[index] = typeof value === "function" ? value(slots[index]) : value; }];
+      },
+      useRef(value) { const index = cursor++; return slots[index] ??= { current: value }; },
+      useMemo: memo,
+      useCallback: (callback, deps) => memo(() => callback, deps),
+    },
+    "expo-router": { useFocusEffect(callback) { if (callback !== focusedCallback) { cleanup?.(); focusedCallback = callback; cleanup = callback(); } } },
+    "../api/bookingOptions.api": {
+      getFavorite: (id, signal) => new Promise((resolve, reject) => reads.push({ id, signal, resolve, reject })),
+      setFavorite: (id, favorite) => new Promise((resolve, reject) => writes.push({ id, favorite, resolve, reject })),
+    },
+  });
+  const render = id => { cursor = 0; return hook.useFlightFavorite(id, true); };
+  const settle = () => new Promise(resolve => setImmediate(resolve));
+  assert.equal(render("out").busy, true);
+  await render("out").toggle();
+  assert.equal(writes.length, 0);
+  reads[0].resolve(true); await settle();
+  const current = render("out");
+  assert.equal(current.favorite, true);
+  const firstTap = current.toggle();
+  await current.toggle();
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].favorite, false);
+  render("back");
+  assert.equal(reads[0].signal.aborted, true);
+  reads[1].resolve(false); await settle();
+  writes[0].resolve(false); await firstTap;
+  assert.equal(render("back").favorite, false);
+  cleanup?.(); cleanup = focusedCallback();
+  reads[2].reject(new Error("offline")); await settle();
+  const failed = render("back");
+  assert.ok(failed.error);
+  const retry = failed.toggle();
+  reads[3].resolve(true); await settle();
+  assert.equal(writes[1].favorite, false);
+  writes[1].resolve(false); await retry;
+  assert.equal(render("back").error, undefined);
+  const pendingSave = render("back").toggle();
+  render("out");
+  render("back");
+  assert.equal(reads.length, 5, "refocusing waits for the pending write before reading");
+  writes[2].resolve(true); await pendingSave; await settle();
+  reads[5].resolve(true); await settle();
+  assert.equal(render("back").favorite, true);
+  cleanup?.();
 });
 
 test("tax loading deduplicates airlines, cancels stale requests and retries failures", async () => {

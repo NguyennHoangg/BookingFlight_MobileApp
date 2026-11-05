@@ -40,7 +40,6 @@ function Routes() {
         animation: reducedMotion ? "none" : "slide_from_right",
         gestureEnabled: true,
         contentStyle: { backgroundColor: "#F9FAFB" },
-        statusBarStyle: "dark",
       }}
     >
       <Stack.Screen name="(tabs)" />
@@ -60,6 +59,7 @@ function Routes() {
         <Stack.Screen name="PaymentResult" />
         <Stack.Screen name="TicketDetail" />
         <Stack.Screen name="EditProfile" />
+        <Stack.Screen name="SavedPassengers" />
         <Stack.Screen name="ChangePassword" />
       </Stack.Protected>
     </Stack>

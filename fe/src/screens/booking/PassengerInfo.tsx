@@ -1,5 +1,5 @@
 import AppHeader from '../../components/common/AppHeader';
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -22,6 +22,7 @@ import { useAppDispatch, useAppSelector } from "../../store";
 import { startBooking } from "../../store/slices/bookingSlice";
 import {
   getSavedPassengers,
+  savePassenger,
   type SavedPassenger,
 } from "../../api/bookingOptions.api";
 import {
@@ -35,6 +36,7 @@ import {
   createPassengerDrafts,
   fullPassengerName,
   splitPassengerName,
+  parseBirthday,
   validatePassengerForm,
   type ContactDraft,
   type PassengerDraft,
@@ -73,7 +75,7 @@ export default function PassengerInfo() {
   return <PassengerForm key={data} params={params} />;
 }
 
-/** Form giữ PII trong bộ nhớ; các API phụ chỉ đọc hồ sơ đã lưu và tồn ghế. */
+/** Chỉ lưu thông tin cá nhân lên tài khoản khi người dùng chọn lưu vào danh bạ. */
 function PassengerForm({ params }: { params: PassengerInfoParams }) {
   const dispatch = useAppDispatch();
   const account = useAppSelector((state) => state.auth.user);
@@ -98,6 +100,10 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
   const [saved, setSaved] = useState<SavedPassenger[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
   const [savedError, setSavedError] = useState<string | null>(null);
+  const [savingPassenger, setSavingPassenger] = useState<number | null>(null);
+  const savingLock = useRef(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [savedIds, setSavedIds] = useState<Record<number, string>>({});
   const [seatPicker, setSeatPicker] = useState(false);
   const [seatChoices, setSeatChoices] = useState<SeatChoice[]>(() => previous?.seats ?? []);
   const count = passengerCount(params.passengers);
@@ -195,11 +201,40 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
               name: profile.fullName,
               birthday,
               identity: profile.identityNumber ?? "",
+              gender: "",
+              nationality: "",
             }
           : passenger,
       ),
     );
+    setSavedIds(old => ({ ...old, [target]: profile.id }));
+    setSaveMessage("");
     setSheet(null);
+  };
+  const saveToAddressBook = async (index: number) => {
+    if (savingLock.current) return;
+    if (!authenticated) { navigate("Login"); return; }
+    const passenger = passengers[index];
+    const validation = validatePassengerForm([passenger], effectiveContact, travelDate);
+    const passengerErrors = Object.fromEntries(Object.entries(validation)
+      .filter(([key]) => key.startsWith("passengers.0."))
+      .map(([key, value]) => [key.replace("passengers.0.", `passengers.${index}.`), value]));
+    setErrors(old => ({ ...Object.fromEntries(Object.entries(old).filter(([key]) => !key.startsWith(`passengers.${index}.`))), ...passengerErrors }));
+    if (Object.keys(passengerErrors).length) { setSaveMessage("Kiểm tra thông tin hành khách trước khi lưu."); return; }
+    savingLock.current = true;
+    setSavingPassenger(index); setSaveMessage("");
+    try {
+      const profile = await savePassenger({
+        fullName: fullPassengerName(passenger),
+        passengerType: ({ adult: "ADULT", child: "CHILD", infant: "INFANT" } as const)[passenger.kind],
+        dateOfBirth: parseBirthday(passenger.birthday)!,
+        identityNumber: passenger.identity.trim() || null,
+      }, savedIds[index]);
+      setSavedIds(old => ({ ...old, [index]: profile.id }));
+      setSaved(old => [...old.filter(row => row.id !== profile.id), profile]);
+      setSaveMessage(`Đã lưu hành khách ${index + 1} vào danh bạ. Danh bạ lưu họ tên, loại khách, ngày sinh và giấy tờ.`);
+    } catch { setSaveMessage("Không thể lưu hành khách. Vui lòng thử lại."); }
+    finally { savingLock.current = false; setSavingPassenger(null); }
   };
   /** Không chuyển sang chọn ghế nếu gói đã hết hoặc thông tin bắt buộc chưa hợp lệ. */
   const continueToSeats = () => {
@@ -305,6 +340,7 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
             </Text>
           </Pressable>
           {passengers.map((passenger, index) => (
+            <View key={index}>
             <PassengerCard
               key={index}
               passenger={passenger}
@@ -317,7 +353,12 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
                 setSheet("country");
               }}
             />
+            <Pressable disabled={savingPassenger !== null} onPress={() => void saveToAddressBook(index)} className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-3">
+              {savingPassenger === index ? <ActivityIndicator color="#2864FF" /> : <Text className="text-center text-xs font-semibold text-booking-primary">{savedIds[index] ? "Cập nhật hành khách trong danh bạ" : "Lưu hành khách vào danh bạ"}</Text>}
+            </Pressable>
+            </View>
           ))}
+          {!!saveMessage && <Text accessibilityLiveRegion="polite" className="mb-4 text-sm text-booking-primary">{saveMessage}</Text>}
           <View className="mb-4 rounded-2xl border border-booking-line bg-white p-4">
             <Text className="text-base font-bold text-booking-ink">
               Thông tin liên hệ

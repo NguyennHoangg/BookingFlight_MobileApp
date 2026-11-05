@@ -1,4 +1,4 @@
-import { savedPassengersController } from "../controllers/bookingOptions.controller";
+import { savedPassengersController, savePassengerController, deletePassengerController } from "../controllers/bookingOptions.controller";
 import { Router } from "express";
 import authController from "../controllers/auth.controller";
 import {
@@ -33,4 +33,7 @@ router.put("/profile", authMiddleware, updateUserProfileController);
 router.put("/change-password", authMiddleware, changePasswordController);
 
 router.get("/passengers", authMiddleware, savedPassengersController);
+router.post("/passengers", authMiddleware, savePassengerController);
+router.put("/passengers/:passengerId", authMiddleware, savePassengerController);
+router.delete("/passengers/:passengerId", authMiddleware, deletePassengerController);
 export default router;

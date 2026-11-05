@@ -113,9 +113,14 @@ export const fetchProfile = createAsyncThunk<
   User,
   void,
   { rejectValue: string }
->("auth/fetchProfile", async (_, { rejectWithValue }) => {
+>("auth/fetchProfile", async (_, { rejectWithValue, getState }) => {
+  const sessionToken = (getState() as { auth: AuthState }).auth.token;
   try {
     const response = await AuthAPI.getProfileApi();
+    const currentSession = (getState() as { auth: AuthState }).auth;
+    if (!currentSession.isAuthenticated || currentSession.token !== sessionToken) {
+      return rejectWithValue("Phiên đăng nhập đã thay đổi.");
+    }
     const user: User = response.data;
     if (user) {
       await storage.setUser(user);
@@ -126,6 +131,11 @@ export const fetchProfile = createAsyncThunk<
       err.response?.data?.message || err.message || "Không thể tải thông tin tài khoản!";
     return rejectWithValue(message);
   }
+}, {
+  condition: (_, { getState }) => {
+    const { auth } = getState() as { auth: AuthState };
+    return auth.isAuthenticated && !!auth.token;
+  },
 });
 
 export const profileUser = fetchProfile;
@@ -151,9 +161,10 @@ export const updateUserProfile = createAsyncThunk<
 });
 
 // Async thunk: Logout
-export const logoutUser = createAsyncThunk("auth/logoutUser", async (_, { dispatch }) => {
+export const logoutUser = createAsyncThunk("auth/logoutUser", async (_, { dispatch, getState }) => {
+  const { token, refreshToken } = (getState() as { auth: AuthState }).auth;
   // Start with the current credentials, then remove access to protected screens.
-  const request = AuthAPI.logout().catch(err => console.log("Logout thunk error:", err));
+  const request = AuthAPI.logout(token, refreshToken).catch(err => console.log("Logout thunk error:", err));
   dispatch(resetAuth());
   await storage.clearAuth();
   await request;

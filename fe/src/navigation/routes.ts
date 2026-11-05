@@ -20,6 +20,7 @@ const paths = {
   SearchFlightResult: "/SearchFlightResult",
   TicketDetail: "/TicketDetail",
   EditProfile: "/EditProfile",
+  SavedPassengers: "/SavedPassengers",
   ChangePassword: "/ChangePassword",
   Notifications: "/Notifications",
 } as const;

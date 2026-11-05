@@ -8,7 +8,6 @@ import {
     TouchableOpacity,
     TextInput,
     ScrollView,
-    Alert,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -26,13 +25,15 @@ export default function LoginScreen() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState("");
   const passwordRef = useRef<TextInput>(null);
   const { login, loading } = useAuth();
 
   const handleLogin = async () => {
     if (loading) return;
+    setFormError("");
     if (!identifier.trim() || !password.trim()) {
-      Alert.alert("Thông báo", "Vui lòng nhập đầy đủ thông tin tài khoản và mật khẩu!");
+      setFormError("Vui lòng nhập đầy đủ thông tin tài khoản và mật khẩu!");
       return;
     }
     Keyboard.dismiss();
@@ -43,7 +44,7 @@ export default function LoginScreen() {
     };
     const result = await login(request);
     if (!result.success) {
-      Alert.alert("Đăng nhập thất bại", result.message || "Tài khoản hoặc mật khẩu không đúng!");
+      setFormError(result.message || "Tài khoản hoặc mật khẩu không đúng!");
     }
     // Protected routes remove the login screen when Redux authenticates the session.
   };
@@ -69,9 +70,14 @@ export default function LoginScreen() {
         keyboardDismissMode="on-drag"
         contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 24, width: "100%", maxWidth: 480, alignSelf: "center" }}
       >
-        <View className="flex items-center justify-center">
-              <Image source={require("../../../assets/Splash_icon.png")} className="max-w-20 max-h-20" />
-          </View>
+        <View style={{ alignItems: "center", justifyContent: "center" }}>
+          <Image
+            source={require("../../../assets/Splash_icon.png")}
+            style={{ width: 80, height: 80, maxWidth: 80, maxHeight: 80, flexShrink: 0 }}
+            resizeMode="contain"
+            accessibilityLabel="SkyJourney"
+          />
+        </View>
 
           <View className="flex items-center justify-center mt-2">
               <Text className="text-3xl font-bold text-[#131B2E]">SkyJourney</Text>
@@ -133,6 +139,11 @@ export default function LoginScreen() {
         </View>
 
         <View className="mt-2">
+          {!!formError && (
+            <Text accessibilityRole="alert" accessibilityLiveRegion="polite" className="mb-3 text-sm text-red-600">
+              {formError}
+            </Text>
+          )}
           <TouchableOpacity
             className="bg-[#2563EB] rounded-lg px-4 py-3 h-[50px] justify-center items-center"
             onPress={handleLogin}

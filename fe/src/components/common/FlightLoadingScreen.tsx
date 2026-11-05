@@ -1,13 +1,11 @@
 import React from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
-import { StatusBar } from "expo-status-bar";
+import { StyleSheet, Text, View } from "react-native";
 
 export const FLIGHT_INTRO_DURATION = 3000;
 
 export default function FlightLoadingScreen() {
   return (
     <View testID="startup-screen" style={styles.screen} accessibilityState={{ busy: true }}>
-      {Platform.OS !== "web" && <StatusBar style="dark" />}
       <View style={styles.lockup}>
         <Text style={styles.brand}>
           Sky<Text style={styles.journey}>Journey</Text>

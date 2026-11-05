@@ -3,6 +3,7 @@ import {
   flightSeatsController,
   flightSeatMapController,
   favoriteController,
+  favoriteFlightsController,
 } from "../controllers/bookingOptions.controller";
 import { Router } from "express";
 import {
@@ -14,6 +15,7 @@ import {
 const router = Router();
 router.post("/conditions", getFlightsByConditionsController);
 router.post("/calendar", getFlightCalendarController);
+router.get("/favorites", authMiddleware, favoriteFlightsController);
 router.get("/:flightId/fares", getFlightFaresController);
 router.get("/:flightId/seats", flightSeatsController);
 router.get("/:flightId/seat-map", flightSeatMapController);

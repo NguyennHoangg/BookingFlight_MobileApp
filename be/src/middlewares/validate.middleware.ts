@@ -40,7 +40,8 @@ export const validateRegister = [
 ]
 
 export const validateLogin = [
-    body('identifierValue').matches(identifierValueRegex).withMessage('Email hoặc số điện thoại không hợp lệ!'),
-    body('password').matches(passwordRegex).withMessage('Mật khẩu không hợp lệ! (ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt)'),
+    body('identifierValue').isString().bail().trim().matches(identifierValueRegex).withMessage('Email hoặc số điện thoại không hợp lệ!'),
+    // Login verifies an existing password; password creation rules belong to registration.
+    body('password').isString().bail().notEmpty().withMessage('Vui lòng nhập mật khẩu!'),
     validateMiddleware
 ]
