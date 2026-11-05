@@ -14,7 +14,7 @@ import { goBack, navigate, readRouteData } from "../../navigation/routes";
 import { parseFlightDetail } from "../../navigation/validation";
 import type { FlightDetailParams } from "../../navigation/types";
 import { useFareSelection } from "../../hook/useFareSelection";
-import { useFlightFavorite } from "../../hook/useFlightFavorite";
+import FlightFavoriteButton from "../../components/flight/FlightFavoriteButton";
 import { useAppSelector } from "../../store";
 import {
   formatFareMoney,
@@ -88,7 +88,6 @@ function FlightDetails({ params }: { params: FlightDetailParams }) {
   const fares = useFareSelection(legs, count);
   const flight = fares.selected[activeLeg];
   const authenticated = useAppSelector((state) => state.auth.isAuthenticated);
-  const favorite = useFlightFavorite(legs[activeLeg].flightId, authenticated);
   const proceed = () => {
     if (fares.total === null) return;
     navigate("FareSelection", params);
@@ -99,10 +98,9 @@ function FlightDetails({ params }: { params: FlightDetailParams }) {
         title="Chi tiết chuyến bay"
         back
         action={{
-          label: favorite.favorite ? "Bỏ yêu thích" : "Lưu chuyến bay",
-          icon: favorite.favorite ? "heart" : "heart-outline",
-          onPress: () => authenticated ? void favorite.toggle() : setHelp(true),
-          disabled: favorite.busy,
+          label: "Thông tin chuyến bay",
+          icon: "help-circle-outline",
+          onPress: () => setHelp(true),
         }}
       />
       <View className="w-full max-w-[540px] flex-1 self-center bg-booking-background">
@@ -154,11 +152,7 @@ function FlightDetails({ params }: { params: FlightDetailParams }) {
                   Còn {flight.ticket.availableSeats} chỗ
                 </Text>
               </View>
-              {!!favorite.error && (
-                <Text className="mb-3 text-xs text-booking-danger">
-                  {favorite.error}
-                </Text>
-              )}
+              <FlightFavoriteButton flightId={legs[activeLeg].flightId} />
               <View className="mb-4 rounded-2xl border border-booking-line bg-white p-4">
                 <View className="flex-row items-center gap-2 border-b border-dashed border-booking-line pb-4">
                   <View className="rounded-xl bg-booking-soft p-2">

@@ -19,6 +19,7 @@ import { searchFlights, getFlightCalendar, getFlightKey } from "../../api/flight
 import type { FlightItem, FlightCalendarDay } from "../../api/flight.api";
 import { isAxiosError } from "axios";
 import RemoteImage from "../../components/common/RemoteImage";
+import FlightFavoriteButton from "../../components/flight/FlightFavoriteButton";
 import FlightFilterModal, {
   FlightFilterState,
   DEFAULT_FILTER_STATE,
@@ -791,6 +792,8 @@ export default function SearchFlightResultScreen() {
                         </Text>
                       </View>
                     </View>
+
+                    <FlightFavoriteButton flightId={flight.flightId} iconOnly />
 
                     {/* Radio Button Checkmark */}
                     <View className="ml-2">

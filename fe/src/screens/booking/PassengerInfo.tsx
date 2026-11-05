@@ -75,6 +75,13 @@ export default function PassengerInfo() {
   return <PassengerForm key={data} params={params} />;
 }
 
+function passengerSaveKey(passenger: PassengerDraft) {
+  return JSON.stringify([
+    fullPassengerName(passenger), passenger.kind,
+    parseBirthday(passenger.birthday), passenger.identity.trim(),
+  ]);
+}
+
 /** Chỉ lưu thông tin cá nhân lên tài khoản khi người dùng chọn lưu vào danh bạ. */
 function PassengerForm({ params }: { params: PassengerInfoParams }) {
   const dispatch = useAppDispatch();
@@ -104,6 +111,10 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
   const savingLock = useRef(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [savedIds, setSavedIds] = useState<Record<number, string>>({});
+  const [savedKeys, setSavedKeys] = useState<Record<number, string>>({});
+  const [savePrompt, setSavePrompt] = useState<{ indices: number[]; continueAfter: boolean } | null>(null);
+  const [confirmingSave, setConfirmingSave] = useState(false);
+  const confirmLock = useRef(false);
   const [seatPicker, setSeatPicker] = useState(false);
   const [seatChoices, setSeatChoices] = useState<SeatChoice[]>(() => previous?.seats ?? []);
   const count = passengerCount(params.passengers);
@@ -208,19 +219,23 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
       ),
     );
     setSavedIds(old => ({ ...old, [target]: profile.id }));
+    setSavedKeys(old => ({ ...old, [target]: passengerSaveKey({
+      ...passengers[target], ...splitPassengerName(profile.fullName), name: profile.fullName,
+      birthday, identity: profile.identityNumber ?? "",
+    }) }));
     setSaveMessage("");
     setSheet(null);
   };
   const saveToAddressBook = async (index: number) => {
-    if (savingLock.current) return;
-    if (!authenticated) { navigate("Login"); return; }
+    if (savingLock.current) return false;
+    if (!authenticated) { navigate("Login"); return false; }
     const passenger = passengers[index];
     const validation = validatePassengerForm([passenger], effectiveContact, travelDate);
     const passengerErrors = Object.fromEntries(Object.entries(validation)
       .filter(([key]) => key.startsWith("passengers.0."))
       .map(([key, value]) => [key.replace("passengers.0.", `passengers.${index}.`), value]));
     setErrors(old => ({ ...Object.fromEntries(Object.entries(old).filter(([key]) => !key.startsWith(`passengers.${index}.`))), ...passengerErrors }));
-    if (Object.keys(passengerErrors).length) { setSaveMessage("Kiểm tra thông tin hành khách trước khi lưu."); return; }
+    if (Object.keys(passengerErrors).length) { setSaveMessage("Kiểm tra thông tin hành khách trước khi lưu."); return false; }
     savingLock.current = true;
     setSavingPassenger(index); setSaveMessage("");
     try {
@@ -231,9 +246,11 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
         identityNumber: passenger.identity.trim() || null,
       }, savedIds[index]);
       setSavedIds(old => ({ ...old, [index]: profile.id }));
+      setSavedKeys(old => ({ ...old, [index]: passengerSaveKey(passenger) }));
       setSaved(old => [...old.filter(row => row.id !== profile.id), profile]);
       setSaveMessage(`Đã lưu hành khách ${index + 1} vào danh bạ. Danh bạ lưu họ tên, loại khách, ngày sinh và giấy tờ.`);
-    } catch { setSaveMessage("Không thể lưu hành khách. Vui lòng thử lại."); }
+      return true;
+    } catch { setSaveMessage("Không thể lưu hành khách. Vui lòng thử lại."); return false; }
     finally { savingLock.current = false; setSavingPassenger(null); }
   };
   /** Không chuyển sang chọn ghế nếu gói đã hết hoặc thông tin bắt buộc chưa hợp lệ. */
@@ -245,7 +262,31 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
       flight.departure.time,
     );
     setErrors(validation);
-    if (!Object.keys(validation).length) setSeatPicker(true);
+    if (Object.keys(validation).length) return;
+    const indices = passengers.flatMap((passenger, index) =>
+      savedKeys[index] === passengerSaveKey(passenger) ? [] : [index],
+    );
+    if (authenticated && indices.length) {
+      setSaveMessage("");
+      setSavePrompt({ indices, continueAfter: true });
+    } else setSeatPicker(true);
+  };
+  const confirmSave = async () => {
+    if (!savePrompt || confirmLock.current) return;
+    confirmLock.current = true;
+    setConfirmingSave(true);
+    try {
+      for (const index of savePrompt.indices) {
+        if (!await saveToAddressBook(index)) return;
+        // Không lưu lại các hành khách đã thành công khi thử lại sau lỗi.
+        setSavePrompt(old => old ? { ...old, indices: old.indices.filter(item => item !== index) } : null);
+      }
+      setSavePrompt(null);
+      if (savePrompt.continueAfter) setSeatPicker(true);
+    } finally {
+      confirmLock.current = false;
+      setConfirmingSave(false);
+    }
   };
   return (
     <SafeAreaView edges={["left", "right"]} className="flex-1 bg-white">
@@ -353,7 +394,11 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
                 setSheet("country");
               }}
             />
-            <Pressable disabled={savingPassenger !== null} onPress={() => void saveToAddressBook(index)} className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-3">
+            <Pressable disabled={savingPassenger !== null} onPress={() => {
+              if (!authenticated) { navigate("Login"); return; }
+              setSaveMessage("");
+              setSavePrompt({ indices: [index], continueAfter: false });
+            }} className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-3">
               {savingPassenger === index ? <ActivityIndicator color="#2864FF" /> : <Text className="text-center text-xs font-semibold text-booking-primary">{savedIds[index] ? "Cập nhật hành khách trong danh bạ" : "Lưu hành khách vào danh bạ"}</Text>}
             </Pressable>
             </View>
@@ -450,7 +495,7 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
         <FareCheckoutBar
           total={total}
           count={count}
-          disabled={!validFares || taxes.status !== "ready"}
+          disabled={!validFares || taxes.status !== "ready" || confirmingSave}
           note={taxes.total === null ? "Chờ xác nhận thuế và phí" : "Đã gồm thuế/phí và phụ phí ghế đã chọn"}
           label="Tiếp tục chọn ghế"
           onContinue={continueToSeats}
@@ -478,6 +523,31 @@ function PassengerForm({ params }: { params: PassengerInfoParams }) {
             }}
           />
         )}
+        <FareSheet
+          title="Lưu thông tin hành khách?"
+          visible={savePrompt !== null}
+          onClose={() => { if (!confirmLock.current) setSavePrompt(null); }}
+        >
+          <Text className="text-sm leading-6 text-[#536F97]">
+            Bạn có muốn lưu thông tin hành khách vào danh bạ để dùng cho lần đặt vé sau không? Chỉ khi chọn “Lưu thông tin”, họ tên, loại hành khách, ngày sinh và giấy tờ mới được thêm hoặc cập nhật trong danh bạ.
+          </Text>
+          {savePrompt?.indices.map(index => (
+            <Text key={index} className="mt-2 text-sm font-semibold text-booking-ink">
+              Hành khách {index + 1}: {fullPassengerName(passengers[index])}
+            </Text>
+          ))}
+          {!!saveMessage && <Text accessibilityLiveRegion="polite" className="mt-3 text-sm text-booking-primary">{saveMessage}</Text>}
+          <Pressable accessibilityRole="button" disabled={confirmingSave} onPress={() => void confirmSave()} className="mt-5 rounded-xl bg-booking-primary p-4">
+            {confirmingSave ? <ActivityIndicator color="white" /> : <Text className="text-center font-bold text-white">Lưu thông tin</Text>}
+          </Pressable>
+          <Pressable accessibilityRole="button" disabled={confirmingSave} onPress={() => {
+            const continueAfter = savePrompt?.continueAfter;
+            setSavePrompt(null);
+            if (continueAfter) setSeatPicker(true);
+          }} className="mt-3 rounded-xl border border-booking-line p-4">
+            <Text className="text-center font-semibold text-booking-ink">{savePrompt?.continueAfter ? "Không lưu, tiếp tục" : "Không lưu"}</Text>
+          </Pressable>
+        </FareSheet>
         <FareSheet
           visible={sheet !== null}
           title={

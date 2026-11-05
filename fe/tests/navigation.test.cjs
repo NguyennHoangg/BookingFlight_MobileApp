@@ -887,6 +887,102 @@ test("favorite hook blocks duplicate taps, ignores stale legs and retries after 
   cleanup?.();
 });
 
+test("passenger address book writes require consent; declining still continues and failed saves can retry", async () => {
+  const formUtils = load("src/utils/passengerForm.ts");
+  const fare = { flightId: "flight", airline: { name: "Airline" }, ticket: { fareClassId: "fare", price: 100 }, departure: { time: "2026-12-01", airportCode: "SGN" }, arrival: { airportCode: "HAN" } };
+  const params = { flights: [{ flightId: "flight", fareClassId: "fare" }], passengers: { adults: 1, children: 0, infants: 0 } };
+  const passenger = { kind: "adult", name: "Nguyen Van An", birthday: "01/01/1990", identity: "123456789" };
+  const state = { auth: { isAuthenticated: true, user: {} }, booking: { draft: {
+    params, passengers: [passenger], contact: { name: passenger.name, email: "an@example.com", phone: "+84901234567" }, seats: [],
+  } } };
+  let cursor = 0;
+  const slots = [];
+  const writes = [];
+  let failSave = false;
+  const react = {
+    createElement: (type, props, ...children) => ({ type, props: { ...props, children } }),
+    useMemo: factory => factory(),
+    useRef(value) { const i = cursor++; return slots[i] ??= { current: value }; },
+    useState(initial) {
+      const i = cursor++;
+      if (!(i in slots)) slots[i] = typeof initial === "function" ? initial() : initial;
+      return [slots[i], value => { slots[i] = typeof value === "function" ? value(slots[i]) : value; }];
+    },
+  };
+  const dependencies = {
+    react: { default: react, ...react },
+    "react-native": { ActivityIndicator: "ActivityIndicator", KeyboardAvoidingView: "KeyboardAvoidingView", Platform: { OS: "web" }, Pressable: "Pressable", ScrollView: "ScrollView", Text: "Text", View: "View" },
+    "react-native-safe-area-context": { SafeAreaView: "SafeAreaView" },
+    "expo-router": { useLocalSearchParams: () => ({ data: "test" }) },
+    "@expo/vector-icons": { Ionicons: "Ionicons" },
+    "../../navigation/routes": { readRouteData: () => params },
+    "../../navigation/validation": { parsePassengerInfo: value => value },
+    "../../hook/useFareSelection": { useFareSelection: () => ({ status: "ready", selected: [fare], total: 100 }) },
+    "../../hook/useTaxAndFee": { useTaxAndFee: () => ({ status: "ready", total: 0 }) },
+    "../../store": { useAppDispatch: () => () => {}, useAppSelector: selector => selector(state) },
+    "../../store/slices/bookingSlice": {},
+    "../../api/bookingOptions.api": { savePassenger: async input => {
+      writes.push(input);
+      if (failSave) throw new Error("offline");
+      return { ...input, id: "saved" };
+    } },
+    "../../utils/fare": { passengerCount: () => 1, formatFareMoney: String, flightDate: String, flightTime: String, flightDuration: String },
+    "../../utils/passengerForm": formUtils,
+  };
+  for (const [file, name] of [
+    ["common/AppHeader", "default"], ["booking/TaxAndFeeCard", "TaxAndFeeCard"],
+    ["flight/fares/FareCheckoutBar", "FareCheckoutBar"], ["flight/fares/FareSheet", "FareSheet"],
+    ["booking/BookingProgress", "BookingProgress"], ["booking/FlightSeatPicker", "FlightSeatPicker"],
+  ]) dependencies[`../../components/${file}`] = { [name]: file };
+  dependencies["../../components/booking/PassengerFields"] = { PassengerCard: "PassengerCard", PassengerField: "PassengerField" };
+  const screen = load("src/screens/booking/PassengerInfo.tsx", dependencies);
+  const form = screen.default();
+  const render = () => { cursor = 0; return form.type(form.props); };
+  const nodes = tree => !tree || typeof tree !== "object" ? [] : [tree, ...(tree.props?.children ?? []).flat(Infinity).flatMap(nodes)];
+  const find = (tree, type) => nodes(tree).find(node => node.type === type);
+  const prompt = tree => nodes(tree).find(node => node.type === "flight/fares/FareSheet" && node.props.title === "Lưu thông tin hành khách?");
+  const button = (tree, label) => nodes(tree).find(node => node.type === "Pressable" && nodes(node).some(child => child.type === "Text" && child.props.children.includes(label)));
+  let tree = render();
+  button(tree, "Lưu hành khách vào danh bạ").props.onPress();
+  tree = render();
+  assert.equal(prompt(tree).props.visible, true);
+  assert.equal(writes.length, 0, "the individual save button also requires consent");
+  prompt(tree).props.onClose();
+  tree = render();
+  assert.equal(prompt(tree).props.visible, false);
+  assert.equal(writes.length, 0, "dismissing confirmation never saves");
+  find(tree, "flight/fares/FareCheckoutBar").props.onContinue();
+  tree = render();
+  assert.equal(prompt(tree).props.visible, true);
+  assert.equal(writes.length, 0, "opening confirmation does not save");
+  button(prompt(tree), "Không lưu, tiếp tục").props.onPress();
+  tree = render();
+  assert.ok(find(tree, "booking/FlightSeatPicker"));
+  assert.equal(writes.length, 0, "declining never writes to the address book");
+  find(tree, "booking/FlightSeatPicker").props.onClose();
+  tree = render();
+  find(tree, "flight/fares/FareCheckoutBar").props.onContinue();
+  tree = render();
+  failSave = true;
+  await button(prompt(tree), "Lưu thông tin").props.onPress();
+  await new Promise(resolve => setImmediate(resolve));
+  tree = render();
+  assert.equal(prompt(tree).props.visible, true, "failed save keeps confirmation open");
+  assert.equal(find(tree, "booking/FlightSeatPicker"), undefined);
+  failSave = false;
+  button(prompt(tree), "Lưu thông tin").props.onPress();
+  await new Promise(resolve => setImmediate(resolve));
+  tree = render();
+  assert.equal(writes.length, 2);
+  assert.equal(writes[1].fullName, passenger.name);
+  assert.equal(prompt(tree).props.visible, false);
+  assert.ok(find(tree, "booking/FlightSeatPicker"));
+  find(tree, "booking/FlightSeatPicker").props.onClose();
+  tree = render();
+  find(tree, "flight/fares/FareCheckoutBar").props.onContinue();
+  assert.equal(prompt(render()).props.visible, false, "unchanged saved passengers need no new consent");
+});
+
 test("tax loading deduplicates airlines, cancels stale requests and retries failures", async () => {
   // Minimal hook runner: requests remain pending so itinerary changes can race responses.
   const states = [];
