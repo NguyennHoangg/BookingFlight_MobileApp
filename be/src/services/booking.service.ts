@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomInt, randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import { connectPool, query } from "../config/db.config";
 import { AppError } from "../errors/AppError";
+import { publicCache } from "../redis/publicCache";
 import { calculateBookingTax, demoPaymentEnabled, passengerAge, validateBooking, type BookingInput } from "../utils/booking.policy";
 
 async function transaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -179,7 +180,9 @@ export async function createBookingWithClient(client: PoolClient, userId: string
 
 export async function createBooking(userId: string, value: unknown) {
   const input = validateBooking(value);
-  return transaction(client => createBookingWithClient(client, userId, input));
+  const booking = await transaction(client => createBookingWithClient(client, userId, input));
+  await publicCache.invalidateFlights();
+  return booking;
 }
 export async function getBooking(userId: string, id: string) { return transaction(client => readBooking(client, userId, id)); }
 export async function getBookingByRequest(userId: string, requestKey: string) {
@@ -198,7 +201,9 @@ export async function listBookingsWithClient(client: PoolClient, userId: string)
   return result.rows.map(presentBooking);
 }
 export async function cancelBooking(userId: string, id: string) {
-  return transaction(client => cancelBookingWithClient(client, userId, id));
+  const booking = await transaction(client => cancelBookingWithClient(client, userId, id));
+  await publicCache.invalidateFlights();
+  return booking;
 }
 export async function cancelBookingWithClient(client: PoolClient, userId: string, id: string) {
     const found = await client.query('SELECT * FROM "Booking" WHERE id = $1 AND "userId" = $2 AND "isActive" FOR UPDATE', [id, userId]);
