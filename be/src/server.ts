@@ -16,7 +16,7 @@ app.use(express.json());
 setupRoutes(app);
 
 app.get("/health", (_req: Request, res: Response) => {
-  res.json({ status: "ok", message: "Flight Booking API running" });
+  res.json({ status: "ok", message: "Flight Booking API running", redis: redisConfig.getRedisStatus() ? "ready" : "unavailable" });
 });
 
 // Xử lý lỗi tập trung

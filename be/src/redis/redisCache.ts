@@ -21,7 +21,7 @@ const getOrSet = async (key, fetchFn, ttl = DEFAULT_TTL_SECONDS) => {
     // Tìm trong cache
     const cached = await client.get(key);
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(String(cached));
     }
 
     // Không có trong cache → lấy từ DB
@@ -56,17 +56,15 @@ const del = async (key) => {
 };
 
 /**
- * Xóa nhiều key theo pattern (vd: "books:list:*")
- * Dùng sau khi tạo/sửa/xóa sách để invalidate cache danh sách
+ * Xóa theo pattern theo từng batch, không chặn Redis bằng KEYS.
  */
 const delPattern = async (pattern) => {
   const client = redisConfig.getRedis();
   if (!client) return;
 
   try {
-    const keys = await client.keys(pattern);
-    if (keys.length > 0) {
-      await client.del(keys);
+    for await (const keys of client.scanIterator({ MATCH: pattern, COUNT: 100 })) {
+      if (keys.length) await client.unlink(keys.map(String));
     }
   } catch (err) {}
 };

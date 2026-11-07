@@ -84,4 +84,5 @@ const transactionQuery = async (queries: string[]) => {
   }
 };
 
-export { query, transactionQuery, connectPool };
+const closePool = () => pool.end();
+export { query, transactionQuery, connectPool, closePool };

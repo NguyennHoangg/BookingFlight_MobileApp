@@ -1,102 +1,38 @@
-import redis from "redis";
+﻿import "dotenv/config";
+import { createClient } from "redis";
 
-let isConnected = false;
-let client: any = null;
-let retryInterval: NodeJS.Timeout | null = null;
-
-// Tạo client
-const createClient = redis.createClient({
-  url:
-    process.env.NODE_ENV === "development"
-      ? process.env.REDIS_URL_DEV
-      : process.env.REDIS_URL_PROD,
+const connection = createClient({
+  url: process.env.REDIS_URL || (process.env.NODE_ENV === "production"
+    ? process.env.REDIS_URL_PROD
+    : process.env.REDIS_URL_DEV) || "redis://127.0.0.1:6379",
+  disableOfflineQueue: true,
+  commandsQueueMaxLength: 1000,
+  commandOptions: { timeout: 500 },
   socket: {
-    reconnectStrategy: (retries) => {
-      if (retries > 1) {
-        return false;
-      }
-      return 3000;
-    },
-    connectTimeout: 3000,
+    connectTimeout: 2000,
+    reconnectStrategy: retries => Math.min(1000 * 2 ** Math.min(retries, 5), 30_000),
   },
 });
 
-// Sự kiện báo lỗi
-createClient.on("error", (error) => {
-  console.error("[Redis Error]:", error.message || error);
-  isConnected = false;
-});
+// Never log connection URLs or credentials. Reconnect in the background.
+connection.on("error", () => {});
+connection.on("ready", () => console.log("[Redis] Ready"));
+let connecting: Promise<void> | undefined;
 
-// Sự kiện đang kết nối lại (tự động kích hoạt bởi reconnectStrategy sau 60s)
-createClient.on("reconnecting", () => {
-  console.log("[Redis] Đang thử kết nối lại (sau 60s)...");
-});
-
-// Khi kết nối thành công và sẵn sàng nhận lệnh
-createClient.on("ready", () => {
-  isConnected = true;
-  client = createClient;
-  console.log("[Redis] Kết nối thành công và đã sẵn sàng!");
-
-  // Nếu trước đó đang có vòng lặp thử lại 60s thì hủy bỏ
-  if (retryInterval) {
-    clearInterval(retryInterval);
-    retryInterval = null;
+async function init() {
+  if (connection.isReady) return connection;
+  if (!connection.isOpen && !connecting) {
+    connecting = connection.connect().then(() => undefined).finally(() => { connecting = undefined; });
   }
-});
+  await connecting;
+  return connection.isReady ? connection : null;
+}
 
-createClient.on("end", () => {
-  console.log("[Redis] Kết nối đã đóng.");
-  isConnected = false;
-});
-
-// Hàm khởi tạo kết nối
-const init = async () => {
-  if (isConnected && client) {
-    return client;
-  }
-
-  const attemptConnect = async () => {
-    try {
-      console.log("[Redis] Đang thử kết nối đến Redis...");
-      await createClient.connect();
-    } catch (error: any) {
-      isConnected = false;
-      console.error(
-        "[Redis] Kết nối thất bại. App vẫn chạy, sẽ thử lại sau 60s...",
-      );
-
-      // Nếu chưa có vòng lặp thử lại thì lên lịch cứ 60s thử kết nối 1 lần
-      if (!retryInterval) {
-        retryInterval = setInterval(async () => {
-          if (!isConnected) {
-            console.log("[Redis] [60s Timer] Đang thử kết nối lại...");
-            attemptConnect();
-          }
-        }, 60000);
-      }
-    }
-  };
-
-  await attemptConnect();
-  return client;
-};
-
-const getRedis = () => client;
-
-const getRedisStatus = () => isConnected;
-
-const closeRedis = async () => {
-  if (retryInterval) {
-    clearInterval(retryInterval);
-    retryInterval = null;
-  }
-  if (client) {
-    await client.quit();
-    client = null;
-    isConnected = false;
-    console.log("[Redis] Đã ngắt kết nối hoàn toàn.");
-  }
-};
+const getRedis = () => connection.isReady ? connection : null;
+const getRedisStatus = () => connection.isReady;
+async function closeRedis() {
+  if (connection.isOpen) connection.destroy();
+  await connecting?.catch(() => {});
+}
 
 export default { init, getRedis, getRedisStatus, closeRedis };

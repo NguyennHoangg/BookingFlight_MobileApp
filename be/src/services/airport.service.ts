@@ -1,9 +1,10 @@
 import { AppError } from "../errors/AppError";
 import { getAirportList, getTaxAndFee } from "../models/airport.model";
+import { publicCache } from "../redis/publicCache";
 
 const getAirportService = async () => {
   try {
-    return await getAirportList();
+    return await publicCache.remember("airports", [], 300, getAirportList);
   } catch (error) {
     throw new AppError("Không thể lấy được danh sách sân bay", 500);
   }
